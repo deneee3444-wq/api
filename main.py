@@ -268,11 +268,11 @@ def process_video_task(task_id, params, api_key_id):
                     db.release_account(api_key_id, account['email'])
                     return
                 payload["userImageId"] = int(str(img_id).strip())
-                payload["modelVersion"] = "MODEL_FIVE_FAST_3"
+                payload["modelVersion"] = "MODEL_ELEVEN_IMAGE_TO_VIDEO_V2"
                 url_submit = URL_SUBMIT_VIDEO
             else:
-                #payload["modelType"] = "MODEL_ELEVEN"
-                payload["modelVersion"] = "MODEL_FIVE_FAST_3"
+                payload["modelType"] = "MODEL_ELEVEN"
+                payload["modelVersion"] = "MODEL_ELEVEN_TEXT_TO_VIDEO_V2"
                 url_submit = URL_SUBMIT_TXT_VIDEO
 
             resp = requests.post(url_submit, headers=headers, json=payload)
