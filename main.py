@@ -250,30 +250,60 @@ def process_video_task(task_id, params, api_key_id):
 
             headers = {"authorization": f"Bearer {token}", **DEVICE_HEADERS}
             
+            # Model parametresini al (varsayılan: SORA2)
+            model = params.get('model', 'SORA2')
             is_i2v = params.get('image') is not None
-            payload = {
-                "prompt": params.get('prompt', ''),
-                "resolution": "720p",
-                "lengthOfSecond": 8,
-                "aiPromptEnhance": True,
-                "size": params.get('size', 'SIXTEEN_BY_NINE'),
-                "addEndFrame": False
-            }
-
-            if is_i2v:
-                img_data = base64.b64decode(params['image'])
-                img_id = upload_image(token, img_data)
-                if not img_id:
-                    db.update_task_status(task_id, 'failed')
-                    db.release_account(api_key_id, account['email'])
-                    return
-                payload["userImageId"] = int(str(img_id).strip())
-                payload["modelVersion"] = "MODEL_FIVE_FAST_3"
-                url_submit = URL_SUBMIT_VIDEO
+            
+            # VEO_3_1 modeli için
+            if model == 'VEO_3_1':
+                payload = {
+                    "prompt": params.get('prompt', ''),
+                    "resolution": "720p",
+                    "lengthOfSecond": 8,
+                    "aiPromptEnhance": True,
+                    "size": params.get('size', 'SIXTEEN_BY_NINE'),
+                    "addEndFrame": False,
+                    "modelType": "MODEL_FIVE",
+                    "modelVersion": "MODEL_FIVE_FAST_3"
+                }
+                
+                if is_i2v:
+                    img_data = base64.b64decode(params['image'])
+                    img_id = upload_image(token, img_data)
+                    if not img_id:
+                        db.update_task_status(task_id, 'failed')
+                        db.release_account(api_key_id, account['email'])
+                        return
+                    payload["userImageId"] = int(str(img_id).strip())
+                    url_submit = URL_SUBMIT_VIDEO
+                else:
+                    url_submit = URL_SUBMIT_TXT_VIDEO
+            
+            # SORA2 modeli için (varsayılan)
             else:
-                payload["modelType"] = "MODEL_FIVE"
-                payload["modelVersion"] = "MODEL_FIVE_FAST_3"
-                url_submit = URL_SUBMIT_TXT_VIDEO
+                payload = {
+                    "prompt": params.get('prompt', ''),
+                    "resolution": "720p",
+                    "lengthOfSecond": 10,
+                    "aiPromptEnhance": True,
+                    "size": params.get('size', 'SIXTEEN_BY_NINE'),
+                    "addEndFrame": False
+                }
+
+                if is_i2v:
+                    img_data = base64.b64decode(params['image'])
+                    img_id = upload_image(token, img_data)
+                    if not img_id:
+                        db.update_task_status(task_id, 'failed')
+                        db.release_account(api_key_id, account['email'])
+                        return
+                    payload["userImageId"] = int(str(img_id).strip())
+                    payload["modelVersion"] = "MODEL_ELEVEN_IMAGE_TO_VIDEO_V2"
+                    url_submit = URL_SUBMIT_VIDEO
+                else:
+                    payload["modelType"] = "MODEL_ELEVEN"
+                    payload["modelVersion"] = "MODEL_ELEVEN_TEXT_TO_VIDEO_V2"
+                    url_submit = URL_SUBMIT_TXT_VIDEO
 
             resp = requests.post(url_submit, headers=headers, json=payload)
             resp_json = resp.json()
