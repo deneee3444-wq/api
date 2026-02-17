@@ -596,8 +596,6 @@ def resume_incomplete_tasks():
         recovery_result = db.recover_stale_tasks()
         if recovery_result['failed_count'] > 0:
             print(f"[STARTUP] Marked {recovery_result['failed_count']} tasks as failed (never logged in)")
-        if recovery_result['orphan_accounts'] > 0:
-            print(f"[STARTUP] Released {recovery_result['orphan_accounts']} orphaned accounts")
     except Exception as e:
         print(f"[STARTUP] Error during stale task recovery: {e}")
         recovery_result = {'needs_check': []}
