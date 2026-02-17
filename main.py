@@ -845,11 +845,8 @@ def delete_account(email):
 
 # Initialize database
 db.init_db()
-# Resume incomplete tasks on startup (in background so worker boots fast)
-def _startup_recovery():
-    time.sleep(2)  # Wait for worker to fully boot
-    resume_incomplete_tasks()
-threading.Thread(target=_startup_recovery, daemon=True).start()
+# Resume incomplete tasks on startup
+resume_incomplete_tasks()
 
 if __name__ == '__main__':
     print(f"Maximum concurrent tasks: {MAX_CONCURRENT_TASKS}")
