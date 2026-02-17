@@ -528,9 +528,10 @@ def recover_stale_tasks():
     Returns dict with:
       - 'failed_count': tasks that had no token (never logged in) → marked failed
       - 'needs_check': tasks that have token but no external_task_id (submit might have happened) → need API check
-      - 'orphan_accounts': count of orphaned accounts released
+    
+    Account release is handled explicitly in each recovery path, not via blanket cleanup.
     """
-    result = {'failed_count': 0, 'needs_check': [], 'orphan_accounts': 0}
+    result = {'failed_count': 0, 'needs_check': []}
     
     with db_lock:
         conn = get_connection()
@@ -575,20 +576,6 @@ def recover_stale_tasks():
             if needs_check:
                 print(f"  [RECOVERY] Found {len(needs_check)} tasks that may have been submitted (will check Deevid API)")
             
-            # 3. Release orphaned accounts: used=1 but not associated with any running/pending task
-            cursor.execute("""
-                UPDATE accounts SET used = 0 
-                WHERE used = 1 
-                AND email NOT IN (
-                    SELECT COALESCE(account_email, '') FROM tasks 
-                    WHERE status IN ('running', 'pending') 
-                    AND account_email IS NOT NULL
-                )
-            """)
-            result['orphan_accounts'] = cursor.rowcount
-            if result['orphan_accounts'] > 0:
-                print(f"  [RECOVERY] Released {result['orphan_accounts']} orphaned accounts back to pool")
-            
             conn.commit()
         else:
             cursor = conn.cursor()
@@ -620,17 +607,6 @@ def recover_stale_tasks():
                 "SELECT task_id, mode, token, account_email, api_key_id FROM tasks WHERE (status = 'running' OR status = 'pending') AND external_task_id IS NULL AND token IS NOT NULL"
             )
             result['needs_check'] = [dict(row) for row in cursor.fetchall()]
-            
-            cursor.execute("""
-                UPDATE accounts SET used = 0 
-                WHERE used = 1 
-                AND email NOT IN (
-                    SELECT COALESCE(account_email, '') FROM tasks 
-                    WHERE status IN ('running', 'pending') 
-                    AND account_email IS NOT NULL
-                )
-            """)
-            result['orphan_accounts'] = cursor.rowcount
             
             conn.commit()
         
