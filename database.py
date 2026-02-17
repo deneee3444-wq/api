@@ -12,7 +12,7 @@ from psycopg2 import pool
 
 DATABASE_URL = os.environ.get(
     "DATABASE_URL",
-    "postgresql://db_2nmh_user:aIc3Okz1OpDVoDXSyfQ9lKBKoKbE8wSE@dpg-d69j3i0gjchc73djahh0-a.oregon-postgres.render.com/db_2nmh"
+    "postgresql://db_mdj5_user:LgPHY1oCy66PW7W2Q0NdBSwH7UDo5vru@dpg-d66v0sjnv86c73dc22fg-a/db_mdj5"
 )
 
 _pool = None
