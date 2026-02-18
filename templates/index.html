@@ -1,0 +1,1354 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CreativeLabs API Interface</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #00ff88;
+            --primary-dark: #00cc6e;
+            --secondary: #ff0055;
+            --accent: #00aaff;
+            --bg-main: #0a0f1c;
+            --bg-card: #131926;
+            --bg-input: #1a2234;
+            --text: #e8eaed;
+            --text-muted: #9aa0a6;
+            --border: #2a3344;
+            --success: #00ff88;
+            --error: #ff0055;
+            --warning: #ffaa00;
+            --info: #00aaff;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: var(--bg-main);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+            padding: 0;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(circle at 20% 30%, rgba(0, 255, 136, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(255, 0, 85, 0.08) 0%, transparent 50%);
+            z-index: -1;
+            animation: pulse 15s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: clamp(1rem, 3vw, 2.5rem);
+        }
+
+        h1 {
+            font-family: 'Space Mono', monospace;
+            font-size: clamp(1.75rem, 5vw, 3rem);
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 50%, var(--secondary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.02em;
+            text-align: center;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: clamp(0.875rem, 2vw, 1.125rem);
+            margin-bottom: 2rem;
+            font-family: 'Space Mono', monospace;
+        }
+
+        .section {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            margin-bottom: 1.5rem;
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }
+
+        .section:hover {
+            border-color: rgba(0, 255, 136, 0.3);
+            box-shadow: 0 8px 32px rgba(0, 255, 136, 0.1);
+        }
+
+        .section h2 {
+            font-family: 'Space Mono', monospace;
+            font-size: clamp(1.25rem, 3vw, 1.75rem);
+            color: var(--primary);
+            padding: clamp(1.25rem, 4vw, 2rem);
+            margin: 0;
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.3s ease;
+            position: relative;
+            border-bottom: 2px solid rgba(0, 255, 136, 0.2);
+        }
+
+        .section h2:hover {
+            background: rgba(0, 255, 136, 0.05);
+        }
+
+        .section h2::after {
+            content: '▼';
+            position: absolute;
+            right: clamp(1.25rem, 4vw, 2rem);
+            transition: transform 0.3s ease;
+            color: var(--primary);
+            font-size: 0.8em;
+        }
+
+        .section.collapsed h2::after {
+            transform: rotate(-90deg);
+        }
+
+        .section-content {
+            padding: clamp(1.25rem, 4vw, 2rem);
+            max-height: 5000px;
+            opacity: 1;
+            transition: all 0.4s ease;
+            overflow: visible;
+        }
+
+        .section.collapsed .section-content {
+            max-height: 0;
+            opacity: 0;
+            padding-top: 0;
+            padding-bottom: 0;
+            overflow: hidden;
+        }
+
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        label {
+            display: block;
+            color: var(--text);
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+            font-family: 'Space Mono', monospace;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        input[type="text"],
+        textarea,
+        select {
+            width: 100%;
+            padding: 0.875rem 1rem;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--text);
+            font-size: 0.9375rem;
+            font-family: 'Outfit', sans-serif;
+            transition: all 0.3s;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            display: inline-block;
+            width: 100%;
+        }
+
+        .file-input-label {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            width: 100%;
+            padding: 0.875rem 1rem;
+            background: var(--bg-input);
+            border: 2px dashed var(--border);
+            border-radius: 10px;
+            color: var(--text-muted);
+            font-size: 0.9375rem;
+            font-family: 'Outfit', sans-serif;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+        }
+
+        .file-input-label:hover {
+            border-color: var(--primary);
+            background: rgba(0, 255, 136, 0.05);
+            color: var(--primary);
+        }
+
+        .file-input-label::before {
+            content: '📁';
+            font-size: 1.5rem;
+        }
+
+        .file-selected {
+            border-color: var(--primary);
+            border-style: solid;
+            background: rgba(0, 255, 136, 0.1);
+            color: var(--primary);
+        }
+
+        .file-selected::before {
+            content: '✓';
+        }
+
+        input[type="text"]:focus,
+        textarea:focus,
+        select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(0, 255, 136, 0.15);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.875rem;
+            line-height: 1.6;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            accent-color: var(--primary);
+        }
+
+        button {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            border: none;
+            padding: clamp(0.75rem, 2vw, 1rem) clamp(1.5rem, 4vw, 2rem);
+            border-radius: 10px;
+            color: var(--bg-main);
+            font-family: 'Space Mono', monospace;
+            font-size: clamp(0.8125rem, 2vw, 0.9375rem);
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            position: relative;
+            overflow: hidden;
+        }
+
+        button::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        button:hover::after {
+            width: 300px;
+            height: 300px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(0, 255, 136, 0.3);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            background: var(--border);
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .btn-secondary:hover {
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, var(--secondary) 0%, #cc0044 100%);
+        }
+
+        .btn-danger:hover {
+            box-shadow: 0 10px 30px rgba(255, 0, 85, 0.3);
+        }
+
+        .response-box {
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 1.25rem;
+            margin-top: 1.25rem;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.8125rem;
+            max-height: 400px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            line-height: 1.6;
+        }
+
+        .response-box::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .response-box::-webkit-scrollbar-track {
+            background: var(--bg-card);
+            border-radius: 4px;
+        }
+
+        .response-box::-webkit-scrollbar-thumb {
+            background: var(--primary);
+            border-radius: 4px;
+        }
+
+        .success {
+            color: var(--success);
+            font-weight: 600;
+        }
+
+        .error {
+            color: var(--error);
+            font-weight: 600;
+        }
+
+        .warning {
+            color: var(--warning);
+            font-weight: 600;
+        }
+
+        .info {
+            color: var(--info);
+            font-weight: 600;
+        }
+
+        .task-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            transition: all 0.3s;
+            break-inside: avoid;
+        }
+
+        .task-card:hover {
+            border-color: var(--primary);
+            box-shadow: 0 6px 24px rgba(0, 255, 136, 0.15);
+        }
+
+        .task-card h3 {
+            font-family: 'Space Mono', monospace;
+            color: var(--primary);
+            margin-bottom: 1rem;
+            font-size: 1.125rem;
+        }
+
+        .single-task-view #tasksContainer {
+            display: block;
+        }
+
+        .single-task-view .task-card {
+            max-width: 100%;
+        }
+
+        #tasksContainer {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(min(100%, 400px), 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .task-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 0.75rem;
+            margin-top: 1rem;
+        }
+
+        .task-info-item {
+            background: var(--bg-input);
+            padding: 0.75rem;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+
+        .task-info-item strong {
+            color: var(--primary);
+            font-family: 'Space Mono', monospace;
+        }
+
+        .task-info-item a {
+            color: var(--info);
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .task-info-item a:hover {
+            color: var(--primary);
+            text-decoration: underline;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .status-pending {
+            background: rgba(255, 170, 0, 0.15);
+            color: var(--warning);
+            border: 1px solid var(--warning);
+        }
+
+        .status-running {
+            background: rgba(0, 170, 255, 0.15);
+            color: var(--info);
+            border: 1px solid var(--info);
+            animation: blink 2s infinite;
+        }
+
+        .status-completed {
+            background: rgba(0, 255, 136, 0.15);
+            color: var(--success);
+            border: 1px solid var(--success);
+        }
+
+        .status-failed, .status-error, .status-timeout {
+            background: rgba(255, 0, 85, 0.15);
+            color: var(--error);
+            border: 1px solid var(--error);
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        .result-image {
+            max-width: 100%;
+            max-height: 500px;
+            width: auto;
+            height: auto;
+            border-radius: 12px;
+            margin: 1rem auto;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            display: block;
+            border: 1px solid var(--border);
+        }
+
+        .result-video {
+            max-width: 100%;
+            max-height: 500px;
+            border-radius: 12px;
+            margin: 1rem auto;
+            display: block;
+            border: 1px solid var(--border);
+        }
+
+        .logs {
+            background: var(--bg-input);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.8125rem;
+            max-height: 150px;
+            overflow-y: auto;
+            color: var(--text-muted);
+            border: 1px solid var(--border);
+            line-height: 1.6;
+        }
+
+        .logs::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .logs::-webkit-scrollbar-thumb {
+            background: var(--primary);
+            border-radius: 3px;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .btn-group button {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(0, 255, 136, 0.2);
+            border-top: 3px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.25rem;
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.25rem;
+        }
+
+        .grid-auto {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.25rem;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.25rem;
+        }
+
+        .form-row.cols-2 {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .form-row.cols-3 {
+            grid-template-columns: repeat(3, 1fr);
+        }
+
+        .alert {
+            padding: 1rem 1.25rem;
+            border-radius: 10px;
+            margin-bottom: 1.25rem;
+            font-weight: 500;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.875rem;
+        }
+
+        .alert-info {
+            background: rgba(0, 170, 255, 0.15);
+            color: var(--info);
+            border: 1px solid var(--info);
+        }
+
+        .alert-warning {
+            background: rgba(255, 170, 0, 0.15);
+            color: var(--warning);
+            border: 1px solid var(--warning);
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 0;
+            padding: 1.5rem 0;
+            flex-wrap: wrap;
+        }
+
+        .pagination button {
+            padding: 0.625rem 1rem;
+            font-size: 0.875rem;
+            min-width: 40px;
+        }
+
+        .pagination .page-btn {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+        }
+
+        .pagination .page-btn:hover:not(:disabled) {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .pagination .page-btn.active {
+            background: var(--primary);
+            color: var(--bg-main);
+            border-color: var(--primary);
+        }
+
+        .pagination .page-btn:disabled {
+            opacity: 0.3;
+        }
+
+        .pagination-info {
+            color: var(--text-muted);
+            font-family: 'Space Mono', monospace;
+            font-size: 0.8125rem;
+            text-align: center;
+            margin-top: 0.75rem;
+            flex-basis: 100%;
+        }
+
+        #paginationContainer {
+            width: 100%;
+            display: block;
+            visibility: visible;
+            clear: both;
+            min-height: 50px;
+            margin-top: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .grid-2,
+            .grid-3,
+            .form-row.cols-2,
+            .form-row.cols-3 {
+                grid-template-columns: 1fr;
+            }
+            .container {
+                padding: 1rem;
+            }
+            .section {
+                padding: 1.25rem;
+            }
+            .btn-group {
+                flex-direction: column;
+            }
+            .btn-group button {
+                width: 100%;
+            }
+            .task-info {
+                grid-template-columns: 1fr;
+            }
+            #tasksContainer {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 1.5rem;
+            }
+            .subtitle {
+                font-size: 0.8125rem;
+            }
+        }
+
+        @media (min-width: 1200px) {
+            .grid-auto {
+                grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            }
+            #tasksContainer {
+                grid-template-columns: repeat(auto-fill, minmax(450px, 1fr));
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎨 CreativeLabs API Interface</h1>
+        <p class="subtitle">Tüm API özelliklerini kullanabileceğiniz interaktif arayüz</p>
+
+        <!-- API Key Section -->
+        <div class="section">
+            <h2 onclick="toggleSection(this)">🔑 API Ayarları</h2>
+            <div class="section-content">
+                <div class="form-row cols-2">
+                    <div class="form-group">
+                        <label for="apiKey">API Key</label>
+                        <input type="text" id="apiKey" value="" placeholder="API anahtarınızı girin">
+                    </div>
+                    <div class="form-group">
+                        <label for="apiUrl">API Base URL</label>
+                        <input type="text" id="apiUrl" value="" placeholder="https://api.example.com">
+                    </div>
+                </div>
+                <div style="display: flex; gap: 0.75rem; margin-top: 1rem;">
+                    <button type="button" class="btn" onclick="saveApiSettings()">💾 Kaydet</button>
+                    <button type="button" class="btn" onclick="clearApiSettings()">🗑️ Temizle</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quota Check Section -->
+        <div class="section collapsed">
+            <h2 onclick="toggleSection(this)">📊 Quota Kontrolü</h2>
+            <div class="section-content">
+                <button onclick="checkQuota()">Quota'yı Kontrol Et</button>
+                <div id="quotaResponse" class="response-box" style="display:none;"></div>
+            </div>
+        </div>
+
+        <!-- Image Generation Section -->
+        <div class="section collapsed">
+            <h2 onclick="toggleSection(this)">🖼️ Görsel Oluşturma</h2>
+            <div class="section-content">
+            <div class="form-group">
+                <label for="imagePrompt">Prompt *</label>
+                <textarea id="imagePrompt" placeholder="Oluşturmak istediğiniz görselin detaylı açıklaması...">A futuristic cyberpunk city at night with neon lights</textarea>
+            </div>
+            <div class="form-row cols-2">
+                <div class="form-group">
+                    <label for="imageModel">Model</label>
+                    <select id="imageModel">
+                        <option value="MODEL_FOUR_NANO_BANANA_PRO" selected>MODEL_FOUR_NANO_BANANA_PRO (En İyi)</option>
+                        <option value="MODEL_FOUR_NANO_BANANA">MODEL_FOUR_NANO_BANANA</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="imageSize">Boyut (imageSize)</label>
+                    <select id="imageSize">
+                        <option value="SIXTEEN_BY_NINE" selected>SIXTEEN_BY_NINE (16:9)</option>
+                        <option value="NINE_BY_SIXTEEN">NINE_BY_SIXTEEN (9:16)</option>
+                        <option value="ONE_BY_ONE">ONE_BY_ONE (1:1)</option>
+                        <option value="THREE_BY_FOUR">THREE_BY_FOUR (3:4)</option>
+                        <option value="FOUR_BY_THREE">FOUR_BY_THREE (4:3)</option>
+                        <option value="THREE_BY_TWO">THREE_BY_TWO (3:2)</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="imageResolution">Resolution (Sadece NANO_PRO için)</label>
+                <select id="imageResolution">
+                    <option value="2K" selected>2K (Varsayılan)</option>
+                    <option value="1K">1K</option>
+                    <option value="4K">4K</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="imageFile">Image-to-Image (İsteğe bağlı - Resim seçin)</label>
+                <div class="file-input-wrapper">
+                    <input type="file" id="imageFile" accept="image/*" multiple onchange="updateFileLabel(this, 'imageFileLabel')">
+                    <label for="imageFile" class="file-input-label" id="imageFileLabel">
+                        Resim Seç (Birden Fazla Seçilebilir)
+                    </label>
+                </div>
+                <small style="color: #94a3b8; display: block; margin-top: 5px;">Birden fazla resim seçebilirsiniz (character references için)</small>
+            </div>
+            <button onclick="generateImage()">Görsel Oluştur</button>
+            <div id="imageResponse" class="response-box" style="display:none;"></div>
+            </div>
+        </div>
+
+        <!-- Video Generation Section -->
+        <div class="section collapsed">
+            <h2 onclick="toggleSection(this)">🎬 Video Oluşturma</h2>
+            <div class="section-content">
+            <div class="alert alert-info">
+                Video oluşturma 60-300 saniye sürebilir.<br>
+                <strong>SORA2:</strong> 10 saniye, 720p<br>
+                <strong>VEO_3_1:</strong> 8 saniye, 720p
+            </div>
+            <div class="form-group">
+                <label for="videoPrompt">Prompt *</label>
+                <textarea id="videoPrompt" placeholder="Oluşturmak istediğiniz videonun detaylı açıklaması...">A serene ocean sunset with waves gently crashing on the shore, cinematic camera movement</textarea>
+            </div>
+            <div class="form-row cols-2">
+                <div class="form-group">
+                    <label for="videoModel">Model</label>
+                    <select id="videoModel">
+                        <option value="SORA2" selected>SORA2 (10 saniye, Varsayılan)</option>
+                        <option value="VEO_3_1">VEO_3_1 (8 saniye)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="videoSize">Boyut (size)</label>
+                    <select id="videoSize">
+                        <option value="SIXTEEN_BY_NINE" selected>SIXTEEN_BY_NINE (16:9)</option>
+                        <option value="NINE_BY_SIXTEEN">NINE_BY_SIXTEEN (9:16)</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="videoImageFile">Image-to-Video (İsteğe bağlı - Resim seçin)</label>
+                <div class="file-input-wrapper">
+                    <input type="file" id="videoImageFile" accept="image/*" onchange="updateFileLabel(this, 'videoFileLabel')">
+                    <label for="videoImageFile" class="file-input-label" id="videoFileLabel">
+                        Resim Seç
+                    </label>
+                </div>
+                <small style="color: #94a3b8; display: block; margin-top: 5px;">Resim yüklerseniz img2vid, yoksa text2vid olarak çalışır</small>
+            </div>
+            <button onclick="generateVideo()">Video Oluştur</button>
+            <div id="videoResponse" class="response-box" style="display:none;"></div>
+            </div>
+        </div>
+
+        <!-- Task Status Section -->
+        <div class="section collapsed">
+            <h2 onclick="toggleSection(this)">📋 Task Durumu Kontrolü</h2>
+            <div class="section-content">
+            <div class="form-group">
+                <label for="taskId">Task ID (İsteğe bağlı - boş bırakırsanız tüm tasklar gösterilir)</label>
+                <input type="text" id="taskId" placeholder="Örn: abc123-def456">
+            </div>
+            <div class="btn-group">
+                <button onclick="checkTaskStatus()">Durumu Kontrol Et</button>
+                <button class="btn-secondary" onclick="checkAllTasks()">Tüm Taskleri Göster</button>
+                <button class="btn-secondary" onclick="startAutoRefresh()">Otomatik Yenileme Başlat (5sn)</button>
+                <button class="btn-danger" onclick="stopAutoRefresh()">Otomatik Yenileme Durdur</button>
+            </div>
+            <div id="statusResponse" class="response-box" style="display:none;"></div>
+            <div id="tasksContainer"></div>
+            <div id="paginationContainer"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Accordion toggle function
+        function toggleSection(headerElement) {
+            const section = headerElement.parentElement;
+            section.classList.toggle('collapsed');
+        }
+
+        // LocalStorage functions
+        function saveApiSettings() {
+            const apiKey = document.getElementById('apiKey').value.trim();
+            const apiUrl = document.getElementById('apiUrl').value.trim();
+            
+            if (apiKey) localStorage.setItem('creativelabs_api_key', apiKey);
+            if (apiUrl) localStorage.setItem('creativelabs_api_url', apiUrl);
+            
+            alert('✅ Ayarlar kaydedildi!');
+        }
+
+        function clearApiSettings() {
+            if (confirm('API ayarlarını silmek istediğinizden emin misiniz?')) {
+                localStorage.removeItem('creativelabs_api_key');
+                localStorage.removeItem('creativelabs_api_url');
+                document.getElementById('apiKey').value = '';
+                document.getElementById('apiUrl').value = '';
+                alert('✅ Ayarlar temizlendi!');
+            }
+        }
+
+        function loadApiSettings() {
+            const savedKey = localStorage.getItem('creativelabs_api_key');
+            const savedUrl = localStorage.getItem('creativelabs_api_url');
+            
+            if (savedKey) document.getElementById('apiKey').value = savedKey;
+            if (savedUrl) document.getElementById('apiUrl').value = savedUrl;
+        }
+
+        // Load settings on page load
+        window.addEventListener('DOMContentLoaded', loadApiSettings);
+
+        const API_BASE = () => document.getElementById('apiUrl').value || 'https://api-pe7w.onrender.com';
+        const API_KEY = () => document.getElementById('apiKey').value;
+        let autoRefreshInterval = null;
+        
+        // Pagination variables
+        let allTasks = [];
+        let currentPage = 1;
+        const tasksPerPage = 6;
+
+        // Helper function for API calls
+        async function apiCall(endpoint, method = 'GET', body = null) {
+            const apiKey = API_KEY();
+            if (!apiKey) {
+                alert('Lütfen API Key girin!');
+                throw new Error('API Key gerekli');
+            }
+
+            const options = {
+                method: method,
+                headers: {
+                    'Authorization': `Bearer ${apiKey}`,
+                    'Content-Type': 'application/json'
+                }
+            };
+
+            if (body) {
+                options.body = JSON.stringify(body);
+            }
+
+            const response = await fetch(`${API_BASE()}${endpoint}`, options);
+            const data = await response.json();
+            
+            return { response, data };
+        }
+
+        // Display response helper
+        function displayResponse(elementId, data, isError = false) {
+            const element = document.getElementById(elementId);
+            element.style.display = 'block';
+            element.innerHTML = `<span class="${isError ? 'error' : 'success'}">${isError ? '❌ Hata' : '✅ Başarılı'}</span>\n\n${JSON.stringify(data, null, 2)}`;
+        }
+
+        // Check Quota
+        async function checkQuota() {
+            try {
+                const { response, data } = await apiCall('/api/quota');
+                displayResponse('quotaResponse', data, !response.ok);
+            } catch (error) {
+                displayResponse('quotaResponse', { error: error.message }, true);
+            }
+        }
+
+        // Generate Image
+        async function generateImage() {
+            const prompt = document.getElementById('imagePrompt').value;
+            if (!prompt) {
+                alert('Lütfen prompt girin!');
+                return;
+            }
+
+            const body = {
+                prompt: prompt,
+                model: document.getElementById('imageModel').value,
+                imageSize: document.getElementById('imageSize').value
+            };
+
+            // NANO_PRO için resolution ekle
+            if (body.model === 'MODEL_FOUR_NANO_BANANA_PRO') {
+                body.resolution = document.getElementById('imageResolution').value;
+            }
+
+            // Image-to-Image için base64 dönüşümü
+            const fileInput = document.getElementById('imageFile');
+            if (fileInput.files && fileInput.files.length > 0) {
+                const images = [];
+                for (let i = 0; i < fileInput.files.length; i++) {
+                    const base64 = await fileToBase64(fileInput.files[i]);
+                    images.push(base64);
+                }
+                body.images = images;
+            }
+
+            try {
+                const { response, data } = await apiCall('/api/generate/image', 'POST', body);
+                displayResponse('imageResponse', data, !response.ok);
+                
+                if (response.ok && data.task_id) {
+                    document.getElementById('taskId').value = data.task_id;
+                }
+            } catch (error) {
+                displayResponse('imageResponse', { error: error.message }, true);
+            }
+        }
+
+        // Generate Video
+        async function generateVideo() {
+            const prompt = document.getElementById('videoPrompt').value;
+            if (!prompt) {
+                alert('Lütfen prompt girin!');
+                return;
+            }
+
+            const body = {
+                prompt: prompt,
+                model: document.getElementById('videoModel').value,
+                size: document.getElementById('videoSize').value
+            };
+
+            // Image-to-Video için base64 dönüşümü
+            const fileInput = document.getElementById('videoImageFile');
+            if (fileInput.files && fileInput.files.length > 0) {
+                const base64 = await fileToBase64(fileInput.files[0]);
+                body.image = base64;
+            }
+
+            try {
+                const { response, data } = await apiCall('/api/generate/video', 'POST', body);
+                displayResponse('videoResponse', data, !response.ok);
+                
+                if (response.ok && data.task_id) {
+                    document.getElementById('taskId').value = data.task_id;
+                }
+            } catch (error) {
+                displayResponse('videoResponse', { error: error.message }, true);
+            }
+        }
+
+        // Helper function: File to Base64
+        function fileToBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => {
+                    // Remove data:image/...;base64, prefix
+                    const base64 = reader.result.split(',')[1];
+                    resolve(base64);
+                };
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+
+        // Check Task Status
+        async function checkTaskStatus() {
+            const taskId = document.getElementById('taskId').value;
+            if (!taskId) {
+                alert('Lütfen Task ID girin!');
+                return;
+            }
+
+            try {
+                const { response, data } = await apiCall(`/api/status/${taskId}`);
+                displayResponse('statusResponse', data, !response.ok);
+                
+                if (response.ok) {
+                    displayTaskCard(taskId, data);
+                }
+            } catch (error) {
+                displayResponse('statusResponse', { error: error.message }, true);
+            }
+        }
+
+        // Check All Tasks
+        async function checkAllTasks() {
+            try {
+                const { response, data } = await apiCall('/api/status');
+                displayResponse('statusResponse', data, !response.ok);
+                
+                if (response.ok && data.tasks) {
+                    displayAllTasks(data);
+                }
+            } catch (error) {
+                displayResponse('statusResponse', { error: error.message }, true);
+            }
+        }
+
+        // Display single task card
+        function displayTaskCard(taskId, taskData) {
+            const container = document.getElementById('tasksContainer');
+            const paginationContainer = document.getElementById('paginationContainer');
+            const section = document.querySelector('.section:has(#tasksContainer)');
+            const statusClass = `status-${taskData.status}`;
+            
+            // Add single task view class
+            if (section) {
+                section.classList.add('single-task-view');
+            }
+            
+            // Clear pagination for single task view
+            paginationContainer.innerHTML = '';
+            
+            let resultHTML = '';
+            if (taskData.result_url) {
+                if (taskData.mode === 'image') {
+                    resultHTML = `<img src="${taskData.result_url}" class="result-image" alt="Result">`;
+                } else if (taskData.mode === 'video') {
+                    resultHTML = `<video src="${taskData.result_url}" class="result-video" controls></video>`;
+                }
+            }
+
+            const logsHTML = taskData.logs && taskData.logs.length > 0 
+                ? `<div class="logs"><strong>Loglar:</strong><br>${taskData.logs.map(log => 
+                    typeof log === 'object' ? `[${log.time}] ${log.message}` : log
+                ).join('<br>')}</div>` 
+                : '';
+
+            container.innerHTML = `
+                <div class="task-card">
+                    <h3>Task: ${taskId}</h3>
+                    <span class="status-badge ${statusClass}">${taskData.status.toUpperCase()}</span>
+                    <div class="task-info">
+                        <div class="task-info-item">
+                            <strong>Mod:</strong> ${taskData.mode}
+                        </div>
+                        ${taskData.result_url ? `
+                        <div class="task-info-item">
+                            <strong>Sonuç URL:</strong> <a href="${taskData.result_url}" target="_blank">Aç</a>
+                        </div>` : ''}
+                    </div>
+                    ${logsHTML}
+                    ${resultHTML}
+                </div>
+            `;
+        }
+
+        // Display all tasks with pagination
+        function displayAllTasks(data) {
+            const container = document.getElementById('tasksContainer');
+            const paginationContainer = document.getElementById('paginationContainer');
+            const section = document.querySelector('.section:has(#tasksContainer)');
+            
+            // Remove single task view class
+            if (section) {
+                section.classList.remove('single-task-view');
+            }
+            
+            if (!data.tasks || Object.keys(data.tasks).length === 0) {
+                container.innerHTML = '<div class="alert alert-info">Henüz task bulunamadı.</div>';
+                paginationContainer.innerHTML = '';
+                return;
+            }
+
+            // Convert tasks object to array
+            allTasks = Object.entries(data.tasks);
+            const totalPages = Math.ceil(allTasks.length / tasksPerPage);
+            
+            // Ensure current page is valid
+            if (currentPage > totalPages) currentPage = totalPages;
+            if (currentPage < 1) currentPage = 1;
+            
+            // Get tasks for current page
+            const startIndex = (currentPage - 1) * tasksPerPage;
+            const endIndex = startIndex + tasksPerPage;
+            const currentTasks = allTasks.slice(startIndex, endIndex);
+            
+            // Display tasks
+            container.innerHTML = '';
+            currentTasks.forEach(([taskId, taskData]) => {
+                const statusClass = `status-${taskData.status}`;
+                
+                let resultHTML = '';
+                if (taskData.result_url) {
+                    if (taskData.mode === 'image') {
+                        resultHTML = `<img src="${taskData.result_url}" class="result-image" alt="Result">`;
+                    } else if (taskData.mode === 'video') {
+                        resultHTML = `<video src="${taskData.result_url}" class="result-video" controls></video>`;
+                    }
+                }
+
+                const logsHTML = taskData.logs && taskData.logs.length > 0 
+                    ? `<div class="logs"><strong>Loglar:</strong><br>${taskData.logs.map(log => 
+                        typeof log === 'object' ? `[${log.time}] ${log.message}` : log
+                    ).join('<br>')}</div>` 
+                    : '';
+
+                const card = document.createElement('div');
+                card.className = 'task-card';
+                card.innerHTML = `
+                    <h3>Task: ${taskId}</h3>
+                    <span class="status-badge ${statusClass}">${taskData.status.toUpperCase()}</span>
+                    <div class="task-info">
+                        <div class="task-info-item">
+                            <strong>Mod:</strong> ${taskData.mode}
+                        </div>
+                        ${taskData.result_url ? `
+                        <div class="task-info-item">
+                            <strong>Sonuç URL:</strong> <a href="${taskData.result_url}" target="_blank">Aç</a>
+                        </div>` : ''}
+                    </div>
+                    ${logsHTML}
+                    ${resultHTML}
+                `;
+                container.appendChild(card);
+            });
+            
+            // Display pagination
+            displayPagination(totalPages);
+        }
+        
+        // Display pagination controls
+        function displayPagination(totalPages) {
+            const paginationContainer = document.getElementById('paginationContainer');
+            
+            if (totalPages <= 1) {
+                paginationContainer.innerHTML = '';
+                return;
+            }
+            
+            let paginationHTML = '<div class="pagination">';
+            
+            // Previous button
+            paginationHTML += `
+                <button onclick="changePage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>
+                    ← Önceki
+                </button>
+            `;
+            
+            // Page numbers
+            for (let i = 1; i <= totalPages; i++) {
+                // Show first page, last page, current page, and pages around current
+                if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
+                    paginationHTML += `
+                        <button class="page-btn ${i === currentPage ? 'active' : ''}" onclick="changePage(${i})">
+                            ${i}
+                        </button>
+                    `;
+                } else if (i === currentPage - 2 || i === currentPage + 2) {
+                    paginationHTML += '<span style="color: #94a3b8;">...</span>';
+                }
+            }
+            
+            // Next button
+            paginationHTML += `
+                <button onclick="changePage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>
+                    Sonraki →
+                </button>
+            `;
+            
+            // Pagination info
+            const startIndex = (currentPage - 1) * tasksPerPage + 1;
+            const endIndex = Math.min(currentPage * tasksPerPage, allTasks.length);
+            paginationHTML += `
+                <div class="pagination-info">
+                    ${startIndex}-${endIndex} arası gösteriliyor (Toplam: ${allTasks.length} task)
+                </div>
+            `;
+            
+            paginationHTML += '</div>';
+            
+            paginationContainer.innerHTML = paginationHTML;
+        }
+        
+        // Change page
+        function changePage(page) {
+            const totalPages = Math.ceil(allTasks.length / tasksPerPage);
+            if (page < 1 || page > totalPages) return;
+            
+            currentPage = page;
+            
+            // Re-render tasks for new page
+            const container = document.getElementById('tasksContainer');
+            const startIndex = (currentPage - 1) * tasksPerPage;
+            const endIndex = startIndex + tasksPerPage;
+            const currentTasks = allTasks.slice(startIndex, endIndex);
+            
+            container.innerHTML = '';
+            currentTasks.forEach(([taskId, taskData]) => {
+                const statusClass = `status-${taskData.status}`;
+                
+                let resultHTML = '';
+                if (taskData.result_url) {
+                    if (taskData.mode === 'image') {
+                        resultHTML = `<img src="${taskData.result_url}" class="result-image" alt="Result">`;
+                    } else if (taskData.mode === 'video') {
+                        resultHTML = `<video src="${taskData.result_url}" class="result-video" controls></video>`;
+                    }
+                }
+
+                const logsHTML = taskData.logs && taskData.logs.length > 0 
+                    ? `<div class="logs"><strong>Loglar:</strong><br>${taskData.logs.map(log => 
+                        typeof log === 'object' ? `[${log.time}] ${log.message}` : log
+                    ).join('<br>')}</div>` 
+                    : '';
+
+                const card = document.createElement('div');
+                card.className = 'task-card';
+                card.innerHTML = `
+                    <h3>Task: ${taskId}</h3>
+                    <span class="status-badge ${statusClass}">${taskData.status.toUpperCase()}</span>
+                    <div class="task-info">
+                        <div class="task-info-item">
+                            <strong>Mod:</strong> ${taskData.mode}
+                        </div>
+                        ${taskData.result_url ? `
+                        <div class="task-info-item">
+                            <strong>Sonuç URL:</strong> <a href="${taskData.result_url}" target="_blank">Aç</a>
+                        </div>` : ''}
+                    </div>
+                    ${logsHTML}
+                    ${resultHTML}
+                `;
+                container.appendChild(card);
+            });
+            
+            displayPagination(totalPages);
+            
+            // Scroll to top of tasks container
+            container.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        // Auto refresh
+        function startAutoRefresh() {
+            if (autoRefreshInterval) {
+                alert('Otomatik yenileme zaten çalışıyor!');
+                return;
+            }
+            
+            autoRefreshInterval = setInterval(() => {
+                checkAllTasks();
+            }, 5000);
+            
+            alert('Otomatik yenileme başlatıldı! (5 saniyede bir)');
+            checkAllTasks(); // İlk kontrolü hemen yap
+        }
+
+        function stopAutoRefresh() {
+            if (autoRefreshInterval) {
+                clearInterval(autoRefreshInterval);
+                autoRefreshInterval = null;
+                alert('Otomatik yenileme durduruldu.');
+            } else {
+                alert('Otomatik yenileme zaten çalışmıyor.');
+            }
+        }
+
+        // Update file input label
+        function updateFileLabel(input, labelId) {
+            const label = document.getElementById(labelId);
+            if (input.files && input.files.length > 0) {
+                const fileCount = input.files.length;
+                const fileName = input.files[0].name;
+                if (fileCount === 1) {
+                    label.textContent = fileName;
+                } else {
+                    label.textContent = `${fileCount} dosya seçildi`;
+                }
+                label.classList.add('file-selected');
+            } else {
+                label.textContent = labelId === 'imageFileLabel' ? 'Resim Seç (Birden Fazla Seçilebilir)' : 'Resim Seç';
+                label.classList.remove('file-selected');
+            }
+        }
+
+        // Clean up on page unload
+        window.addEventListener('beforeunload', () => {
+            stopAutoRefresh();
+        });
+    </script>
+</body>
+</html>
