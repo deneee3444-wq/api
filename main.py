@@ -7,7 +7,7 @@ import requests
 import base64
 from io import BytesIO
 from PIL import Image
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify
 from flask_cors import CORS
 import database as db
 
@@ -653,10 +653,6 @@ def resume_incomplete_tasks():
 
 # --- API Routes ---
 
-@app.route('/', methods=['GET'])
-def index():
-    return render_template('index.html')
-
 @app.route('/api/generate/image', methods=['POST'])
 def generate_image():
     api_key_id = verify_api_key()
@@ -855,18 +851,12 @@ def delete_account(email):
 
 # --- Startup ---
 
-# --- Startup ---
-
-def start_db_and_tasks():
-    # Bu fonksiyon arka planda çalışır, sunucuyu kilitlemez
-    print("Arka plan işlemleri başlatıldı...", flush=True)
-    db.init_db() # Yukarıdaki yeni get_connection sayesinde bağlanana kadar bekler
-    resume_incomplete_tasks()
-    print("Veritabanı hazır ve görevler kurtarıldı!", flush=True)
-
-# Sunucu başlar başlamaz arka planda DB'yi uyandır ve işlemleri yap
-threading.Thread(target=start_db_and_tasks, daemon=True).start()
+# Initialize database
+db.init_db()
+# Resume incomplete tasks on startup
+resume_incomplete_tasks()
 
 if __name__ == '__main__':
-    # Burası local için
-    app.run(host='0.0.0.0', port=5000)
+    print(f"Maximum concurrent tasks: {MAX_CONCURRENT_TASKS}")
+    print("API ready. Use any API key to authenticate - each key has isolated data.")
+    app.run(host='0.0.0.0', port=5000, debug=False, threaded=True)
