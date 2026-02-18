@@ -7,7 +7,7 @@ import requests
 import base64
 from io import BytesIO
 from PIL import Image
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
 import database as db
 
@@ -652,6 +652,10 @@ def resume_incomplete_tasks():
     print("=" * 50)
 
 # --- API Routes ---
+
+@app.route('/', methods=['GET'])
+def index():
+    return render_template('index.html')
 
 @app.route('/api/generate/image', methods=['POST'])
 def generate_image():
