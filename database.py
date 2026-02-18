@@ -317,43 +317,68 @@ def get_account_count(api_key_id):
     return result['count'] if result else 0
 
 
-def get_next_account(api_key_id):
-    """Returns the next available account and marks it as used."""
+def get_next_account(api_key_id, task_id=None):
+    """Returns the next available account, marks it used, and LINKS it to the task immediately.
+    
+    Atomik işlem: hesap used=1 yapılırken AYNI transaction içinde task'e account_email yazılır.
+    Bu sayede sunucu nerede çökerse çöksün, recovery scripti hangi hesabın kullanıldığını bilir.
+    """
     with db_lock:
         conn = get_connection()
-        if DB_TYPE == 'postgresql':
-            cursor = conn.cursor(cursor_factory=RealDictCursor)
-            cursor.execute(
-                'SELECT email, password FROM accounts WHERE api_key_id = %s AND used = 0 LIMIT 1',
-                (api_key_id,)
-            )
-            account = cursor.fetchone()
-            if account:
+        try:
+            if DB_TYPE == 'postgresql':
+                cursor = conn.cursor(cursor_factory=RealDictCursor)
+                # 1. Boş hesabı bul
                 cursor.execute(
-                    'UPDATE accounts SET used = 1 WHERE api_key_id = %s AND email = %s',
-                    (api_key_id, account['email'])
+                    'SELECT email, password FROM accounts WHERE api_key_id = %s AND used = 0 LIMIT 1',
+                    (api_key_id,)
                 )
-                conn.commit()
-            conn.close()
-            return dict(account) if account else None
-        else:
-            cursor = conn.cursor()
-            cursor.execute(
-                'SELECT email, password FROM accounts WHERE api_key_id = ? AND used = 0 LIMIT 1',
-                (api_key_id,)
-            )
-            row = cursor.fetchone()
-            if row:
-                account = dict(row)
+                account = cursor.fetchone()
+                if account:
+                    account_email = account['email']
+                    # 2. Hesabı used=1 yap
+                    cursor.execute(
+                        'UPDATE accounts SET used = 1 WHERE api_key_id = %s AND email = %s',
+                        (api_key_id, account_email)
+                    )
+                    # 3. (KRİTİK) Eğer task_id verildiyse, email'i task'e HEMEN aynı transaction'da işle
+                    if task_id:
+                        cursor.execute(
+                            'UPDATE tasks SET account_email = %s WHERE task_id = %s',
+                            (account_email, task_id)
+                        )
+                    conn.commit()
+                    return dict(account)
+            else:
+                # SQLite versiyonu
+                cursor = conn.cursor()
                 cursor.execute(
-                    'UPDATE accounts SET used = 1 WHERE api_key_id = ? AND email = ?',
-                    (api_key_id, account['email'])
+                    'SELECT email, password FROM accounts WHERE api_key_id = ? AND used = 0 LIMIT 1',
+                    (api_key_id,)
                 )
-                conn.commit()
+                row = cursor.fetchone()
+                if row:
+                    account = dict(row)
+                    account_email = account['email']
+                    cursor.execute(
+                        'UPDATE accounts SET used = 1 WHERE api_key_id = ? AND email = ?',
+                        (api_key_id, account_email)
+                    )
+                    if task_id:
+                        cursor.execute(
+                            'UPDATE tasks SET account_email = ? WHERE task_id = ?',
+                            (account_email, task_id)
+                        )
+                    conn.commit()
+                    return account
+        except Exception as e:
+            print(f"Db Error in get_next_account: {e}")
+            if conn:
+                conn.rollback()
+        finally:
+            if conn:
                 conn.close()
-                return account
-            conn.close()
-            return None
+        return None
 
 
 def release_account(api_key_id, email):
