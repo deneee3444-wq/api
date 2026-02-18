@@ -9,7 +9,7 @@ import threading
 from datetime import datetime
 
 # PostgreSQL Configuration
-DATABASE_URL = "postgresql://db_mdj5_user:LgPHY1oCy66PW7W2Q0NdBSwH7UDo5vru@dpg-d66v0sjnv86c73dc22fg-a.oregon-postgres.render.com/db_mdj5"
+DATABASE_URL = "postgresql://db_mdj5_user:LgPHY1oCy66PW7W2Q0NdBSwH7UDo5vru@dpg-d66v0sjnv86c73dc22fg-a/db_mdj5"
 
 import psycopg2
 from psycopg2.extras import RealDictCursor
@@ -20,21 +20,17 @@ db_lock = threading.Lock()
 
 
 def get_connection():
-    """Bağlantı sağlanana kadar her 2 saniyede bir dener."""
-    while True:
-        try:
-            if DB_TYPE == 'postgresql':
-                # connect_timeout eklemek önemli
-                conn = psycopg2.connect(DATABASE_URL, connect_timeout=10)
-                return conn
-            else:
-                import sqlite3
-                conn = sqlite3.connect("api.db", check_same_thread=False)
-                conn.row_factory = sqlite3.Row
-                return conn
-        except Exception as e:
-            print(f"DB henüz uyanmadı, bekleniyor... Hata: {e}", flush=True)
-            time.sleep(2) # 2 saniye bekle ve tekrar dene
+    """Returns a database connection."""
+    if DB_TYPE == 'postgresql':
+        conn = psycopg2.connect(DATABASE_URL)
+        return conn
+    else:
+        # Fallback to local SQLite - usually for dev
+        import sqlite3
+        DB_FILE = "api.db"
+        conn = sqlite3.connect(DB_FILE, check_same_thread=False)
+        conn.row_factory = sqlite3.Row
+        return conn
 
 
 def init_db():
