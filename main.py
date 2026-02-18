@@ -73,8 +73,12 @@ def refresh_quota(token):
     except:
         pass
 
-def login_with_retry(api_key_id):
-    """Tries logging in with available accounts until one succeeds."""
+def login_with_retry(api_key_id, task_id=None):
+    """Tries logging in with available accounts until one succeeds.
+    
+    task_id parametresi verildiğinde, hesap alındığı milisaniyede veritabanında
+    task ile atomik olarak eşleştirilir (çökme koruması için).
+    """
     tried_count = 0
     max_tries = db.get_account_count(api_key_id)
     
@@ -83,7 +87,9 @@ def login_with_retry(api_key_id):
         return None, None
     
     while tried_count < max_tries:
-        account = db.get_next_account(api_key_id)
+        # DEĞİŞİKLİK: task_id'yi de gönderiyoruz.
+        # Böylece hesap alındığı milisaniyede veritabanında task ile eşleşiyor.
+        account = db.get_next_account(api_key_id, task_id)
         if not account:
             break
         
@@ -104,11 +110,11 @@ def login_with_retry(api_key_id):
                     refresh_quota(token)
                     return token, account
             print(f"Login failed for {account['email']}: {resp.status_code} - {resp.text}")
-            # Release account if login fails (invalid credentials or temporary block)
+            # Login başarısızsa hesabı hemen bırak
             db.release_account(api_key_id, account['email'])
         except Exception as e:
             print(f"Login error for {account['email']}: {e}")
-            # Release on connection errors too
+            # Hata durumunda da bırak
             db.release_account(api_key_id, account['email'])
             
     return None, None
@@ -152,14 +158,15 @@ def process_image_task(task_id, params, api_key_id):
     try:
         db.update_task_status(task_id, 'running')
         try:
-            token, account = login_with_retry(api_key_id)
+            # task_id gönderiyoruz: hesap alındığı anda atomik olarak task'e yazılır (çökme koruması)
+            token, account = login_with_retry(api_key_id, task_id=task_id)
             if not token:
                 db.update_task_status(task_id, 'failed')
                 db.add_task_log(task_id, "All accounts failed to login.")
                 return
 
-            # Save account info for crash recovery
-            db.update_task_account(task_id, account['email'])
+            # NOT: db.update_task_account() artık burada çağrılmıyor.
+            # get_next_account() zaten task_id ile atomik olarak account_email'i yazdı.
 
             headers = {"authorization": f"Bearer {token}", **DEVICE_HEADERS}
             
@@ -249,13 +256,14 @@ def process_video_task(task_id, params, api_key_id):
     try:
         db.update_task_status(task_id, 'running')
         try:
-            token, account = login_with_retry(api_key_id)
+            # task_id gönderiyoruz: hesap alındığı anda atomik olarak task'e yazılır (çökme koruması)
+            token, account = login_with_retry(api_key_id, task_id=task_id)
             if not token:
                 db.update_task_status(task_id, 'failed')
                 return
 
-            # Save account info for crash recovery
-            db.update_task_account(task_id, account['email'])
+            # NOT: db.update_task_account() artık burada çağrılmıyor.
+            # get_next_account() zaten task_id ile atomik olarak account_email'i yazdı.
 
             headers = {"authorization": f"Bearer {token}", **DEVICE_HEADERS}
             
