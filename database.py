@@ -13,6 +13,19 @@ DATABASE_URL = "postgresql://db_mdj5_user:LgPHY1oCy66PW7W2Q0NdBSwH7UDo5vru@dpg-d
 
 import psycopg2
 from psycopg2.extras import RealDictCursor
+from psycopg2 import pool as pg_pool
+
+def _get_pool():
+    global _pool
+    if _pool is None:
+        _pool = pg_pool.ThreadedConnectionPool(
+            minconn=2,
+            maxconn=10,  # Render free tier için yeterli
+            dsn=DATABASE_URL,
+            connect_timeout=15
+        )
+    return _pool
+
 DB_TYPE = 'postgresql'
 print(f"Using PostgreSQL database")
 
@@ -20,28 +33,10 @@ db_lock = threading.Lock()
 
 
 def get_connection():
-    """Returns a database connection."""
-    if DB_TYPE == 'postgresql':
-        import time
-        max_retries = 5
-        retry_delay = 5
-        for attempt in range(max_retries):
-            try:
-                conn = psycopg2.connect(DATABASE_URL, connect_timeout=15)
-                return conn
-            except psycopg2.OperationalError as e:
-                if attempt < max_retries - 1:
-                    print(f"[DB] Connection failed (attempt {attempt+1}/{max_retries}), retrying in {retry_delay}s... Error: {e}")
-                    time.sleep(retry_delay)
-                else:
-                    print(f"[DB] All connection attempts failed!")
-                    raise
-    else:
-        import sqlite3
-        DB_FILE = "api.db"
-        conn = sqlite3.connect(DB_FILE, check_same_thread=False)
-        conn.row_factory = sqlite3.Row
-        return conn
+    return _get_pool().getconn()
+
+def release_connection(conn):
+    _get_pool().putconn(conn)
 
 
 def init_db():
@@ -144,38 +139,26 @@ def init_db():
 
 
 def _execute_query(query, params=None, fetch_one=False, fetch_all=False):
-    """Internal helper to execute SQL queries."""
-    with db_lock:
-        conn = get_connection()
-        if DB_TYPE == 'postgresql':
-            cursor = conn.cursor(cursor_factory=RealDictCursor)
-        else:
-            cursor = conn.cursor()
+    conn = get_connection()
+    try:
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+        cursor.execute(query, params or ())
         
-        try:
-            if params:
-                cursor.execute(query, params)
-            else:
-                cursor.execute(query)
-            
-            result = None
-            if fetch_one:
-                row = cursor.fetchone()
-                if row:
-                    result = dict(row)
-            elif fetch_all:
-                rows = cursor.fetchall()
-                result = [dict(row) for row in rows]
-            else:
-                conn.commit()
-                if DB_TYPE != 'postgresql' and cursor.lastrowid:
-                    result = cursor.lastrowid
-                elif cursor.rowcount is not None:
-                    result = cursor.rowcount
-            
-            return result
-        finally:
-            conn.close()
+        if fetch_one:
+            row = cursor.fetchone()
+            result = dict(row) if row else None
+        elif fetch_all:
+            result = [dict(r) for r in cursor.fetchall()]
+        else:
+            result = cursor.rowcount
+        
+        conn.commit()
+        return result
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        release_connection(conn)  # bağlantı kapatılmıyor, pool'a geri dönüyor
 
 
 # --- API Key Functions ---
