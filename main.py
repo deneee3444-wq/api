@@ -14,7 +14,7 @@ import database as db
 app = Flask(__name__)
 CORS(app)
 
-# --- Confdiguration & Constants ---
+# --- Configuration & Constants ---
 API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.ewogICJyb2xlIjogImFub24iLAogICJpc3MiOiAic3VwYWJhc2UiLAogICJpYXQiOiAxNzM0OTY5NjAwLAogICJleHAiOiAxODkyNzM2MDAwCn0.4NnK23LGYvKPGuKI5rwQn2KbLMzzdE4jXpHwbGCqPqY"
 
 # Maximum concurrent tasks
@@ -653,10 +653,6 @@ def resume_incomplete_tasks():
 
 # --- API Routes ---
 
-@app.route('/health', methods=['GET'])
-def health():
-    return jsonify({"status": "ok"}), 200
-
 @app.route('/', methods=['GET'])
 def index():
     return render_template('index.html')
@@ -859,7 +855,9 @@ def delete_account(email):
 
 # --- Startup ---
 
+# Initialize database
 db.init_db()
+# Resume incomplete tasks on startup
 resume_incomplete_tasks()
 
 if __name__ == '__main__':
