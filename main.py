@@ -853,10 +853,12 @@ def delete_account(email):
     else:
         return jsonify({"error": "Account not found"}), 404
 
-# --- Startup --- #
+# --- Startup ---
 
+# Initialize database
 db.init_db()
-threading.Thread(target=resume_incomplete_tasks, daemon=True).start()
+# Resume incomplete tasks on startup
+resume_incomplete_tasks()
 
 if __name__ == '__main__':
     print(f"Maximum concurrent tasks: {MAX_CONCURRENT_TASKS}")
