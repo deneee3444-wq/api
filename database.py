@@ -15,6 +15,8 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 from psycopg2 import pool as pg_pool
 
+_pool = None
+
 def _get_pool():
     global _pool
     if _pool is None:
