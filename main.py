@@ -653,6 +653,10 @@ def resume_incomplete_tasks():
 
 # --- API Routes ---
 
+@app.route('/health', methods=['GET'])
+def health():
+    return jsonify({"status": "ok"}), 200
+
 @app.route('/', methods=['GET'])
 def index():
     return render_template('index.html')
