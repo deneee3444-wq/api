@@ -859,13 +859,14 @@ def delete_account(email):
 
 # --- Startup ---
 
-# Dosyanın en altında (if __name__ bloğunun üstünde):
-try:
-    db.init_db()
-    resume_incomplete_tasks()
-except Exception as e:
-    print(f"[STARTUP] Kritik hata: {e}")
-    # Uygulama yine de ayağa kalksın, ilk istek gelince DB hazır olur
+def _startup():
+    try:
+        db.init_db()
+        resume_incomplete_tasks()
+    except Exception as e:
+        print(f"[STARTUP] Hata: {e}")
+
+threading.Thread(target=_startup, daemon=True).start()
 
 if __name__ == '__main__':
     print(f"Maximum concurrent tasks: {MAX_CONCURRENT_TASKS}")
