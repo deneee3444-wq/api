@@ -20,12 +20,21 @@ db_lock = threading.Lock()
 
 
 def get_connection():
-    """Returns a database connection."""
     if DB_TYPE == 'postgresql':
-        conn = psycopg2.connect(DATABASE_URL)
-        return conn
+        max_retries = 5
+        retry_delay = 5
+        for attempt in range(max_retries):
+            try:
+                conn = psycopg2.connect(DATABASE_URL, connect_timeout=15)
+                return conn
+            except psycopg2.OperationalError as e:
+                if attempt < max_retries - 1:
+                    print(f"[DB] Bağlantı başarısız (deneme {attempt+1}/{max_retries}), {retry_delay}s bekliyor... Hata: {e}")
+                    time.sleep(retry_delay)
+                else:
+                    print(f"[DB] Tüm denemeler tükendi!")
+                    raise
     else:
-        # Fallback to local SQLite - usually for dev
         import sqlite3
         DB_FILE = "api.db"
         conn = sqlite3.connect(DB_FILE, check_same_thread=False)
