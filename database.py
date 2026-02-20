@@ -1,5 +1,5 @@
 """
-Database Module for API
+Database Module for APIs
 Supports both SQLite (local) and PostgreSQL (production).
 Set DATABASE_URL environment variable for PostgreSQL.
 """
