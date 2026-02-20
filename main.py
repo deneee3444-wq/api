@@ -859,14 +859,23 @@ def delete_account(email):
 
 # --- Startup ---
 
+db_ready = False
+
 def _startup():
+    global db_ready
     try:
         db.init_db()
         resume_incomplete_tasks()
+        db_ready = True
     except Exception as e:
-        print(f"[STARTUP] Hata: {e}")
+        print(f"[STARTUP] Error: {e}")
 
 threading.Thread(target=_startup, daemon=True).start()
+
+@app.before_request
+def check_db():
+    if not db_ready:
+        return jsonify({"error": "Server is starting up, please try again"}), 503
 
 if __name__ == '__main__':
     print(f"Maximum concurrent tasks: {MAX_CONCURRENT_TASKS}")
