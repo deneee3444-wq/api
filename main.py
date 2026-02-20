@@ -14,7 +14,7 @@ import database as db
 app = Flask(__name__)
 CORS(app)
 
-# --- Configuration & Constants ---
+# --- Confdiguration & Constants ---
 API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.ewogICJyb2xlIjogImFub24iLAogICJpc3MiOiAic3VwYWJhc2UiLAogICJpYXQiOiAxNzM0OTY5NjAwLAogICJleHAiOiAxODkyNzM2MDAwCn0.4NnK23LGYvKPGuKI5rwQn2KbLMzzdE4jXpHwbGCqPqY"
 
 # Maximum concurrent tasks
