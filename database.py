@@ -1,5 +1,5 @@
 """
-Database Module for APIs
+Database Module for API
 Supports both SQLite (local) and PostgreSQL (production).
 Set DATABASE_URL environment variable for PostgreSQL.
 """
@@ -20,7 +20,9 @@ db_lock = threading.Lock()
 
 
 def get_connection():
+    """Returns a database connection."""
     if DB_TYPE == 'postgresql':
+        import time
         max_retries = 5
         retry_delay = 5
         for attempt in range(max_retries):
@@ -29,10 +31,10 @@ def get_connection():
                 return conn
             except psycopg2.OperationalError as e:
                 if attempt < max_retries - 1:
-                    print(f"[DB] Bağlantı başarısız (deneme {attempt+1}/{max_retries}), {retry_delay}s bekliyor... Hata: {e}")
+                    print(f"[DB] Connection failed (attempt {attempt+1}/{max_retries}), retrying in {retry_delay}s... Error: {e}")
                     time.sleep(retry_delay)
                 else:
-                    print(f"[DB] Tüm denemeler tükendi!")
+                    print(f"[DB] All connection attempts failed!")
                     raise
     else:
         import sqlite3
@@ -514,7 +516,7 @@ def update_task_external_data(task_id, external_task_id, token):
         else:
             cursor = conn.cursor()
             cursor.execute(
-                'UPDATE tasks SET external_task_id = ?, token = ?, WHERE task_id = ?',
+                'UPDATE tasks SET external_task_id = ?, token = ? WHERE task_id = ?',
                 (external_task_id, token, task_id)
             )
         conn.commit()
