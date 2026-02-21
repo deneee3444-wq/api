@@ -872,7 +872,7 @@ def _run_startup():
         print(f"[STARTUP] ERROR during background startup: {e}")
 
 # Start immediately but non-blocking — worker is ready for health checks right away
-t = threading.Thread(target=_run_startup, daemon=False)
+t = threading.Thread(target=_run_startup, daemon=True)
 t.start()
 
 
