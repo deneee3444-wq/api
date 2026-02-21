@@ -6,7 +6,6 @@ Set DATABASE_URL environment variable for PostgreSQL.
 import os
 import json
 import threading
-import contextlib
 from datetime import datetime
 
 # PostgreSQL Configuration
@@ -17,20 +16,21 @@ from psycopg2.extras import RealDictCursor
 DB_TYPE = 'postgresql'
 print(f"Using PostgreSQL database")
 
-db_lock = threading.Lock()  # Only used for SQLite
+db_lock = threading.Lock()
+
 
 def get_connection():
     """Returns a database connection."""
     if DB_TYPE == 'postgresql':
         import time
         max_retries = 5
+        retry_delay = 5
         for attempt in range(max_retries):
             try:
-                conn = psycopg2.connect(DATABASE_URL, connect_timeout=10)
+                conn = psycopg2.connect(DATABASE_URL, connect_timeout=15)
                 return conn
             except psycopg2.OperationalError as e:
                 if attempt < max_retries - 1:
-                    retry_delay = min(2 ** attempt, 10)  # exponential backoff: 1, 2, 4, 8, 10s
                     print(f"[DB] Connection failed (attempt {attempt+1}/{max_retries}), retrying in {retry_delay}s... Error: {e}")
                     time.sleep(retry_delay)
                 else:
@@ -46,7 +46,7 @@ def get_connection():
 
 def init_db():
     """Initializes the database with required tables."""
-    with (db_lock if DB_TYPE != 'postgresql' else contextlib.nullcontext()):
+    with db_lock:
         conn = get_connection()
         cursor = conn.cursor()
         
@@ -145,18 +145,19 @@ def init_db():
 
 def _execute_query(query, params=None, fetch_one=False, fetch_all=False):
     """Internal helper to execute SQL queries."""
-    lock = db_lock if DB_TYPE != 'postgresql' else None
-    def _run():
+    with db_lock:
         conn = get_connection()
         if DB_TYPE == 'postgresql':
             cursor = conn.cursor(cursor_factory=RealDictCursor)
         else:
             cursor = conn.cursor()
+        
         try:
             if params:
                 cursor.execute(query, params)
             else:
                 cursor.execute(query)
+            
             result = None
             if fetch_one:
                 row = cursor.fetchone()
@@ -171,15 +172,10 @@ def _execute_query(query, params=None, fetch_one=False, fetch_all=False):
                     result = cursor.lastrowid
                 elif cursor.rowcount is not None:
                     result = cursor.rowcount
+            
             return result
         finally:
             conn.close()
-
-    if lock:
-        with lock:
-            return _run()
-    else:
-        return _run()
 
 
 # --- API Key Functions ---
@@ -196,7 +192,7 @@ def get_api_key_id(key):
 
 def create_api_key(key):
     """Creates a new API key and returns its ID."""
-    with (db_lock if DB_TYPE != 'postgresql' else contextlib.nullcontext()):
+    with db_lock:
         conn = get_connection()
         if DB_TYPE == 'postgresql':
             cursor = conn.cursor(cursor_factory=RealDictCursor)
@@ -234,7 +230,7 @@ def get_all_api_keys():
 
 def delete_api_key(api_key_id):
     """Deletes an API key and its associated data."""
-    with (db_lock if DB_TYPE != 'postgresql' else contextlib.nullcontext()):
+    with db_lock:
         conn = get_connection()
         cursor = conn.cursor()
         if DB_TYPE == 'postgresql':
@@ -251,7 +247,7 @@ def delete_api_key(api_key_id):
 
 def clear_all_usage_data():
     """Clears all tasks and accounts from the database."""
-    with (db_lock if DB_TYPE != 'postgresql' else contextlib.nullcontext()):
+    with db_lock:
         conn = get_connection()
         cursor = conn.cursor()
         cursor.execute('DELETE FROM tasks')
@@ -262,7 +258,7 @@ def clear_all_usage_data():
 
 def reset_all_accounts_usage():
     """Resets 'used' status for all accounts."""
-    with (db_lock if DB_TYPE != 'postgresql' else contextlib.nullcontext()):
+    with db_lock:
         conn = get_connection()
         cursor = conn.cursor()
         cursor.execute('UPDATE accounts SET used = 0')
@@ -282,7 +278,7 @@ def get_or_create_api_key(key):
 
 def add_account(api_key_id, email, password):
     """Adds an account for a specific API key."""
-    with (db_lock if DB_TYPE != 'postgresql' else contextlib.nullcontext()):
+    with db_lock:
         conn = get_connection()
         if DB_TYPE == 'postgresql':
             cursor = conn.cursor()
@@ -338,7 +334,7 @@ def get_next_account(api_key_id, task_id=None):
     Atomik işlem: hesap used=1 yapılırken AYNI transaction içinde task'e account_email yazılır.
     Bu sayede sunucu nerede çökerse çöksün, recovery scripti hangi hesabın kullanıldığını bilir.
     """
-    with (db_lock if DB_TYPE != 'postgresql' else contextlib.nullcontext()):
+    with db_lock:
         conn = get_connection()
         try:
             if DB_TYPE == 'postgresql':
@@ -440,7 +436,7 @@ def update_task_status(task_id, status, result_url=None):
 
 def add_task_log(task_id, message):
     """Adds a log message to the task."""
-    with (db_lock if DB_TYPE != 'postgresql' else contextlib.nullcontext()):
+    with db_lock:
         conn = get_connection()
         if DB_TYPE == 'postgresql':
             cursor = conn.cursor(cursor_factory=RealDictCursor)
@@ -493,7 +489,7 @@ def get_all_tasks(api_key_id):
 
 def get_running_task_count():
     """Returns the count of currently running/pending tasks (across all API keys)."""
-    with (db_lock if DB_TYPE != 'postgresql' else contextlib.nullcontext()):
+    with db_lock:
         conn = get_connection()
         query = "SELECT COUNT(*) as count FROM tasks WHERE status IN ('running', 'pending')"
         if DB_TYPE == 'postgresql':
@@ -509,7 +505,7 @@ def get_running_task_count():
 
 def update_task_external_data(task_id, external_task_id, token):
     """Updates external API task ID and token for recovery."""
-    with (db_lock if DB_TYPE != 'postgresql' else contextlib.nullcontext()):
+    with db_lock:
         conn = get_connection()
         if DB_TYPE == 'postgresql':
             cursor = conn.cursor()
@@ -529,7 +525,7 @@ def update_task_external_data(task_id, external_task_id, token):
 
 def get_incomplete_tasks():
     """Returns tasks that need recovery (have external_task_id = can resume polling)."""
-    with (db_lock if DB_TYPE != 'postgresql' else contextlib.nullcontext()):
+    with db_lock:
         conn = get_connection()
         if DB_TYPE == 'postgresql':
             cursor = conn.cursor(cursor_factory=RealDictCursor)
@@ -573,7 +569,7 @@ def recover_stale_tasks():
     """
     result = {'failed_count': 0, 'needs_check': []}
     
-    with (db_lock if DB_TYPE != 'postgresql' else contextlib.nullcontext()):
+    with db_lock:
         conn = get_connection()
         if DB_TYPE == 'postgresql':
             cursor = conn.cursor(cursor_factory=RealDictCursor)
