@@ -855,10 +855,27 @@ def delete_account(email):
 
 # --- Startup ---
 
-# Initialize database
-db.init_db()
-# Resume incomplete tasks on startup
-resume_incomplete_tasks()
+def run_startup_tasks():
+    """
+    Veritabanı başlatma ve kurtarma işlemlerini arka planda yapar.
+    Böylece Gunicorn'un port bind işlemini (Render'ın bekleme süresini) bloklamaz.
+    """
+    print("[STARTUP] Arka plan işlemleri başlatılıyor...")
+    try:
+        # 1. Veritabanını hazırla (Hızlıdır ama bağlantı kopukluklarında bekletebilir)
+        db.init_db()
+        
+        # 2. Yarım kalan işleri toparla (Ağ istekleri içerdiği için yavaştır)
+        resume_incomplete_tasks()
+        print("[STARTUP] Arka plan işlemleri sorunsuz tamamlandı.")
+    except Exception as e:
+        print(f"[STARTUP] Kritik Hata: Başlatma işlemleri çöktü: {e}")
+
+# Uygulama ayağa kalkarken işlemleri daemon thread olarak başlatıyoruz.
+# daemon=True olması, sunucu kapanırken bu thread'in de güvenlice ölmesini sağlar.
+import threading # (Eğer dosyanın başında yoksa ekle, gerçi senin kodunda var)
+startup_thread = threading.Thread(target=run_startup_tasks, daemon=True)
+startup_thread.start()
 
 if __name__ == '__main__':
     print(f"Maximum concurrent tasks: {MAX_CONCURRENT_TASKS}")
