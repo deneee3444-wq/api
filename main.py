@@ -853,21 +853,43 @@ def delete_account(email):
     else:
         return jsonify({"error": "Account not found"}), 404
 
-# --- Health & Startup ---
+# --- Startup ---
 
+# YENİ
 _startup_done = False
 _startup_lock = threading.Lock()
 
+def _run_startup():
+    global _startup_done
+    retries = 0
+    while True:
+        try:
+            db.init_db()
+            resume_incomplete_tasks()
+            with _startup_lock:
+                _startup_done = True
+            print("[STARTUP] Background startup complete. API is fully ready.")
+            return
+        except Exception as e:
+            retries += 1
+            wait = min(2 ** retries, 30)
+            print(f"[STARTUP] DB init failed (attempt {retries}), retrying in {wait}s... Error: {e}")
+            time.sleep(wait)
+
+# Worker boot olur olmaz background'da başlat, bloklama
+threading.Thread(target=_run_startup, daemon=True).start()
+
 @app.before_request
 def startup():
-    global _startup_done
     if not _startup_done:
-        with _startup_lock:
-            if not _startup_done:
-                db.init_db()
-                resume_incomplete_tasks()
-                _startup_done = True
-
+        # Kısa süre bekle, hâlâ hazır değilse 503 dön
+        for _ in range(10):
+            if _startup_done:
+                break
+            time.sleep(0.5)
+        if not _startup_done:
+            from flask import abort
+            abort(503)
 
 if __name__ == '__main__':
     print(f"Maximum concurrent tasks: {MAX_CONCURRENT_TASKS}")
