@@ -856,14 +856,17 @@ def delete_account(email):
 # --- Health & Startup ---
 
 _startup_done = False
+_startup_lock = threading.Lock()
 
 @app.before_request
 def startup():
     global _startup_done
     if not _startup_done:
-        _startup_done = True
-        db.init_db()
-        resume_incomplete_tasks()
+        with _startup_lock:
+            if not _startup_done:
+                db.init_db()
+                resume_incomplete_tasks()
+                _startup_done = True
 
 
 if __name__ == '__main__':
