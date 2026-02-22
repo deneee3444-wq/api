@@ -7,7 +7,7 @@ import requests
 import base64
 from io import BytesIO
 from PIL import Image
-from flask import Flask, request, jsonify, render_template, abort
+from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
 import database as db
 
@@ -652,6 +652,11 @@ def resume_incomplete_tasks():
     print("=" * 50)
 
 # --- API Routes ---
+
+@app.errorhandler(Exception)
+def handle_exception(e):
+    print(f"[ERROR] {request.method} {request.path} → {type(e).__name__}: {e}")
+    return jsonify({"error": "Internal server error"}), 500
 
 @app.route('/', methods=['GET'])
 def index():
