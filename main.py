@@ -856,23 +856,14 @@ def delete_account(email):
 # --- Health & Startup ---
 
 _startup_done = False
-_startup_error = None
 
-def _run_startup():
-    """Runs DB init and crash recovery in background so gunicorn workers stay responsive."""
-    global _startup_done, _startup_error
-    try:
+@app.before_request
+def startup():
+    global _startup_done
+    if not _startup_done:
+        _startup_done = True
         db.init_db()
         resume_incomplete_tasks()
-        _startup_done = True
-        print("[STARTUP] Background startup complete. API is fully ready.")
-    except Exception as e:
-        _startup_error = str(e)
-        _startup_done = True  # Still mark done so health check doesn't hang forever
-        print(f"[STARTUP] ERROR during background startup: {e}")
-
-# Start immediately but non-blocking — worker is ready for health checks right away
-threading.Thread(target=_run_startup, daemon=True).start()
 
 
 if __name__ == '__main__':
