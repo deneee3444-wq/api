@@ -854,8 +854,6 @@ def delete_account(email):
         return jsonify({"error": "Account not found"}), 404
 
 # --- Startup ---
-
-# YENİ
 _startup_done = False
 _startup_lock = threading.Lock()
 
@@ -876,19 +874,18 @@ def _run_startup():
             print(f"[STARTUP] DB init failed (attempt {retries}), retrying in {wait}s... Error: {e}")
             time.sleep(wait)
 
-# Worker boot olur olmaz background'da başlat, bloklama
 threading.Thread(target=_run_startup, daemon=True).start()
 
 @app.before_request
 def startup():
+    if request.path == '/' or request.path == '/health':
+        return
     if not _startup_done:
-        # Kısa süre bekle, hâlâ hazır değilse 503 dön
         for _ in range(10):
             if _startup_done:
                 break
             time.sleep(0.5)
         if not _startup_done:
-            from flask import abort
             abort(503)
 
 if __name__ == '__main__':
