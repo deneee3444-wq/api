@@ -876,18 +876,6 @@ def _run_startup():
 
 threading.Thread(target=_run_startup, daemon=True).start()
 
-@app.before_request
-def startup():
-    if request.path == '/' or request.path == '/health':
-        return
-    if not _startup_done:
-        for _ in range(10):
-            if _startup_done:
-                break
-            time.sleep(0.5)
-        if not _startup_done:
-            abort(503)
-
 if __name__ == '__main__':
     print(f"Maximum concurrent tasks: {MAX_CONCURRENT_TASKS}")
     print("API ready. Use any API key to authenticate - each key has isolated data.")
