@@ -7,7 +7,7 @@ import requests
 import base64
 from io import BytesIO
 from PIL import Image
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify, render_template, abort
 from flask_cors import CORS
 import database as db
 
