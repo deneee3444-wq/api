@@ -26,7 +26,7 @@ def get_connection():
         max_retries = 5
         for attempt in range(max_retries):
             try:
-                conn = psycopg2.connect(DATABASE_URL, connect_timeout=60)
+                conn = psycopg2.connect(DATABASE_URL, connect_timeout=10)
                 return conn
             except psycopg2.OperationalError as e:
                 if attempt < max_retries - 1:
