@@ -653,11 +653,6 @@ def resume_incomplete_tasks():
 
 # --- API Routes ---
 
-@app.before_request
-def check_startup():
-    if not _startup_done and request.path.startswith('/api/'):
-        return jsonify({"error": "Service is starting, please retry in a few seconds"}), 503
-
 @app.errorhandler(Exception)
 def handle_exception(e):
     print(f"[ERROR] {request.method} {request.path} → {type(e).__name__}: {e}")
@@ -884,7 +879,7 @@ def _run_startup():
             print(f"[STARTUP] DB init failed (attempt {retries}), retrying in {wait}s... Error: {e}")
             time.sleep(wait)
 
-threading.Thread(target=_run_startup, daemon=True).start()
+_run_startup()
 
 if __name__ == '__main__':
     print(f"Maximum concurrent tasks: {MAX_CONCURRENT_TASKS}")
