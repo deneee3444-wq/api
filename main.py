@@ -14,14 +14,6 @@ import database as db
 app = Flask(__name__)
 CORS(app)
 
-@app.before_request
-def check_startup():
-    if not _startup_done:
-        return jsonify({
-            "error": "Service Unavailable",
-            "message": "The server is still starting up. Please try again in a few moments."
-        }), 503
-
 # --- Configuration & Constants ---
 API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.ewogICJyb2xlIjogImFub24iLAogICJpc3MiOiAic3VwYWJhc2UiLAogICJpYXQiOiAxNzM0OTY5NjAwLAogICJleHAiOiAxODkyNzM2MDAwCn0.4NnK23LGYvKPGuKI5rwQn2KbLMzzdE4jXpHwbGCqPqY"
 
