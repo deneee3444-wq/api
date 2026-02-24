@@ -653,11 +653,6 @@ def resume_incomplete_tasks():
 
 # --- API Routes ---
 
-@app.before_request
-def check_startup():
-    if not _startup_done:
-        return jsonify({"error": "Service starting, please retry"}), 503
-
 @app.errorhandler(Exception)
 def handle_exception(e):
     print(f"[ERROR] {request.method} {request.path} → {type(e).__name__}: {e}")
