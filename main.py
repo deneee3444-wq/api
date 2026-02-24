@@ -876,6 +876,11 @@ def _run_startup():
             print(f"[STARTUP] DB init failed (attempt {retries}), retrying in {wait}s... Error: {e}")
             time.sleep(wait)
 
+@app.before_request
+def check_startup():
+    if not _startup_event.is_set():
+        return jsonify({"error": "Service is starting, please retry"}), 503
+
 if __name__ == '__main__':
     print(f"Maximum concurrent tasks: {MAX_CONCURRENT_TASKS}")
     print("API ready. Use any API key to authenticate - each key has isolated data.")
