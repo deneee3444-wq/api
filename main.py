@@ -876,11 +876,6 @@ def _run_startup():
             print(f"[STARTUP] DB init failed (attempt {retries}), retrying in {wait}s... Error: {e}")
             time.sleep(wait)
 
-@app.before_request
-def check_startup():
-    if not _startup_event.is_set():
-        return jsonify({"error": "Service is starting, please retry in a moment"}), 503
-
 threading.Thread(target=_run_startup, daemon=True).start()
 
 if __name__ == '__main__':
