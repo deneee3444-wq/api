@@ -859,18 +859,15 @@ def delete_account(email):
         return jsonify({"error": "Account not found"}), 404
 
 # --- Startup ---
-_startup_done = False
-_startup_lock = threading.Lock()
+_startup_event = threading.Event()
 
 def _run_startup():
-    global _startup_done
     retries = 0
     while True:
         try:
             db.init_db()
             resume_incomplete_tasks()
-            with _startup_lock:
-                _startup_done = True
+            _startup_event.set()
             print("[STARTUP] Background startup complete. API is fully ready.")
             return
         except Exception as e:
@@ -878,6 +875,11 @@ def _run_startup():
             wait = min(2 ** retries, 30)
             print(f"[STARTUP] DB init failed (attempt {retries}), retrying in {wait}s... Error: {e}")
             time.sleep(wait)
+
+@app.before_request
+def check_startup():
+    if not _startup_event.is_set():
+        return jsonify({"error": "Service is starting, please retry in a moment"}), 503
 
 threading.Thread(target=_run_startup, daemon=True).start()
 
