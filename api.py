@@ -3,6 +3,7 @@ import json
 import time
 import uuid
 import threading
+import atexit
 import requests
 import base64
 from io import BytesIO
@@ -13,6 +14,10 @@ import database as db
 
 app = Flask(__name__)
 CORS(app)
+
+# Graceful shutdown: polling thread'leri temiz kapansın
+_shutdown_event = threading.Event()
+atexit.register(lambda: _shutdown_event.set())
 
 # --- Configuration & Constants ---
 API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.ewogICJyb2xlIjogImFub24iLAogICJpc3MiOiAic3VwYWJhc2UiLAogICJpYXQiOiAxNzM0OTY5NjAwLAogICJleHAiOiAxODkyNzM2MDAwCn0.4NnK23LGYvKPGuKI5rwQn2KbLMzzdE4jXpHwbGCqPqY"
@@ -221,7 +226,8 @@ def process_image_task(task_id, params, api_key_id):
             db.add_task_log(task_id, f"API Task ID: {api_task_id}")
 
             for _ in range(300):
-                time.sleep(2)
+                if _shutdown_event.wait(2):
+                    return  # Shutdown — task 'running' kalır, recovery halleder
                 try:
                     poll = requests.get(URL_ASSETS, headers=headers).json()
                     groups = poll.get('data', {}).get('data', {}).get('groups', [])
@@ -340,7 +346,8 @@ def process_video_task(task_id, params, api_key_id):
             db.add_task_log(task_id, f"API Task ID: {api_task_id}")
             
             for _ in range(600):
-                time.sleep(5)
+                if _shutdown_event.wait(5):
+                    return  # Shutdown — task 'running' kalır, recovery halleder
                 try:
                     poll = requests.get(URL_VIDEO_TASKS, headers=headers).json()
                     video_list = poll.get('data', {}).get('data', {}).get('data', [])
@@ -529,7 +536,8 @@ def poll_image_recovery(task_id, api_task_id, token, account_email=None, api_key
     try:
         headers = {"authorization": f"Bearer {token}", **DEVICE_HEADERS}
         for _ in range(300):
-            time.sleep(5)
+            if _shutdown_event.wait(5):
+                return  # Shutdown — task 'running' kalır, recovery halleder
             try:
                 poll = requests.get(URL_ASSETS, headers=headers).json()
                 groups = poll.get('data', {}).get('data', {}).get('groups', [])
@@ -563,7 +571,8 @@ def poll_video_recovery(task_id, api_task_id, token, account_email=None, api_key
     try:
         headers = {"authorization": f"Bearer {token}", **DEVICE_HEADERS}
         for _ in range(600):
-            time.sleep(10)
+            if _shutdown_event.wait(10):
+                return  # Shutdown — task 'running' kalır, recovery halleder
             try:
                 poll = requests.get(URL_VIDEO_TASKS, headers=headers).json()
                 video_list = poll.get('data', {}).get('data', {}).get('data', [])
@@ -859,29 +868,35 @@ def delete_account(email):
         return jsonify({"error": "Account not found"}), 404
 
 # --- Startup ---
-_startup_event = threading.Event()
+_startup_done = False
+_startup_initiated = False
+_startup_lock = threading.Lock()
 
 def _run_startup():
+    global _startup_done
     retries = 0
     while True:
         try:
             db.init_db()
             resume_incomplete_tasks()
-            _startup_event.set()
+            with _startup_lock:
+                _startup_done = True
             print("[STARTUP] Background startup complete. API is fully ready.")
             return
         except Exception as e:
             retries += 1
             wait = min(2 ** retries, 30)
             print(f"[STARTUP] DB init failed (attempt {retries}), retrying in {wait}s... Error: {e}")
-            time.sleep(wait)
+            if _shutdown_event.wait(wait):
+                return  # Shutdown sırasında retry yapma
 
 @app.before_request
-def check_startup():
-    if not _startup_event.is_set():
-        return jsonify({"error": "Service is starting, please retry"}), 503
-
-if __name__ == '__main__':
-    print(f"Maximum concurrent tasks: {MAX_CONCURRENT_TASKS}")
-    print("API ready. Use any API key to authenticate - each key has isolated data.")
-    app.run(host='0.0.0.0', port=5000, debug=False, threaded=True)
+def _trigger_startup():
+    global _startup_initiated
+    if _startup_initiated:
+        return
+    with _startup_lock:
+        if _startup_initiated:
+            return
+        _startup_initiated = True
+    threading.Thread(target=_run_startup, daemon=True).start()
