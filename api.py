@@ -893,10 +893,10 @@ def _run_startup():
 @app.before_request
 def _trigger_startup():
     global _startup_initiated
-    if _startup_initiated:
-        return
-    with _startup_lock:
-        if _startup_initiated:
-            return
-        _startup_initiated = True
-    threading.Thread(target=_run_startup, daemon=True).start()
+    if not _startup_initiated:
+        with _startup_lock:
+            if not _startup_initiated:
+                _startup_initiated = True
+                threading.Thread(target=_run_startup, daemon=True).start()
+    if not _startup_done and request.path.startswith('/api/'):
+        return jsonify({"error": "Server is starting up, please try again shortly."}), 503
