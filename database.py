@@ -10,7 +10,7 @@ import contextlib
 from datetime import datetime
 
 # PostgreSQL Configuration
-DATABASE_URL = "postgresql://neondb_owner:npg_BavUz09AgdGR@ep-falling-wildflower-aijr1wu1-pooler.c-4.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
+DATABASE_URL = "postgresql://neondb_owner:npg_Hb5QoPL8MCOf@ep-morning-glade-aindpl1a-pooler.c-4.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
 
 import psycopg2
 from psycopg2.extras import RealDictCursor
@@ -19,27 +19,14 @@ print(f"Using PostgreSQL database")
 
 db_lock = threading.Lock()  # Only used for SQLite
 
+# database.py - get_connection sade kalsın
 def get_connection():
-    """Returns a database connection."""
     if DB_TYPE == 'postgresql':
-        import time
-        max_retries = 5
-        for attempt in range(max_retries):
-            try:
-                conn = psycopg2.connect(DATABASE_URL, connect_timeout=10)
-                return conn
-            except psycopg2.OperationalError as e:
-                if attempt < max_retries - 1:
-                    retry_delay = min(2 ** attempt, 10)  # exponential backoff: 1, 2, 4, 8, 10s
-                    print(f"[DB] Connection failed (attempt {attempt+1}/{max_retries}), retrying in {retry_delay}s... Error: {e}")
-                    time.sleep(retry_delay)
-                else:
-                    print(f"[DB] All connection attempts failed!")
-                    raise
+        conn = psycopg2.connect(DATABASE_URL, connect_timeout=10)
+        return conn
     else:
         import sqlite3
-        DB_FILE = "api.db"
-        conn = sqlite3.connect(DB_FILE, check_same_thread=False)
+        conn = sqlite3.connect("api.db", check_same_thread=False)
         conn.row_factory = sqlite3.Row
         return conn
 
@@ -294,7 +281,8 @@ def add_account(api_key_id, email, password):
                 conn.commit()
                 conn.close()
                 return True
-            except psycopg2.IntegrityError:
+            except Exception as e:
+                print(f"DB HATA: {e}")
                 conn.rollback()
                 conn.close()
                 return False
