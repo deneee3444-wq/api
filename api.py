@@ -866,37 +866,3 @@ def delete_account(email):
         return jsonify({"message": f"Account {email} deleted"})
     else:
         return jsonify({"error": "Account not found"}), 404
-
-# --- Startup ---
-_startup_done = False
-_startup_initiated = False
-_startup_lock = threading.Lock()
-
-def _run_startup():
-    global _startup_done
-    retries = 0
-    while True:
-        try:
-            db.init_db()
-            resume_incomplete_tasks()
-            with _startup_lock:
-                _startup_done = True
-            print("[STARTUP] Background startup complete. API is fully ready.")
-            return
-        except Exception as e:
-            retries += 1
-            wait = min(2 ** retries, 30)
-            print(f"[STARTUP] DB init failed (attempt {retries}), retrying in {wait}s... Error: {e}")
-            if _shutdown_event.wait(wait):
-                return  # Shutdown sırasında retry yapma
-
-@app.before_request
-def _trigger_startup():
-    global _startup_initiated
-    if not _startup_initiated:
-        with _startup_lock:
-            if not _startup_initiated:
-                _startup_initiated = True
-                threading.Thread(target=_run_startup, daemon=True).start()
-    if not _startup_done and request.path.startswith('/api/'):
-        return jsonify({"error": "Server is starting up, please try again shortly."}), 503
