@@ -1020,16 +1020,41 @@
             }
         }
 
-        // Helper function: File to Base64
+        // Helper function: File to Base64 (with resize + JPEG conversion)
         function fileToBase64(file) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
-                reader.onload = () => {
-                    // Remove data:image/...;base64, prefix
-                    const base64 = reader.result.split(',')[1];
-                    resolve(base64);
-                };
                 reader.onerror = reject;
+                reader.onload = () => {
+                    const img = new Image();
+                    img.onerror = reject;
+                    img.onload = () => {
+                        const MAX = 3000;
+                        let { width, height } = img;
+
+                        // Resize only if needed
+                        if (width > MAX || height > MAX) {
+                            if (width >= height) {
+                                height = Math.round(height * (MAX / width));
+                                width = MAX;
+                            } else {
+                                width = Math.round(width * (MAX / height));
+                                height = MAX;
+                            }
+                        }
+
+                        const canvas = document.createElement('canvas');
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+
+                        // Convert to JPEG, quality 0.92 (high quality, smaller size)
+                        const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
+                        resolve(dataUrl.split(',')[1]);
+                    };
+                    img.src = reader.result;
+                };
                 reader.readAsDataURL(file);
             });
         }
