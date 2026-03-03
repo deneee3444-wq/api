@@ -1020,41 +1020,55 @@
             }
         }
 
-        // Helper function: File to Base64 (with resize + JPEG conversion)
+        // Helper function: File to Base64 (with compression)
         function fileToBase64(file) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
-                reader.onerror = reject;
                 reader.onload = () => {
                     const img = new Image();
-                    img.onerror = reject;
                     img.onload = () => {
-                        const MAX = 3000;
+                        const MAX_SIDE = 3000;
                         let { width, height } = img;
-
-                        // Resize only if needed
-                        if (width > MAX || height > MAX) {
-                            if (width >= height) {
-                                height = Math.round(height * (MAX / width));
-                                width = MAX;
+        
+                        if (width > MAX_SIDE || height > MAX_SIDE) {
+                            if (width > height) {
+                                height = Math.round((height / width) * MAX_SIDE);
+                                width = MAX_SIDE;
                             } else {
-                                width = Math.round(width * (MAX / height));
-                                height = MAX;
+                                width = Math.round((width / height) * MAX_SIDE);
+                                height = MAX_SIDE;
                             }
                         }
-
+        
                         const canvas = document.createElement('canvas');
                         canvas.width = width;
                         canvas.height = height;
+        
                         const ctx = canvas.getContext('2d');
+        
+                        // JPEG doesn't support transparency — fill background white
+                        ctx.fillStyle = '#ffffff';
+                        ctx.fillRect(0, 0, width, height);
                         ctx.drawImage(img, 0, 0, width, height);
-
-                        // Convert to JPEG, quality 0.92 (high quality, smaller size)
-                        const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
-                        resolve(dataUrl.split(',')[1]);
+        
+                        canvas.toBlob(
+                            (blob) => {
+                                const blobReader = new FileReader();
+                                blobReader.onload = () => {
+                                    const base64 = blobReader.result.split(',')[1];
+                                    resolve(base64);
+                                };
+                                blobReader.onerror = reject;
+                                blobReader.readAsDataURL(blob);
+                            },
+                            'image/jpeg',
+                            0.92
+                        );
                     };
+                    img.onerror = reject;
                     img.src = reader.result;
                 };
+                reader.onerror = reject;
                 reader.readAsDataURL(file);
             });
         }
