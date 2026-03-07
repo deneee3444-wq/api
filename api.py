@@ -667,7 +667,18 @@ def resume_incomplete_tasks():
     print("[STARTUP] Crash recovery complete.")
     print("=" * 50)
 
-# --- API Routes ---
+TASK_FIELDS_BY_MODE = {
+    'image': ['task_id', 'mode', 'status', 'result_url', 'prompt', 'model', 'size', 'resolution', 'reference_image_urls', 'logs', 'created_at'],
+    'video': ['task_id', 'mode', 'status', 'result_url', 'prompt', 'model', 'size', 'resolution', 'duration', 'reference_image_urls', 'logs', 'created_at'],
+    'tts':   ['task_id', 'mode', 'status', 'result_url', 'prompt', 'model', 'logs', 'created_at'],
+}
+
+def filter_task_fields(task):
+    """Filters task dict fields based on mode."""
+    if not task:
+        return task
+    fields = TASK_FIELDS_BY_MODE.get(task.get('mode'), list(task.keys()))
+    return {k: task[k] for k in fields if k in task}
 
 @app.errorhandler(Exception)
 def handle_exception(e):
@@ -810,7 +821,7 @@ def get_task_status(task_id):
     task = db.get_task(api_key_id, task_id)
     if not task:
         return jsonify({"error": "Task not found"}), 404
-    return jsonify(task)
+    return jsonify(filter_task_fields(task))
 
 @app.route('/api/status', methods=['GET'])
 def get_all_tasks_status():
