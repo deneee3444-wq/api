@@ -71,22 +71,34 @@ def init_db():
                     external_task_id TEXT,
                     token TEXT,
                     account_email TEXT,
+                    prompt TEXT,
+                    model TEXT,
+                    size TEXT,
+                    resolution TEXT,
+                    duration INTEGER,
+                    reference_image_urls TEXT DEFAULT '[]',
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             ''')
             
             # Safely add columns to existing PostgreSQL table
-            cursor.execute("SELECT column_name FROM information_schema.columns WHERE table_name='tasks' AND column_name='external_task_id'")
-            if not cursor.fetchone():
-                cursor.execute("ALTER TABLE tasks ADD COLUMN external_task_id TEXT")
-            
-            cursor.execute("SELECT column_name FROM information_schema.columns WHERE table_name='tasks' AND column_name='token'")
-            if not cursor.fetchone():
-                cursor.execute("ALTER TABLE tasks ADD COLUMN token TEXT")
-            
-            cursor.execute("SELECT column_name FROM information_schema.columns WHERE table_name='tasks' AND column_name='account_email'")
-            if not cursor.fetchone():
-                cursor.execute("ALTER TABLE tasks ADD COLUMN account_email TEXT")
+            for col, definition in [
+                ('external_task_id', 'TEXT'),
+                ('token', 'TEXT'),
+                ('account_email', 'TEXT'),
+                ('prompt', 'TEXT'),
+                ('model', 'TEXT'),
+                ('size', 'TEXT'),
+                ('resolution', 'TEXT'),
+                ('duration', 'INTEGER'),
+                ('reference_image_urls', "TEXT DEFAULT '[]'"),
+            ]:
+                cursor.execute(
+                    "SELECT column_name FROM information_schema.columns WHERE table_name='tasks' AND column_name=%s",
+                    (col,)
+                )
+                if not cursor.fetchone():
+                    cursor.execute(f"ALTER TABLE tasks ADD COLUMN {col} {definition}")
                 
         else:
             # SQLite syntax
@@ -404,11 +416,19 @@ def delete_account(api_key_id, email):
 
 # --- Task Functions ---
 
-def create_task(api_key_id, task_id, mode):
+def create_task(api_key_id, task_id, mode, prompt=None, model=None, size=None, resolution=None, duration=None):
     """Creates a new task in the database."""
     _execute_query(
-        'INSERT INTO tasks (api_key_id, task_id, mode, status) VALUES (%s, %s, %s, %s)' if DB_TYPE == 'postgresql' else 'INSERT INTO tasks (api_key_id, task_id, mode, status) VALUES (?, ?, ?, ?)',
-        (api_key_id, task_id, mode, 'pending')
+        'INSERT INTO tasks (api_key_id, task_id, mode, status, prompt, model, size, resolution, duration) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)' if DB_TYPE == 'postgresql' else 'INSERT INTO tasks (api_key_id, task_id, mode, status, prompt, model, size, resolution, duration) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        (api_key_id, task_id, mode, 'pending', prompt, model, size, resolution, duration)
+    )
+
+
+def update_task_reference_urls(task_id, urls):
+    """Saves the reference image URLs used in a task."""
+    _execute_query(
+        'UPDATE tasks SET reference_image_urls = %s WHERE task_id = %s' if DB_TYPE == 'postgresql' else 'UPDATE tasks SET reference_image_urls = ? WHERE task_id = ?',
+        (json.dumps(urls), task_id)
     )
 
 
@@ -460,12 +480,14 @@ def add_task_log(task_id, message):
 def get_task(api_key_id, task_id):
     """Returns task detail."""
     result = _execute_query(
-        'SELECT task_id, mode, status, result_url, logs, created_at FROM tasks WHERE api_key_id = %s AND task_id = %s' if DB_TYPE == 'postgresql' else 'SELECT task_id, mode, status, result_url, logs, created_at FROM tasks WHERE api_key_id = ? AND task_id = ?',
+        'SELECT task_id, mode, status, result_url, logs, prompt, model, size, resolution, duration, reference_image_urls, created_at FROM tasks WHERE api_key_id = %s AND task_id = %s' if DB_TYPE == 'postgresql' else 'SELECT task_id, mode, status, result_url, logs, prompt, model, size, resolution, duration, reference_image_urls, created_at FROM tasks WHERE api_key_id = ? AND task_id = ?',
         (api_key_id, task_id),
         fetch_one=True
     )
-    if result and result.get('logs'):
-        result['logs'] = json.loads(result['logs'])
+    if result:
+        if result.get('logs'):
+            result['logs'] = json.loads(result['logs'])
+        result['reference_image_urls'] = json.loads(result.get('reference_image_urls') or '[]')
     return result
 
 
