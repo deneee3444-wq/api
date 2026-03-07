@@ -143,20 +143,24 @@ def resize_image(image_bytes):
         return None
 
 def upload_image(token, image_bytes):
-    """Uploads image to API and returns image ID."""
+    """Uploads image to API and returns (image_id, image_url) tuple."""
     headers = {"authorization": f"Bearer {token}", **DEVICE_HEADERS}
     resized = resize_image(image_bytes)
-    if not resized: return None
+    if not resized: return None, None
     
     files = {"file": ("image.png", resized, "image/png")}
     data = {"width": "1024", "height": "1536"} 
     try:
         resp = requests.post(URL_UPLOAD, headers=headers, files=files, data=data)
         if resp.status_code in [200, 201]:
-            return resp.json()['data']['data']['id']
+            upload_data = resp.json()['data']['data']
+            img_id = upload_data['id']
+            image_name = upload_data['imageName']
+            img_url = f"https://sp.deevid.ai/storage/v1/object/public/user-image/{image_name}"
+            return img_id, img_url
     except Exception as e:
         print(f"Upload error: {e}")
-    return None
+    return None, None
 
 def process_image_task(task_id, params, api_key_id):
     """Worker for image generation."""
@@ -176,21 +180,26 @@ def process_image_task(task_id, params, api_key_id):
             headers = {"authorization": f"Bearer {token}", **DEVICE_HEADERS}
             
             user_image_ids = []
+            user_image_urls = []
             images = params.get('images', [])
             if not images and params.get('image'):  # Geriye dönük uyumluluk
                 images = [params.get('image')]
 
             for img_base64 in images:
                 img_data = base64.b64decode(img_base64)
-                img_id = upload_image(token, img_data)
+                img_id, img_url = upload_image(token, img_data)
                 if img_id:
                     user_image_ids.append(img_id)
+                    user_image_urls.append(img_url)
                 else:
                     db.update_task_status(task_id, 'failed')
                     db.add_task_log(task_id, "Image upload failed.")
                     # Release account on upload failure
                     db.release_account(api_key_id, account['email'])
                     return
+
+            if user_image_urls:
+                db.update_task_reference_urls(task_id, user_image_urls)
 
             model_version = params.get('model', 'MODEL_FOUR_NANO_BANANA_PRO')
             payload = {
@@ -292,11 +301,12 @@ def process_video_task(task_id, params, api_key_id):
                 
                 if is_i2v:
                     img_data = base64.b64decode(params['image'])
-                    img_id = upload_image(token, img_data)
+                    img_id, img_url = upload_image(token, img_data)
                     if not img_id:
                         db.update_task_status(task_id, 'failed')
                         db.release_account(api_key_id, account['email'])
                         return
+                    db.update_task_reference_urls(task_id, [img_url])
                     payload["userImageId"] = int(str(img_id).strip())
                     url_submit = URL_SUBMIT_VIDEO
                 else:
@@ -315,11 +325,12 @@ def process_video_task(task_id, params, api_key_id):
 
                 if is_i2v:
                     img_data = base64.b64decode(params['image'])
-                    img_id = upload_image(token, img_data)
+                    img_id, img_url = upload_image(token, img_data)
                     if not img_id:
                         db.update_task_status(task_id, 'failed')
                         db.release_account(api_key_id, account['email'])
                         return
+                    db.update_task_reference_urls(task_id, [img_url])
                     payload["userImageId"] = int(str(img_id).strip())
                     payload["modelVersion"] = "MODEL_ELEVEN_IMAGE_TO_VIDEO_V2"
                     url_submit = URL_SUBMIT_VIDEO
@@ -692,7 +703,15 @@ def generate_image():
         }), 429
     
     task_id = str(uuid.uuid4())
-    db.create_task(api_key_id, task_id, 'image')
+    model = data.get('model', 'MODEL_FOUR_NANO_BANANA_PRO')
+    size = data.get('imageSize', 'SIXTEEN_BY_NINE')
+    resolution = data.get('resolution', '2K') if model == 'MODEL_FOUR_NANO_BANANA_PRO' else None
+    db.create_task(api_key_id, task_id, 'image',
+                   prompt=data.get('prompt'),
+                   model=model,
+                   size=size,
+                   resolution=resolution,
+                   duration=None)
     
     threading.Thread(target=process_image_task, args=(task_id, data, api_key_id)).start()
     return jsonify({"task_id": task_id})
@@ -718,7 +737,16 @@ def generate_video():
         }), 429
     
     task_id = str(uuid.uuid4())
-    db.create_task(api_key_id, task_id, 'video')
+    model = data.get('model', 'SORA2')
+    size = data.get('size', 'SIXTEEN_BY_NINE')
+    resolution = '720p'
+    duration = 8 if model == 'VEO_3_1' else 10
+    db.create_task(api_key_id, task_id, 'video',
+                   prompt=data.get('prompt'),
+                   model=model,
+                   size=size,
+                   resolution=resolution,
+                   duration=duration)
     
     threading.Thread(target=process_video_task, args=(task_id, data, api_key_id)).start()
     return jsonify({"task_id": task_id})
