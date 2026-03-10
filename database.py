@@ -494,10 +494,13 @@ def get_task(api_key_id, task_id):
 def get_all_tasks(api_key_id):
     """Returns all tasks for an API key."""
     rows = _execute_query(
-        'SELECT task_id, mode, status, result_url, created_at FROM tasks WHERE api_key_id = %s ORDER BY created_at DESC' if DB_TYPE == 'postgresql' else 'SELECT task_id, mode, status, result_url, created_at FROM tasks WHERE api_key_id = ? ORDER BY created_at DESC',
+        'SELECT task_id, mode, status, result_url, reference_image_urls, created_at FROM tasks WHERE api_key_id = %s ORDER BY created_at DESC' if DB_TYPE == 'postgresql' else 'SELECT task_id, mode, status, result_url, reference_image_urls, created_at FROM tasks WHERE api_key_id = ? ORDER BY created_at DESC',
         (api_key_id,),
         fetch_all=True
     )
+    if rows:
+        for row in rows:
+            row['reference_image_urls'] = json.loads(row.get('reference_image_urls') or '[]')
     return rows
 
 
