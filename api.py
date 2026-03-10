@@ -31,6 +31,7 @@ URL_UPLOAD = "https://api.deevid.ai/file-upload/image"
 URL_SUBMIT_IMG = "https://api.deevid.ai/text-to-image/task/submit"
 URL_SUBMIT_VIDEO = "https://api.deevid.ai/image-to-video/task/submit"
 URL_SUBMIT_TXT_VIDEO = "https://api.deevid.ai/text-to-video/task/submit"
+URL_SUBMIT_CHARACTER_VIDEO = "https://api.deevid.ai/character-to-video/task/submit"
 URL_ASSETS = "https://api.deevid.ai/my-assets?limit=50&assetType=All&filter=CREATION"
 URL_VIDEO_TASKS = "https://api.deevid.ai/video/tasks?page=1&size=20"
 URL_QUOTA = "https://api.deevid.ai/subscription/plan"
@@ -329,7 +330,7 @@ def process_video_task(task_id, params, api_key_id):
                             return
                         ref_ids.append(int(str(ref_id).strip()))
                     payload["userImageIds"] = ref_ids
-                    url_submit = URL_SUBMIT_VIDEO  # reference images her zaman video endpoint'e gitmeli
+                    url_submit = URL_SUBMIT_CHARACTER_VIDEO
             
             # SORA2 modeli için (varsayılan)
             else:
