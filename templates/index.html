@@ -805,7 +805,7 @@
             <div class="form-row cols-2">
                 <div class="form-group">
                     <label for="videoModel">Model</label>
-                    <select id="videoModel">
+                    <select id="videoModel" onchange="onVideoModelChange()">
                         <option value="SORA2" selected>SORA2 (10 saniye, Varsayılan)</option>
                         <option value="VEO_3_1">VEO_3_1 (8 saniye)</option>
                     </select>
@@ -819,7 +819,7 @@
                 </div>
             </div>
             <div class="form-group">
-                <label for="videoImageFile">Image-to-Video (İsteğe bağlı - Resim seçin)</label>
+                <label for="videoImageFile">Start Frame / Image-to-Video (İsteğe bağlı)</label>
                 <div class="file-input-wrapper">
                     <input type="file" id="videoImageFile" accept="image/*" onchange="updateFileLabel(this, 'videoFileLabel')">
                     <label for="videoImageFile" class="file-input-label" id="videoFileLabel">
@@ -827,6 +827,24 @@
                     </label>
                 </div>
                 <small style="color: #94a3b8; display: block; margin-top: 5px;">Resim yüklerseniz img2vid, yoksa text2vid olarak çalışır</small>
+            </div>
+            <div class="form-group" id="endFrameGroup" style="display:none;">
+                <label for="videoEndFrameFile">End Frame (Sadece VEO_3_1 — Start Frame gereklidir)</label>
+                <div class="file-input-wrapper">
+                    <input type="file" id="videoEndFrameFile" accept="image/*" onchange="updateFileLabel(this, 'videoEndFrameLabel')">
+                    <label for="videoEndFrameFile" class="file-input-label" id="videoEndFrameLabel">
+                        Resim Seç
+                    </label>
+                </div>
+            </div>
+            <div class="form-group" id="referenceImagesGroup" style="display:none;">
+                <label for="videoReferenceFiles">Reference Images (Sadece VEO_3_1 — Birden fazla seçilebilir)</label>
+                <div class="file-input-wrapper">
+                    <input type="file" id="videoReferenceFiles" accept="image/*" multiple onchange="updateFileLabel(this, 'videoReferenceLabel')">
+                    <label for="videoReferenceFiles" class="file-input-label" id="videoReferenceLabel">
+                        Resim Seç (Birden Fazla Seçilebilir)
+                    </label>
+                </div>
             </div>
             <button onclick="generateVideo()">Video Oluştur</button>
             <div id="videoResponse" class="response-box" style="display:none;"></div>
@@ -987,6 +1005,14 @@
             }
         }
 
+        // Toggle VEO_3_1 only fields
+        function onVideoModelChange() {
+            const model = document.getElementById('videoModel').value;
+            const isVeo = model === 'VEO_3_1';
+            document.getElementById('endFrameGroup').style.display = isVeo ? 'block' : 'none';
+            document.getElementById('referenceImagesGroup').style.display = isVeo ? 'block' : 'none';
+        }
+
         // Generate Video
         async function generateVideo() {
             const prompt = document.getElementById('videoPrompt').value;
@@ -1001,11 +1027,32 @@
                 size: document.getElementById('videoSize').value
             };
 
-            // Image-to-Video için base64 dönüşümü
+            // Start frame (image-to-video)
             const fileInput = document.getElementById('videoImageFile');
             if (fileInput.files && fileInput.files.length > 0) {
-                const base64 = await fileToBase64(fileInput.files[0]);
-                body.image = base64;
+                body.image = await fileToBase64(fileInput.files[0]);
+            }
+
+            // VEO_3_1 only: end frame
+            if (body.model === 'VEO_3_1') {
+                const endFrameInput = document.getElementById('videoEndFrameFile');
+                if (endFrameInput.files && endFrameInput.files.length > 0) {
+                    if (!body.image) {
+                        alert('End Frame için önce Start Frame (image) seçmelisiniz!');
+                        return;
+                    }
+                    body.end_frame = await fileToBase64(endFrameInput.files[0]);
+                }
+
+                // VEO_3_1 only: reference images
+                const refInput = document.getElementById('videoReferenceFiles');
+                if (refInput.files && refInput.files.length > 0) {
+                    const refs = [];
+                    for (let i = 0; i < refInput.files.length; i++) {
+                        refs.push(await fileToBase64(refInput.files[i]));
+                    }
+                    body.reference_images = refs;
+                }
             }
 
             try {
@@ -1029,7 +1076,7 @@
                     img.onload = () => {
                         const MAX_SIDE = 3000;
                         let { width, height } = img;
-        
+
                         if (width > MAX_SIDE || height > MAX_SIDE) {
                             if (width > height) {
                                 height = Math.round((height / width) * MAX_SIDE);
@@ -1039,18 +1086,18 @@
                                 height = MAX_SIDE;
                             }
                         }
-        
+
                         const canvas = document.createElement('canvas');
                         canvas.width = width;
                         canvas.height = height;
-        
+
                         const ctx = canvas.getContext('2d');
-        
+
                         // JPEG doesn't support transparency — fill background white
                         ctx.fillStyle = '#ffffff';
                         ctx.fillRect(0, 0, width, height);
                         ctx.drawImage(img, 0, 0, width, height);
-        
+
                         canvas.toBlob(
                             (blob) => {
                                 const blobReader = new FileReader();
