@@ -329,6 +329,7 @@ def process_video_task(task_id, params, api_key_id):
                             return
                         ref_ids.append(int(str(ref_id).strip()))
                     payload["userImageIds"] = ref_ids
+                    url_submit = URL_SUBMIT_VIDEO  # reference images her zaman video endpoint'e gitmeli
             
             # SORA2 modeli için (varsayılan)
             else:
