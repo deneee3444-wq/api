@@ -329,7 +329,15 @@ def process_video_task(task_id, params, api_key_id):
                             db.release_account(api_key_id, account["email"])
                             return
                         ref_ids.append(int(str(ref_id).strip()))
-                    payload["userImageIds"] = ref_ids
+                    payload = {
+                        "prompt": params.get('prompt', ''),
+                        "resolution": "720p",
+                        "duration": 8,
+                        "size": params.get('size', 'SIXTEEN_BY_NINE'),
+                        "aiPromptEnhance": params.get('aiPromptEnhance', True),
+                        "modelVersion": "MODEL_FIVE_FAST_3",
+                        "userImageIds": ref_ids
+                    }
                     url_submit = URL_SUBMIT_CHARACTER_VIDEO
             
             # SORA2 modeli için (varsayılan)
