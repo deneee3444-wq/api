@@ -373,7 +373,11 @@ def process_video_task(task_id, params, api_key_id):
             db.update_task_external_data(task_id, api_task_id, token)
             db.add_task_log(task_id, f"API Task ID: {api_task_id}")
 
-            ref_urls = resp_json['data']['data'].get('inputUserImageUrls') or []
+            data_obj = resp_json['data']['data']
+            ref_urls = data_obj.get('originalImageNameUrls') or []
+            end_frame_url = data_obj.get('endFrameUserImageUrl')
+            if end_frame_url:
+                ref_urls = ref_urls + [end_frame_url]
             if ref_urls:
                 db.update_task_reference_urls(task_id, ref_urls)
             
