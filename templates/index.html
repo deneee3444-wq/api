@@ -1184,6 +1184,12 @@
                 ).join('<br>')}</div>` 
                 : '';
 
+            const refImagesHTML = taskData.reference_image_urls && taskData.reference_image_urls.length > 0
+                ? `<div class="task-info-item" style="grid-column:1/-1"><strong>Referans Görseller:</strong><br>${taskData.reference_image_urls.map(url =>
+                    `<a href="${url}" target="_blank"><img src="${url}" style="height:60px;border-radius:6px;margin:4px;object-fit:cover;"></a>`
+                ).join('')}</div>`
+                : '';
+
             container.innerHTML = `
                 <div class="task-card">
                     <h3>Task: ${taskId}</h3>
@@ -1196,6 +1202,7 @@
                         <div class="task-info-item">
                             <strong>Sonuç URL:</strong> <a href="${taskData.result_url}" target="_blank">Aç</a>
                         </div>` : ''}
+                        ${refImagesHTML}
                     </div>
                     ${logsHTML}
                     ${resultHTML}
@@ -1220,8 +1227,8 @@
                 return;
             }
 
-            // Convert tasks object to array
-            allTasks = Object.entries(data.tasks);
+            // Convert tasks array to [taskId, taskData] pairs
+            allTasks = data.tasks.map(t => [t.task_id, t]);
             const totalPages = Math.ceil(allTasks.length / tasksPerPage);
             
             // Ensure current page is valid
@@ -1253,6 +1260,12 @@
                     ).join('<br>')}</div>` 
                     : '';
 
+                const refImagesHTML = taskData.reference_image_urls && taskData.reference_image_urls.length > 0
+                    ? `<div class="task-info-item" style="grid-column:1/-1"><strong>Referans Görseller:</strong><br>${taskData.reference_image_urls.map(url =>
+                        `<a href="${url}" target="_blank"><img src="${url}" style="height:60px;border-radius:6px;margin:4px;object-fit:cover;"></a>`
+                    ).join('')}</div>`
+                    : '';
+
                 const card = document.createElement('div');
                 card.className = 'task-card';
                 card.innerHTML = `
@@ -1266,6 +1279,7 @@
                         <div class="task-info-item">
                             <strong>Sonuç URL:</strong> <a href="${taskData.result_url}" target="_blank">Aç</a>
                         </div>` : ''}
+                        ${refImagesHTML}
                     </div>
                     ${logsHTML}
                     ${resultHTML}
@@ -1362,6 +1376,12 @@
                     ).join('<br>')}</div>` 
                     : '';
 
+                const refImagesHTML = taskData.reference_image_urls && taskData.reference_image_urls.length > 0
+                    ? `<div class="task-info-item" style="grid-column:1/-1"><strong>Referans Görseller:</strong><br>${taskData.reference_image_urls.map(url =>
+                        `<a href="${url}" target="_blank"><img src="${url}" style="height:60px;border-radius:6px;margin:4px;object-fit:cover;"></a>`
+                    ).join('')}</div>`
+                    : '';
+
                 const card = document.createElement('div');
                 card.className = 'task-card';
                 card.innerHTML = `
@@ -1375,6 +1395,7 @@
                         <div class="task-info-item">
                             <strong>Sonuç URL:</strong> <a href="${taskData.result_url}" target="_blank">Aç</a>
                         </div>` : ''}
+                        ${refImagesHTML}
                     </div>
                     ${logsHTML}
                     ${resultHTML}
