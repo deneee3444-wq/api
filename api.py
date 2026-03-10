@@ -66,9 +66,9 @@ def verify_api_key():
     api_key_id = db.get_api_key_id(provided_key)
     return api_key_id
 
-def can_start_new_task():
-    """Checks if a new task can be started (max concurrent limit)."""
-    return db.get_running_task_count() < MAX_CONCURRENT_TASKS
+def can_start_new_task(api_key_id):
+    """Checks if a new task can be started (max concurrent limit per user)."""
+    return db.get_running_task_count(api_key_id) < MAX_CONCURRENT_TASKS
 
 def refresh_quota(token):
     """Optional but might be required to activate session."""
@@ -282,13 +282,14 @@ def process_video_task(task_id, params, api_key_id):
             
             # VEO_3_1 modeli için
             if model == 'VEO_3_1':
+                end_frame = params.get('end_frame')
                 payload = {
                     "prompt": params.get('prompt', ''),
                     "resolution": "720p",
                     "lengthOfSecond": 8,
-                    "aiPromptEnhance": True,
+                    "aiPromptEnhance": params.get('aiPromptEnhance', True),
                     "size": params.get('size', 'SIXTEEN_BY_NINE'),
-                    "addEndFrame": False,
+                    "addEndFrame": bool(end_frame),
                     "modelType": "MODEL_FIVE",
                     "modelVersion": "MODEL_FIVE_FAST_3"
                 }
@@ -304,6 +305,30 @@ def process_video_task(task_id, params, api_key_id):
                     url_submit = URL_SUBMIT_VIDEO
                 else:
                     url_submit = URL_SUBMIT_TXT_VIDEO
+
+                if end_frame:
+                    end_frame_data = base64.b64decode(end_frame)
+                    end_frame_id = upload_image(token, end_frame_data)
+                    if not end_frame_id:
+                        db.update_task_status(task_id, 'failed')
+                        db.add_task_log(task_id, "End frame upload failed.")
+                        db.release_account(api_key_id, account['email'])
+                        return
+                    payload["endFrameUserImageId"] = int(str(end_frame_id).strip())
+
+                reference_images = params.get("reference_images", [])
+                if reference_images:
+                    ref_ids = []
+                    for ref_b64 in reference_images:
+                        ref_data = base64.b64decode(ref_b64)
+                        ref_id = upload_image(token, ref_data)
+                        if not ref_id:
+                            db.update_task_status(task_id, "failed")
+                            db.add_task_log(task_id, "Reference image upload failed.")
+                            db.release_account(api_key_id, account["email"])
+                            return
+                        ref_ids.append(int(str(ref_id).strip()))
+                    payload["userImageIds"] = ref_ids
             
             # SORA2 modeli için (varsayılan)
             else:
@@ -702,7 +727,7 @@ def generate_image():
     if db.get_account_count(api_key_id) == 0:
         return jsonify({"error": "No accounts available"}), 503
     
-    running_count = db.get_running_task_count()
+    running_count = db.get_running_task_count(api_key_id)
     if running_count >= MAX_CONCURRENT_TASKS:
         return jsonify({
             "error": "Maximum concurrent tasks reached",
@@ -735,8 +760,11 @@ def generate_video():
     
     if db.get_account_count(api_key_id) == 0:
         return jsonify({"error": "No accounts available"}), 503
+
+    if data.get('model') == 'VEO_3_1' and data.get('end_frame') and not data.get('image'):
+        return jsonify({"error": "end_frame requires image (start frame) to be provided"}), 400
     
-    running_count = db.get_running_task_count()
+    running_count = db.get_running_task_count(api_key_id)
     if running_count >= MAX_CONCURRENT_TASKS:
         return jsonify({
             "error": "Maximum concurrent tasks reached",
@@ -771,7 +799,7 @@ def generate_tts():
     if not ELEVENLABS_API_KEY:
         return jsonify({"error": "ElevenLabs API key not configured"}), 500
     
-    running_count = db.get_running_task_count()
+    running_count = db.get_running_task_count(api_key_id)
     if running_count >= MAX_CONCURRENT_TASKS:
         return jsonify({
             "error": "Maximum concurrent tasks reached",
@@ -829,7 +857,7 @@ def get_all_tasks_status():
     if not api_key_id:
         return jsonify({"error": "Unauthorized"}), 401
     
-    running_count = db.get_running_task_count()
+    running_count = db.get_running_task_count(api_key_id)
     return jsonify({
         "tasks": db.get_all_tasks(api_key_id),
         "running_tasks": running_count,
@@ -842,7 +870,7 @@ def get_quota():
     if not api_key_id:
         return jsonify({"error": "Unauthorized"}), 401
     
-    running_count = db.get_running_task_count()
+    running_count = db.get_running_task_count(api_key_id)
     return jsonify({
         "quota": db.get_account_count(api_key_id),
         "running_tasks": running_count,
