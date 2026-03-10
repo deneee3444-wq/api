@@ -501,16 +501,25 @@ def get_all_tasks(api_key_id):
     return rows
 
 
-def get_running_task_count():
-    """Returns the count of currently running/pending tasks (across all API keys)."""
+def get_running_task_count(api_key_id=None):
+    """Returns the count of currently running/pending tasks (per user if api_key_id given)."""
     with (db_lock if DB_TYPE != 'postgresql' else contextlib.nullcontext()):
         conn = get_connection()
-        query = "SELECT COUNT(*) as count FROM tasks WHERE status IN ('running', 'pending')"
-        if DB_TYPE == 'postgresql':
-            cursor = conn.cursor(cursor_factory=RealDictCursor)
-            cursor.execute(query)
+        if api_key_id is not None:
+            if DB_TYPE == 'postgresql':
+                query = "SELECT COUNT(*) as count FROM tasks WHERE status IN ('running', 'pending') AND api_key_id = %s"
+                cursor = conn.cursor(cursor_factory=RealDictCursor)
+                cursor.execute(query, (api_key_id,))
+            else:
+                query = "SELECT COUNT(*) as count FROM tasks WHERE status IN ('running', 'pending') AND api_key_id = ?"
+                cursor = conn.cursor()
+                cursor.execute(query, (api_key_id,))
         else:
-            cursor = conn.cursor()
+            query = "SELECT COUNT(*) as count FROM tasks WHERE status IN ('running', 'pending')"
+            if DB_TYPE == 'postgresql':
+                cursor = conn.cursor(cursor_factory=RealDictCursor)
+            else:
+                cursor = conn.cursor()
             cursor.execute(query)
         row = cursor.fetchone()
         conn.close()
