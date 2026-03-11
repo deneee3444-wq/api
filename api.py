@@ -738,6 +738,10 @@ def generate_image():
     if not data or 'prompt' not in data:
         return jsonify({"error": "Prompt required"}), 400
     
+    images = data.get('images', [])
+    if isinstance(images, list) and len(images) > 5:
+        return jsonify({"error": "Maximum 5 images allowed"}), 400
+
     if db.get_account_count(api_key_id) == 0:
         return jsonify({"error": "No accounts available"}), 503
     
@@ -777,6 +781,13 @@ def generate_video():
 
     if data.get('model') == 'VEO_3_1' and data.get('end_frame') and not data.get('image'):
         return jsonify({"error": "end_frame requires image (start frame) to be provided"}), 400
+
+    if data.get('model') == 'VEO_3_1':
+        reference_images = data.get('reference_images', [])
+        if isinstance(reference_images, list) and len(reference_images) > 3:
+            return jsonify({"error": "Maximum 3 reference images allowed"}), 400
+        if reference_images and (data.get('image') or data.get('end_frame')):
+            return jsonify({"error": "reference_images cannot be used together with image or end_frame"}), 400
     
     running_count = db.get_running_task_count(api_key_id)
     if running_count >= MAX_CONCURRENT_TASKS:
