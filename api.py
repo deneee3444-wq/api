@@ -888,7 +888,41 @@ def get_all_tasks_status():
     if not api_key_id:
         return jsonify({"error": "Unauthorized"}), 401
     
+@app.route('/api/status', methods=['GET'])
+def get_all_tasks_status():
+    api_key_id = verify_api_key()
+    if not api_key_id:
+        return jsonify({"error": "Unauthorized"}), 401
+    
     running_count = db.get_running_task_count(api_key_id)
+
+    page_param = request.args.get('page')
+    if page_param is not None:
+        try:
+            page = max(1, int(page_param))
+        except ValueError:
+            return jsonify({"error": "Invalid page parameter"}), 400
+
+        per_page_param = request.args.get('per_page', 6)
+        try:
+            per_page = max(1, int(per_page_param))
+        except ValueError:
+            return jsonify({"error": "Invalid per_page parameter"}), 400
+
+        tasks, total = db.get_tasks_paginated(api_key_id, page, per_page)
+        import math
+        total_pages = math.ceil(total / per_page) if total > 0 else 1
+
+        return jsonify({
+            "tasks": tasks,
+            "running_tasks": running_count,
+            "max_concurrent": MAX_CONCURRENT_TASKS,
+            "page": page,
+            "per_page": per_page,
+            "total": total,
+            "total_pages": total_pages
+        })
+
     return jsonify({
         "tasks": db.get_all_tasks(api_key_id),
         "running_tasks": running_count,
