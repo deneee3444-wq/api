@@ -777,9 +777,9 @@
             <div class="form-group">
                 <label for="imageFile">Image-to-Image (İsteğe bağlı - Resim seçin)</label>
                 <div class="file-input-wrapper">
-                    <input type="file" id="imageFile" accept="image/*" multiple onchange="updateFileLabel(this, 'imageFileLabel')">
+                    <input type="file" id="imageFile" accept="image/*" multiple onchange="onImageFileChange(this)">
                     <label for="imageFile" class="file-input-label" id="imageFileLabel">
-                        Resim Seç (Birden Fazla Seçilebilir)
+                        Resim Seç (Maks. 5)
                     </label>
                 </div>
                 <small style="color: #94a3b8; display: block; margin-top: 5px;">Birden fazla resim seçebilirsiniz (character references için)</small>
@@ -821,7 +821,7 @@
             <div class="form-group">
                 <label for="videoImageFile">Start Frame / Image-to-Video (İsteğe bağlı)</label>
                 <div class="file-input-wrapper">
-                    <input type="file" id="videoImageFile" accept="image/*" onchange="updateFileLabel(this, 'videoFileLabel')">
+                    <input type="file" id="videoImageFile" accept="image/*" onchange="updateFileLabel(this, 'videoFileLabel'); onStartFrameChange(this)">
                     <label for="videoImageFile" class="file-input-label" id="videoFileLabel">
                         Resim Seç
                     </label>
@@ -831,20 +831,21 @@
             <div class="form-group" id="endFrameGroup" style="display:none;">
                 <label for="videoEndFrameFile">End Frame (Sadece VEO_3_1 — Start Frame gereklidir)</label>
                 <div class="file-input-wrapper">
-                    <input type="file" id="videoEndFrameFile" accept="image/*" onchange="updateFileLabel(this, 'videoEndFrameLabel')">
+                    <input type="file" id="videoEndFrameFile" accept="image/*" onchange="updateFileLabel(this, 'videoEndFrameLabel'); onStartFrameChange(this)">
                     <label for="videoEndFrameFile" class="file-input-label" id="videoEndFrameLabel">
                         Resim Seç
                     </label>
                 </div>
             </div>
             <div class="form-group" id="referenceImagesGroup" style="display:none;">
-                <label for="videoReferenceFiles">Reference Images (Sadece VEO_3_1 — Birden fazla seçilebilir)</label>
+                <label for="videoReferenceFiles">Reference Images (Sadece VEO_3_1 — Maks. 3 görsel)</label>
                 <div class="file-input-wrapper">
-                    <input type="file" id="videoReferenceFiles" accept="image/*" multiple onchange="updateFileLabel(this, 'videoReferenceLabel')">
+                    <input type="file" id="videoReferenceFiles" accept="image/*" multiple onchange="updateFileLabel(this, 'videoReferenceLabel'); onReferenceChange(this)">
                     <label for="videoReferenceFiles" class="file-input-label" id="videoReferenceLabel">
-                        Resim Seç (Birden Fazla Seçilebilir)
+                        Resim Seç (Maks. 3)
                     </label>
                 </div>
+                <small style="color: #94a3b8; display: block; margin-top: 5px;">En fazla 3 referans görsel seçilebilir</small>
             </div>
             <button onclick="generateVideo()">Video Oluştur</button>
             <div id="videoResponse" class="response-box" style="display:none;"></div>
@@ -1434,6 +1435,81 @@
             }
         }
 
+        function onImageFileChange(input) {
+            if (input.files && input.files.length > 5) {
+                alert('En fazla 5 görsel seçebilirsiniz!');
+                input.value = '';
+                document.getElementById('imageFileLabel').textContent = 'Resim Seç (Maks. 5)';
+                document.getElementById('imageFileLabel').classList.remove('file-selected');
+                return;
+            }
+            updateFileLabel(input, 'imageFileLabel');
+        }
+
+        // Mutual exclusion: start/end frame <-> reference images
+        function onStartFrameChange(input) {
+            const hasFile = input.files && input.files.length > 0;
+            const refInput = document.getElementById('videoReferenceFiles');
+            const refLabel = document.getElementById('videoReferenceLabel');
+            const refGroup = document.getElementById('referenceImagesGroup');
+            if (hasFile) {
+                refInput.value = '';
+                refInput.disabled = true;
+                refLabel.textContent = 'Start/End Frame seçilince kullanılamaz';
+                refLabel.classList.remove('file-selected');
+                refLabel.style.opacity = '0.4';
+                refLabel.style.cursor = 'not-allowed';
+            } else {
+                // Diğer start/end frame input da boşsa kilidi kaldır
+                const startEmpty = !document.getElementById('videoImageFile').files.length;
+                const endEmpty = !document.getElementById('videoEndFrameFile').files.length;
+                if (startEmpty && endEmpty) {
+                    refInput.disabled = false;
+                    refLabel.textContent = 'Resim Seç (Maks. 3)';
+                    refLabel.style.opacity = '';
+                    refLabel.style.cursor = '';
+                }
+            }
+        }
+
+        function onReferenceChange(input) {
+            if (input.files && input.files.length > 3) {
+                alert('En fazla 3 referans görsel seçebilirsiniz!');
+                input.value = '';
+                document.getElementById('videoReferenceLabel').textContent = 'Resim Seç (Maks. 3)';
+                document.getElementById('videoReferenceLabel').classList.remove('file-selected');
+                return;
+            }
+            const hasFile = input.files && input.files.length > 0;
+            const startInput = document.getElementById('videoImageFile');
+            const startLabel = document.getElementById('videoFileLabel');
+            const endInput = document.getElementById('videoEndFrameFile');
+            const endLabel = document.getElementById('videoEndFrameLabel');
+            if (hasFile) {
+                startInput.value = '';
+                startInput.disabled = true;
+                startLabel.textContent = 'Reference Images seçilince kullanılamaz';
+                startLabel.classList.remove('file-selected');
+                startLabel.style.opacity = '0.4';
+                startLabel.style.cursor = 'not-allowed';
+                endInput.value = '';
+                endInput.disabled = true;
+                endLabel.textContent = 'Reference Images seçilince kullanılamaz';
+                endLabel.classList.remove('file-selected');
+                endLabel.style.opacity = '0.4';
+                endLabel.style.cursor = 'not-allowed';
+            } else {
+                startInput.disabled = false;
+                startLabel.textContent = 'Resim Seç';
+                startLabel.style.opacity = '';
+                startLabel.style.cursor = '';
+                endInput.disabled = false;
+                endLabel.textContent = 'Resim Seç';
+                endLabel.style.opacity = '';
+                endLabel.style.cursor = '';
+            }
+        }
+
         // Update file input label
         function updateFileLabel(input, labelId) {
             const label = document.getElementById(labelId);
@@ -1447,7 +1523,7 @@
                 }
                 label.classList.add('file-selected');
             } else {
-                label.textContent = labelId === 'imageFileLabel' ? 'Resim Seç (Birden Fazla Seçilebilir)' : 'Resim Seç';
+                label.textContent = labelId === 'imageFileLabel' ? 'Resim Seç (Maks. 5)' : 'Resim Seç';
                 label.classList.remove('file-selected');
             }
         }
