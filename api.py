@@ -742,6 +742,9 @@ def generate_image():
     if isinstance(images, list) and len(images) > 5:
         return jsonify({"error": "Maximum 5 images allowed"}), 400
 
+    if len(data.get('prompt', '')) > 4000:
+        return jsonify({"error": "Prompt must be 4000 characters or less"}), 400
+
     if db.get_account_count(api_key_id) == 0:
         return jsonify({"error": "No accounts available"}), 503
     
@@ -775,7 +778,10 @@ def generate_video():
     data = request.json
     if not data or 'prompt' not in data:
         return jsonify({"error": "Prompt required"}), 400
-    
+
+    if len(data.get('prompt', '')) > 2000:
+        return jsonify({"error": "Prompt must be 2000 characters or less"}), 400
+
     if db.get_account_count(api_key_id) == 0:
         return jsonify({"error": "No accounts available"}), 503
 
