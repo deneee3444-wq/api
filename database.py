@@ -504,6 +504,37 @@ def get_all_tasks(api_key_id):
     return rows
 
 
+def get_tasks_paginated(api_key_id, page, per_page):
+    """Returns paginated tasks and total count for an API key."""
+    offset = (page - 1) * per_page
+
+    total_result = _execute_query(
+        'SELECT COUNT(*) as count FROM tasks WHERE api_key_id = %s' if DB_TYPE == 'postgresql' else 'SELECT COUNT(*) as count FROM tasks WHERE api_key_id = ?',
+        (api_key_id,),
+        fetch_one=True
+    )
+    total = total_result['count'] if total_result else 0
+
+    if DB_TYPE == 'postgresql':
+        rows = _execute_query(
+            'SELECT task_id, mode, status, result_url, reference_image_urls, created_at FROM tasks WHERE api_key_id = %s ORDER BY created_at DESC LIMIT %s OFFSET %s',
+            (api_key_id, per_page, offset),
+            fetch_all=True
+        )
+    else:
+        rows = _execute_query(
+            'SELECT task_id, mode, status, result_url, reference_image_urls, created_at FROM tasks WHERE api_key_id = ? ORDER BY created_at DESC LIMIT ? OFFSET ?',
+            (api_key_id, per_page, offset),
+            fetch_all=True
+        )
+
+    if rows:
+        for row in rows:
+            row['reference_image_urls'] = json.loads(row.get('reference_image_urls') or '[]')
+
+    return rows or [], total
+
+
 def get_running_task_count(api_key_id=None):
     """Returns the count of currently running/pending tasks (per user if api_key_id given)."""
     with (db_lock if DB_TYPE != 'postgresql' else contextlib.nullcontext()):
