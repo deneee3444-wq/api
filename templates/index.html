@@ -744,12 +744,15 @@
             <div class="section-content">
             <div class="form-group">
                 <label for="imagePrompt">Prompt *</label>
-                <textarea id="imagePrompt" placeholder="Oluşturmak istediğiniz görselin detaylı açıklaması...">A futuristic cyberpunk city at night with neon lights</textarea>
+                <div style="position:relative;">
+                    <textarea id="imagePrompt" maxlength="4000" oninput="updateCounter('imagePrompt','imagePromptCounter',4000)" placeholder="Oluşturmak istediğiniz görselin detaylı açıklaması...">A futuristic cyberpunk city at night with neon lights</textarea>
+                    <span id="imagePromptCounter" style="position:absolute;bottom:8px;right:12px;font-size:0.75rem;color:var(--text-muted);font-family:'Space Mono',monospace;">52/4000</span>
+                </div>
             </div>
             <div class="form-row cols-2">
                 <div class="form-group">
                     <label for="imageModel">Model</label>
-                    <select id="imageModel">
+                    <select id="imageModel" onchange="onImageModelChange()">
                         <option value="MODEL_FOUR_NANO_BANANA_PRO" selected>MODEL_FOUR_NANO_BANANA_PRO (En İyi)</option>
                         <option value="MODEL_FOUR_NANO_BANANA">MODEL_FOUR_NANO_BANANA</option>
                     </select>
@@ -766,7 +769,7 @@
                     </select>
                 </div>
             </div>
-            <div class="form-group">
+            <div class="form-group" id="imageResolutionGroup">
                 <label for="imageResolution">Resolution (Sadece NANO_PRO için)</label>
                 <select id="imageResolution">
                     <option value="2K" selected>2K (Varsayılan)</option>
@@ -800,7 +803,10 @@
             </div>
             <div class="form-group">
                 <label for="videoPrompt">Prompt *</label>
-                <textarea id="videoPrompt" placeholder="Oluşturmak istediğiniz videonun detaylı açıklaması...">A serene ocean sunset with waves gently crashing on the shore, cinematic camera movement</textarea>
+                <div style="position:relative;">
+                    <textarea id="videoPrompt" maxlength="2000" oninput="updateCounter('videoPrompt','videoPromptCounter',2000)" placeholder="Oluşturmak istediğiniz videonun detaylı açıklaması...">A serene ocean sunset with waves gently crashing on the shore, cinematic camera movement</textarea>
+                    <span id="videoPromptCounter" style="position:absolute;bottom:8px;right:12px;font-size:0.75rem;color:var(--text-muted);font-family:'Space Mono',monospace;">87/2000</span>
+                </div>
             </div>
             <div class="form-row cols-2">
                 <div class="form-group">
@@ -909,8 +915,11 @@
             if (savedUrl) document.getElementById('apiUrl').value = savedUrl;
         }
 
-        // Load settings on page load
-        window.addEventListener('DOMContentLoaded', loadApiSettings);
+        window.addEventListener('DOMContentLoaded', () => {
+            loadApiSettings();
+            updateCounter('imagePrompt', 'imagePromptCounter', 4000);
+            updateCounter('videoPrompt', 'videoPromptCounter', 2000);
+        });
 
         const API_BASE = () => document.getElementById('apiUrl').value || 'https://api-pe7w.onrender.com';
         const API_KEY = () => document.getElementById('apiKey').value;
@@ -1004,6 +1013,19 @@
             } catch (error) {
                 displayResponse('imageResponse', { error: error.message }, true);
             }
+        }
+
+        function onImageModelChange() {
+            const model = document.getElementById('imageModel').value;
+            document.getElementById('imageResolutionGroup').style.display = 
+                model === 'MODEL_FOUR_NANO_BANANA_PRO' ? 'block' : 'none';
+        }
+
+        function updateCounter(textareaId, counterId, max) {
+            const len = document.getElementById(textareaId).value.length;
+            const counter = document.getElementById(counterId);
+            counter.textContent = `${len}/${max}`;
+            counter.style.color = len >= max * 0.9 ? 'var(--warning)' : len >= max ? 'var(--error)' : 'var(--text-muted)';
         }
 
         // Toggle VEO_3_1 only fields
