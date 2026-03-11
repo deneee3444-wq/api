@@ -657,6 +657,55 @@
             margin-top: 1rem;
         }
 
+        .pagination-goto {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.625rem;
+            padding: 0.75rem 0 1rem;
+            flex-wrap: wrap;
+        }
+
+        .pagination-goto label {
+            color: var(--text-muted);
+            font-family: 'Space Mono', monospace;
+            font-size: 0.8125rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin: 0;
+        }
+
+        .pagination-goto input[type="number"] {
+            width: 72px;
+            padding: 0.5rem 0.75rem;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--text);
+            font-family: 'Space Mono', monospace;
+            font-size: 0.875rem;
+            text-align: center;
+            transition: all 0.3s;
+            -moz-appearance: textfield;
+        }
+
+        .pagination-goto input[type="number"]::-webkit-inner-spin-button,
+        .pagination-goto input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+        }
+
+        .pagination-goto input[type="number"]:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(0, 255, 136, 0.15);
+        }
+
+        .pagination-goto button {
+            padding: 0.5rem 1.25rem;
+            font-size: 0.8125rem;
+        }
+
         @media (max-width: 768px) {
             .grid-2,
             .grid-3,
@@ -1634,8 +1683,35 @@
             `;
             
             paginationHTML += '</div>';
+
+            // Go to page row
+            paginationHTML += `
+                <div class="pagination-goto">
+                    <label for="gotoPageInput">Sayfaya Git:</label>
+                    <input
+                        type="number"
+                        id="gotoPageInput"
+                        min="1"
+                        max="${totalPages}"
+                        placeholder="No"
+                        onkeydown="if(event.key==='Enter') goToPage(${totalPages})"
+                    >
+                    <button onclick="goToPage(${totalPages})">Git →</button>
+                </div>
+            `;
             
             paginationContainer.innerHTML = paginationHTML;
+        }
+
+        // Go to specific page
+        function goToPage(totalPages) {
+            const input = document.getElementById('gotoPageInput');
+            if (!input) return;
+            let page = parseInt(input.value);
+            if (isNaN(page)) return;
+            if (page < 1) page = 1;
+            if (page > totalPages) page = totalPages;
+            changePage(page);
         }
         
         // Change page
