@@ -881,12 +881,6 @@ def get_task_status(task_id):
     if not task:
         return jsonify({"error": "Task not found"}), 404
     return jsonify(filter_task_fields(task))
-
-@app.route('/api/status', methods=['GET'])
-def get_all_tasks_status():
-    api_key_id = verify_api_key()
-    if not api_key_id:
-        return jsonify({"error": "Unauthorized"}), 401
     
 @app.route('/api/status', methods=['GET'])
 def get_all_tasks_status():
