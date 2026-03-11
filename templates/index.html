@@ -839,6 +839,7 @@
                 <!-- Main Tabs -->
                 <div class="tab-nav">
                     <button class="tab-btn active" onclick="switchTab('tab-t2i')">🖼️ Text to Image</button>
+                    <button class="tab-btn" onclick="switchTab('tab-i2i')">🔄 Image to Image</button>
                     <button class="tab-btn" onclick="switchTab('tab-t2v')">🎬 Text to Video</button>
                     <button class="tab-btn" onclick="switchTab('tab-i2v')">🎞️ Image to Video</button>
                 </div>
@@ -880,16 +881,57 @@
                             <option value="4K">4K</option>
                         </select>
                     </div>
+                    <button onclick="generateImage()">Görsel Oluştur</button>
+                    <div id="imageResponse" class="response-box" style="display:none;"></div>
+                </div>
+
+                <!-- Image to Image -->
+                <div class="tab-panel" id="tab-i2i" style="display:none;">
                     <div class="form-group">
-                        <label for="imageFile">Reference Images (İsteğe bağlı — Maks. 5)</label>
+                        <label for="i2iPrompt">Prompt *</label>
+                        <div style="position:relative;">
+                            <textarea id="i2iPrompt" maxlength="4000" oninput="updateCounter('i2iPrompt','i2iPromptCounter',4000)" placeholder="Görseli nasıl dönüştürmek istediğinizi açıklayın..."></textarea>
+                            <span id="i2iPromptCounter" style="position:absolute;bottom:8px;right:12px;font-size:0.75rem;color:var(--text-muted);font-family:'Space Mono',monospace;">0/4000</span>
+                        </div>
+                    </div>
+                    <div class="form-row cols-2">
+                        <div class="form-group">
+                            <label for="i2iModel">Model</label>
+                            <select id="i2iModel" onchange="onI2iModelChange()">
+                                <option value="MODEL_FOUR_NANO_BANANA_PRO" selected>MODEL_FOUR_NANO_BANANA_PRO</option>
+                                <option value="MODEL_FOUR_NANO_BANANA">MODEL_FOUR_NANO_BANANA</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="i2iSize">Boyut (imageSize)</label>
+                            <select id="i2iSize">
+                                <option value="SIXTEEN_BY_NINE" selected>SIXTEEN_BY_NINE (16:9)</option>
+                                <option value="NINE_BY_SIXTEEN">NINE_BY_SIXTEEN (9:16)</option>
+                                <option value="ONE_BY_ONE">ONE_BY_ONE (1:1)</option>
+                                <option value="THREE_BY_FOUR">THREE_BY_FOUR (3:4)</option>
+                                <option value="FOUR_BY_THREE">FOUR_BY_THREE (4:3)</option>
+                                <option value="THREE_BY_TWO">THREE_BY_TWO (3:2)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group" id="i2iResolutionGroup">
+                        <label for="i2iResolution">Resolution (Sadece NANO_PRO için)</label>
+                        <select id="i2iResolution">
+                            <option value="2K" selected>2K (Varsayılan)</option>
+                            <option value="1K">1K</option>
+                            <option value="4K">4K</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="i2iRefImages">Reference Images (İsteğe bağlı — Maks. 5)</label>
                         <div class="file-input-wrapper">
-                            <input type="file" id="imageFile" accept="image/*" multiple onchange="onImageFileChange(this)">
-                            <label for="imageFile" class="file-input-label" id="imageFileLabel">Resim Seç (Maks. 5)</label>
+                            <input type="file" id="i2iRefImages" accept="image/*" multiple onchange="onI2iRefChange(this)">
+                            <label for="i2iRefImages" class="file-input-label" id="i2iRefImagesLabel">Resim Seç (Maks. 5)</label>
                         </div>
                         <small style="color: #94a3b8; display: block; margin-top: 5px;">Birden fazla resim seçebilirsiniz (character references için)</small>
                     </div>
-                    <button onclick="generateImage()">Görsel Oluştur</button>
-                    <div id="imageResponse" class="response-box" style="display:none;"></div>
+                    <button onclick="generateImageToImage()">Görsel Dönüştür</button>
+                    <div id="i2iResponse" class="response-box" style="display:none;"></div>
                 </div>
 
                 <!-- Text to Video -->
@@ -933,7 +975,7 @@
                     <div class="form-row cols-2">
                         <div class="form-group">
                             <label for="i2vModel">Model</label>
-                            <select id="i2vModel">
+                            <select id="i2vModel" onchange="onI2vModelChange()">
                                 <option value="SORA2" selected>SORA2 (10 saniye)</option>
                                 <option value="VEO_3_1">VEO_3_1 (8 saniye)</option>
                             </select>
@@ -947,7 +989,7 @@
                         </div>
                     </div>
                     <!-- Sub Tabs -->
-                    <div class="sub-tab-nav">
+                    <div class="sub-tab-nav" id="i2vSubTabNav" style="display:none;">
                         <button class="sub-tab-btn active" onclick="switchSubTab('subtab-startend')">🎬 Start / End Frame</button>
                         <button class="sub-tab-btn" onclick="switchSubTab('subtab-refimages')">🖼️ Reference Images</button>
                     </div>
@@ -960,8 +1002,8 @@
                                 <label for="i2vStartFrame" class="file-input-label" id="i2vStartFrameLabel">Resim Seç</label>
                             </div>
                         </div>
-                        <div class="form-group">
-                            <label for="i2vEndFrame">End Frame (İsteğe bağlı — Sadece VEO_3_1)</label>
+                        <div class="form-group" id="i2vEndFrameGroup" style="display:none;">
+                            <label for="i2vEndFrame">End Frame *</label>
                             <div class="file-input-wrapper">
                                 <input type="file" id="i2vEndFrame" accept="image/*" onchange="updateFileLabel(this, 'i2vEndFrameLabel')">
                                 <label for="i2vEndFrame" class="file-input-label" id="i2vEndFrameLabel">Resim Seç</label>
@@ -1048,6 +1090,8 @@
             updateCounter('imagePrompt', 'imagePromptCounter', 4000);
             updateCounter('t2vPrompt', 't2vPromptCounter', 2000);
             updateCounter('i2vPrompt', 'i2vPromptCounter', 2000);
+            updateCounter('i2iPrompt', 'i2iPromptCounter', 4000);
+            onI2vModelChange();
         });
 
         const API_BASE = () => document.getElementById('apiUrl').value || 'https://api-pe7w.onrender.com';
@@ -1141,6 +1185,77 @@
                 }
             } catch (error) {
                 displayResponse('imageResponse', { error: error.message }, true);
+            }
+        }
+
+        function onI2vModelChange() {
+            const model = document.getElementById('i2vModel').value;
+            const isVeo = model === 'VEO_3_1';
+
+            // Sub-tab nav: sadece VEO_3_1'de göster
+            document.getElementById('i2vSubTabNav').style.display = isVeo ? 'flex' : 'none';
+
+            // End Frame: sadece VEO_3_1'de göster
+            document.getElementById('i2vEndFrameGroup').style.display = isVeo ? 'block' : 'none';
+
+            // Reference Images paneli: sadece VEO_3_1'de erişilebilir
+            document.getElementById('subtab-refimages').style.display = 'none';
+
+            // Start Frame panelini her zaman aktif yap
+            document.getElementById('subtab-startend').style.display = 'block';
+
+            // Sub-tab butonlarını sıfırla
+            document.querySelectorAll('.sub-tab-btn').forEach(b => b.classList.remove('active'));
+            const firstSubBtn = document.querySelector('.sub-tab-btn');
+            if (firstSubBtn) firstSubBtn.classList.add('active');
+        }
+
+        function onI2iRefChange(input) {
+            if (input.files && input.files.length > 5) {
+                alert('En fazla 5 görsel seçebilirsiniz!');
+                input.value = '';
+                document.getElementById('i2iRefImagesLabel').textContent = 'Resim Seç (Maks. 5)';
+                document.getElementById('i2iRefImagesLabel').classList.remove('file-selected');
+                return;
+            }
+            updateFileLabel(input, 'i2iRefImagesLabel');
+        }
+
+        function onI2iModelChange() {
+            const model = document.getElementById('i2iModel').value;
+            document.getElementById('i2iResolutionGroup').style.display =
+                model === 'MODEL_FOUR_NANO_BANANA_PRO' ? 'block' : 'none';
+        }
+
+        async function generateImageToImage() {
+            const prompt = document.getElementById('i2iPrompt').value;
+            if (!prompt) { alert('Lütfen prompt girin!'); return; }
+
+            const body = {
+                prompt,
+                model: document.getElementById('i2iModel').value,
+                imageSize: document.getElementById('i2iSize').value
+            };
+
+            if (body.model === 'MODEL_FOUR_NANO_BANANA_PRO') {
+                body.resolution = document.getElementById('i2iResolution').value;
+            }
+
+            const refInput = document.getElementById('i2iRefImages');
+            if (refInput.files && refInput.files.length > 0) {
+                const images = [];
+                for (let i = 0; i < refInput.files.length; i++) {
+                    images.push(await fileToBase64(refInput.files[i]));
+                }
+                body.images = images;
+            }
+
+            try {
+                const { response, data } = await apiCall('/api/generate/image', 'POST', body);
+                displayResponse('i2iResponse', data, !response.ok);
+                if (response.ok && data.task_id) document.getElementById('taskId').value = data.task_id;
+            } catch (error) {
+                displayResponse('i2iResponse', { error: error.message }, true);
             }
         }
 
