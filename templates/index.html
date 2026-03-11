@@ -1166,7 +1166,7 @@
         // Check All Tasks
         async function checkAllTasks() {
             try {
-                const { response, data } = await apiCall('/api/status');
+                const { response, data } = await apiCall(`/api/status?page=${currentPage}&per_page=${tasksPerPage}`);
                 displayResponse('statusResponse', data, !response.ok);
                 
                 if (response.ok && data.tasks) {
@@ -1244,28 +1244,24 @@
                 section.classList.remove('single-task-view');
             }
             
-            if (!data.tasks || Object.keys(data.tasks).length === 0) {
+            if (!data.tasks || data.tasks.length === 0) {
                 container.innerHTML = '<div class="alert alert-info">Henüz task bulunamadı.</div>';
                 paginationContainer.innerHTML = '';
                 return;
             }
 
-            // Convert tasks array to [taskId, taskData] pairs
+            // Server already returns only current page's tasks
+            const total = data.total || data.tasks.length;
+            const totalPages = data.total_pages || Math.ceil(total / tasksPerPage);
             allTasks = data.tasks.map(t => [t.task_id, t]);
-            const totalPages = Math.ceil(allTasks.length / tasksPerPage);
-            
+
             // Ensure current page is valid
             if (currentPage > totalPages) currentPage = totalPages;
             if (currentPage < 1) currentPage = 1;
             
-            // Get tasks for current page
-            const startIndex = (currentPage - 1) * tasksPerPage;
-            const endIndex = startIndex + tasksPerPage;
-            const currentTasks = allTasks.slice(startIndex, endIndex);
-            
-            // Display tasks
+            // Display tasks (server already sliced them)
             container.innerHTML = '';
-            currentTasks.forEach(([taskId, taskData]) => {
+            allTasks.forEach(([taskId, taskData]) => {
                 const statusClass = `status-${taskData.status}`;
                 
                 let resultHTML = '';
@@ -1311,11 +1307,11 @@
             });
             
             // Display pagination
-            displayPagination(totalPages);
+            displayPagination(totalPages, total);
         }
         
         // Display pagination controls
-        function displayPagination(totalPages) {
+        function displayPagination(totalPages, serverTotal) {
             const paginationContainer = document.getElementById('paginationContainer');
             
             if (totalPages <= 1) {
@@ -1355,10 +1351,10 @@
             
             // Pagination info
             const startIndex = (currentPage - 1) * tasksPerPage + 1;
-            const endIndex = Math.min(currentPage * tasksPerPage, allTasks.length);
+            const endIndex = Math.min(currentPage * tasksPerPage, serverTotal);
             paginationHTML += `
                 <div class="pagination-info">
-                    ${startIndex}-${endIndex} arası gösteriliyor (Toplam: ${allTasks.length} task)
+                    ${startIndex}-${endIndex} arası gösteriliyor (Toplam: ${serverTotal} task)
                 </div>
             `;
             
@@ -1369,67 +1365,11 @@
         
         // Change page
         function changePage(page) {
-            const totalPages = Math.ceil(allTasks.length / tasksPerPage);
-            if (page < 1 || page > totalPages) return;
+            const totalPages = Math.ceil((allTasks.length > 0 ? allTasks.length : 1) / tasksPerPage);
+            if (page < 1) return;
             
             currentPage = page;
-            
-            // Re-render tasks for new page
-            const container = document.getElementById('tasksContainer');
-            const startIndex = (currentPage - 1) * tasksPerPage;
-            const endIndex = startIndex + tasksPerPage;
-            const currentTasks = allTasks.slice(startIndex, endIndex);
-            
-            container.innerHTML = '';
-            currentTasks.forEach(([taskId, taskData]) => {
-                const statusClass = `status-${taskData.status}`;
-                
-                let resultHTML = '';
-                if (taskData.result_url) {
-                    if (taskData.mode === 'image') {
-                        resultHTML = `<img src="${taskData.result_url}" class="result-image" alt="Result">`;
-                    } else if (taskData.mode === 'video') {
-                        resultHTML = `<video src="${taskData.result_url}" class="result-video" controls></video>`;
-                    }
-                }
-
-                const logsHTML = taskData.logs && taskData.logs.length > 0 
-                    ? `<div class="logs"><strong>Loglar:</strong><br>${taskData.logs.map(log => 
-                        typeof log === 'object' ? `[${log.time}] ${log.message}` : log
-                    ).join('<br>')}</div>` 
-                    : '';
-
-                const refImagesHTML = taskData.reference_image_urls && taskData.reference_image_urls.length > 0
-                    ? `<div class="task-info-item" style="grid-column:1/-1"><strong>Referans Görseller:</strong><br>${taskData.reference_image_urls.map(url =>
-                        `<a href="${url}" target="_blank"><img src="${url}" style="height:60px;border-radius:6px;margin:4px;object-fit:cover;"></a>`
-                    ).join('')}</div>`
-                    : '';
-
-                const card = document.createElement('div');
-                card.className = 'task-card';
-                card.innerHTML = `
-                    <h3>Task: ${taskId}</h3>
-                    <span class="status-badge ${statusClass}">${taskData.status.toUpperCase()}</span>
-                    <div class="task-info">
-                        <div class="task-info-item">
-                            <strong>Mod:</strong> ${taskData.mode}
-                        </div>
-                        ${taskData.result_url ? `
-                        <div class="task-info-item">
-                            <strong>Sonuç URL:</strong> <a href="${taskData.result_url}" target="_blank">Aç</a>
-                        </div>` : ''}
-                        ${refImagesHTML}
-                    </div>
-                    ${logsHTML}
-                    ${resultHTML}
-                `;
-                container.appendChild(card);
-            });
-            
-            displayPagination(totalPages);
-            
-            // Scroll to top of tasks container
-            container.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            checkAllTasks();
         }
 
         // Auto refresh
