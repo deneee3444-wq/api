@@ -693,6 +693,99 @@
             }
         }
 
+        /* ── Tab Navigation ── */
+        .tab-nav {
+            display: flex;
+            gap: 0.375rem;
+            margin-bottom: 1.5rem;
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 0;
+            flex-wrap: wrap;
+        }
+
+        .tab-btn {
+            background: transparent;
+            border: none;
+            border-bottom: 3px solid transparent;
+            border-radius: 0;
+            color: var(--text-muted);
+            font-family: 'Space Mono', monospace;
+            font-size: 0.8125rem;
+            font-weight: 700;
+            padding: 0.625rem 1.25rem;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            transition: all 0.2s ease;
+            margin-bottom: -2px;
+            box-shadow: none;
+            transform: none;
+        }
+
+        .tab-btn:hover {
+            color: var(--primary);
+            background: rgba(0, 255, 136, 0.05);
+            transform: none;
+            box-shadow: none;
+        }
+
+        .tab-btn:hover::after { display: none; }
+        .tab-btn::after { display: none; }
+
+        .tab-btn.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+            background: rgba(0, 255, 136, 0.07);
+        }
+
+        .tab-panel { display: block; }
+
+        /* ── Sub Tab Navigation ── */
+        .sub-tab-nav {
+            display: flex;
+            gap: 0.375rem;
+            margin-bottom: 1.25rem;
+            border-bottom: 2px solid var(--border);
+            flex-wrap: wrap;
+        }
+
+        .sub-tab-btn {
+            background: transparent;
+            border: none;
+            border-bottom: 3px solid transparent;
+            border-radius: 0;
+            color: var(--text-muted);
+            font-family: 'Space Mono', monospace;
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            transition: all 0.2s ease;
+            margin-bottom: -2px;
+            box-shadow: none;
+            transform: none;
+        }
+
+        .sub-tab-btn:hover {
+            color: var(--accent);
+            background: rgba(0, 170, 255, 0.05);
+            transform: none;
+            box-shadow: none;
+        }
+
+        .sub-tab-btn:hover::after { display: none; }
+        .sub-tab-btn::after { display: none; }
+
+        .sub-tab-btn.active {
+            color: var(--accent);
+            border-bottom-color: var(--accent);
+            background: rgba(0, 170, 255, 0.07);
+        }
+
+        .sub-tab-panel { display: block; }
+
         @media (min-width: 1200px) {
             .grid-auto {
                 grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -738,123 +831,158 @@
             </div>
         </div>
 
-        <!-- Image Generation Section -->
+        <!-- Generation Section (Tabbed) -->
         <div class="section collapsed">
-            <h2 onclick="toggleSection(this)">🖼️ Görsel Oluşturma</h2>
+            <h2 onclick="toggleSection(this)">🎨 Oluşturma</h2>
             <div class="section-content">
-            <div class="form-group">
-                <label for="imagePrompt">Prompt *</label>
-                <div style="position:relative;">
-                    <textarea id="imagePrompt" maxlength="4000" oninput="updateCounter('imagePrompt','imagePromptCounter',4000)" placeholder="Oluşturmak istediğiniz görselin detaylı açıklaması...">A futuristic cyberpunk city at night with neon lights</textarea>
-                    <span id="imagePromptCounter" style="position:absolute;bottom:8px;right:12px;font-size:0.75rem;color:var(--text-muted);font-family:'Space Mono',monospace;">52/4000</span>
-                </div>
-            </div>
-            <div class="form-row cols-2">
-                <div class="form-group">
-                    <label for="imageModel">Model</label>
-                    <select id="imageModel" onchange="onImageModelChange()">
-                        <option value="MODEL_FOUR_NANO_BANANA_PRO" selected>MODEL_FOUR_NANO_BANANA_PRO (En İyi)</option>
-                        <option value="MODEL_FOUR_NANO_BANANA">MODEL_FOUR_NANO_BANANA</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="imageSize">Boyut (imageSize)</label>
-                    <select id="imageSize">
-                        <option value="SIXTEEN_BY_NINE" selected>SIXTEEN_BY_NINE (16:9)</option>
-                        <option value="NINE_BY_SIXTEEN">NINE_BY_SIXTEEN (9:16)</option>
-                        <option value="ONE_BY_ONE">ONE_BY_ONE (1:1)</option>
-                        <option value="THREE_BY_FOUR">THREE_BY_FOUR (3:4)</option>
-                        <option value="FOUR_BY_THREE">FOUR_BY_THREE (4:3)</option>
-                        <option value="THREE_BY_TWO">THREE_BY_TWO (3:2)</option>
-                    </select>
-                </div>
-            </div>
-            <div class="form-group" id="imageResolutionGroup">
-                <label for="imageResolution">Resolution (Sadece NANO_PRO için)</label>
-                <select id="imageResolution">
-                    <option value="2K" selected>2K (Varsayılan)</option>
-                    <option value="1K">1K</option>
-                    <option value="4K">4K</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="imageFile">Image-to-Image (İsteğe bağlı - Resim seçin)</label>
-                <div class="file-input-wrapper">
-                    <input type="file" id="imageFile" accept="image/*" multiple onchange="onImageFileChange(this)">
-                    <label for="imageFile" class="file-input-label" id="imageFileLabel">
-                        Resim Seç (Maks. 5)
-                    </label>
-                </div>
-                <small style="color: #94a3b8; display: block; margin-top: 5px;">Birden fazla resim seçebilirsiniz (character references için)</small>
-            </div>
-            <button onclick="generateImage()">Görsel Oluştur</button>
-            <div id="imageResponse" class="response-box" style="display:none;"></div>
-            </div>
-        </div>
 
-        <!-- Video Generation Section -->
-        <div class="section collapsed">
-            <h2 onclick="toggleSection(this)">🎬 Video Oluşturma</h2>
-            <div class="section-content">
-            <div class="alert alert-info">
-                Video oluşturma 60-300 saniye sürebilir.<br>
-                <strong>SORA2:</strong> 10 saniye, 720p<br>
-                <strong>VEO_3_1:</strong> 8 saniye, 720p
-            </div>
-            <div class="form-group">
-                <label for="videoPrompt">Prompt *</label>
-                <div style="position:relative;">
-                    <textarea id="videoPrompt" maxlength="2000" oninput="updateCounter('videoPrompt','videoPromptCounter',2000)" placeholder="Oluşturmak istediğiniz videonun detaylı açıklaması...">A serene ocean sunset with waves gently crashing on the shore, cinematic camera movement</textarea>
-                    <span id="videoPromptCounter" style="position:absolute;bottom:8px;right:12px;font-size:0.75rem;color:var(--text-muted);font-family:'Space Mono',monospace;">87/2000</span>
+                <!-- Main Tabs -->
+                <div class="tab-nav">
+                    <button class="tab-btn active" onclick="switchTab('tab-t2i')">🖼️ Text to Image</button>
+                    <button class="tab-btn" onclick="switchTab('tab-t2v')">🎬 Text to Video</button>
+                    <button class="tab-btn" onclick="switchTab('tab-i2v')">🎞️ Image to Video</button>
                 </div>
-            </div>
-            <div class="form-row cols-2">
-                <div class="form-group">
-                    <label for="videoModel">Model</label>
-                    <select id="videoModel" onchange="onVideoModelChange()">
-                        <option value="SORA2" selected>SORA2 (10 saniye, Varsayılan)</option>
-                        <option value="VEO_3_1">VEO_3_1 (8 saniye)</option>
-                    </select>
+
+                <!-- Text to Image -->
+                <div class="tab-panel" id="tab-t2i">
+                    <div class="form-group">
+                        <label for="imagePrompt">Prompt *</label>
+                        <div style="position:relative;">
+                            <textarea id="imagePrompt" maxlength="4000" oninput="updateCounter('imagePrompt','imagePromptCounter',4000)" placeholder="Oluşturmak istediğiniz görselin detaylı açıklaması...">A futuristic cyberpunk city at night with neon lights</textarea>
+                            <span id="imagePromptCounter" style="position:absolute;bottom:8px;right:12px;font-size:0.75rem;color:var(--text-muted);font-family:'Space Mono',monospace;">52/4000</span>
+                        </div>
+                    </div>
+                    <div class="form-row cols-2">
+                        <div class="form-group">
+                            <label for="imageModel">Model</label>
+                            <select id="imageModel" onchange="onImageModelChange()">
+                                <option value="MODEL_FOUR_NANO_BANANA_PRO" selected>MODEL_FOUR_NANO_BANANA_PRO</option>
+                                <option value="MODEL_FOUR_NANO_BANANA">MODEL_FOUR_NANO_BANANA</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="imageSize">Boyut (imageSize)</label>
+                            <select id="imageSize">
+                                <option value="SIXTEEN_BY_NINE" selected>SIXTEEN_BY_NINE (16:9)</option>
+                                <option value="NINE_BY_SIXTEEN">NINE_BY_SIXTEEN (9:16)</option>
+                                <option value="ONE_BY_ONE">ONE_BY_ONE (1:1)</option>
+                                <option value="THREE_BY_FOUR">THREE_BY_FOUR (3:4)</option>
+                                <option value="FOUR_BY_THREE">FOUR_BY_THREE (4:3)</option>
+                                <option value="THREE_BY_TWO">THREE_BY_TWO (3:2)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group" id="imageResolutionGroup">
+                        <label for="imageResolution">Resolution (Sadece NANO_PRO için)</label>
+                        <select id="imageResolution">
+                            <option value="2K" selected>2K (Varsayılan)</option>
+                            <option value="1K">1K</option>
+                            <option value="4K">4K</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="imageFile">Reference Images (İsteğe bağlı — Maks. 5)</label>
+                        <div class="file-input-wrapper">
+                            <input type="file" id="imageFile" accept="image/*" multiple onchange="onImageFileChange(this)">
+                            <label for="imageFile" class="file-input-label" id="imageFileLabel">Resim Seç (Maks. 5)</label>
+                        </div>
+                        <small style="color: #94a3b8; display: block; margin-top: 5px;">Birden fazla resim seçebilirsiniz (character references için)</small>
+                    </div>
+                    <button onclick="generateImage()">Görsel Oluştur</button>
+                    <div id="imageResponse" class="response-box" style="display:none;"></div>
                 </div>
-                <div class="form-group">
-                    <label for="videoSize">Boyut (size)</label>
-                    <select id="videoSize">
-                        <option value="SIXTEEN_BY_NINE" selected>SIXTEEN_BY_NINE (16:9)</option>
-                        <option value="NINE_BY_SIXTEEN">NINE_BY_SIXTEEN (9:16)</option>
-                    </select>
+
+                <!-- Text to Video -->
+                <div class="tab-panel" id="tab-t2v" style="display:none;">
+                    <div class="form-group">
+                        <label for="t2vPrompt">Prompt *</label>
+                        <div style="position:relative;">
+                            <textarea id="t2vPrompt" maxlength="2000" oninput="updateCounter('t2vPrompt','t2vPromptCounter',2000)" placeholder="Oluşturmak istediğiniz videonun detaylı açıklaması...">A serene ocean sunset with waves gently crashing on the shore, cinematic camera movement</textarea>
+                            <span id="t2vPromptCounter" style="position:absolute;bottom:8px;right:12px;font-size:0.75rem;color:var(--text-muted);font-family:'Space Mono',monospace;">87/2000</span>
+                        </div>
+                    </div>
+                    <div class="form-row cols-2">
+                        <div class="form-group">
+                            <label for="t2vModel">Model</label>
+                            <select id="t2vModel">
+                                <option value="SORA2" selected>SORA2 (10 saniye)</option>
+                                <option value="VEO_3_1">VEO_3_1 (8 saniye)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="t2vSize">Boyut (size)</label>
+                            <select id="t2vSize">
+                                <option value="SIXTEEN_BY_NINE" selected>SIXTEEN_BY_NINE (16:9)</option>
+                                <option value="NINE_BY_SIXTEEN">NINE_BY_SIXTEEN (9:16)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button onclick="generateTextToVideo()">Video Oluştur</button>
+                    <div id="t2vResponse" class="response-box" style="display:none;"></div>
                 </div>
-            </div>
-            <div class="form-group">
-                <label for="videoImageFile">Start Frame / Image-to-Video (İsteğe bağlı)</label>
-                <div class="file-input-wrapper">
-                    <input type="file" id="videoImageFile" accept="image/*" onchange="updateFileLabel(this, 'videoFileLabel'); onStartFrameChange(this)">
-                    <label for="videoImageFile" class="file-input-label" id="videoFileLabel">
-                        Resim Seç
-                    </label>
+
+                <!-- Image to Video -->
+                <div class="tab-panel" id="tab-i2v" style="display:none;">
+                    <div class="form-group">
+                        <label for="i2vPrompt">Prompt *</label>
+                        <div style="position:relative;">
+                            <textarea id="i2vPrompt" maxlength="2000" oninput="updateCounter('i2vPrompt','i2vPromptCounter',2000)" placeholder="Oluşturmak istediğiniz videonun detaylı açıklaması..."></textarea>
+                            <span id="i2vPromptCounter" style="position:absolute;bottom:8px;right:12px;font-size:0.75rem;color:var(--text-muted);font-family:'Space Mono',monospace;">0/2000</span>
+                        </div>
+                    </div>
+                    <div class="form-row cols-2">
+                        <div class="form-group">
+                            <label for="i2vModel">Model</label>
+                            <select id="i2vModel">
+                                <option value="SORA2" selected>SORA2 (10 saniye)</option>
+                                <option value="VEO_3_1">VEO_3_1 (8 saniye)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="i2vSize">Boyut (size)</label>
+                            <select id="i2vSize">
+                                <option value="SIXTEEN_BY_NINE" selected>SIXTEEN_BY_NINE (16:9)</option>
+                                <option value="NINE_BY_SIXTEEN">NINE_BY_SIXTEEN (9:16)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <!-- Sub Tabs -->
+                    <div class="sub-tab-nav">
+                        <button class="sub-tab-btn active" onclick="switchSubTab('subtab-startend')">🎬 Start / End Frame</button>
+                        <button class="sub-tab-btn" onclick="switchSubTab('subtab-refimages')">🖼️ Reference Images</button>
+                    </div>
+                    <!-- Start / End Frame -->
+                    <div class="sub-tab-panel" id="subtab-startend">
+                        <div class="form-group">
+                            <label for="i2vStartFrame">Start Frame *</label>
+                            <div class="file-input-wrapper">
+                                <input type="file" id="i2vStartFrame" accept="image/*" onchange="updateFileLabel(this, 'i2vStartFrameLabel')">
+                                <label for="i2vStartFrame" class="file-input-label" id="i2vStartFrameLabel">Resim Seç</label>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="i2vEndFrame">End Frame (İsteğe bağlı — Sadece VEO_3_1)</label>
+                            <div class="file-input-wrapper">
+                                <input type="file" id="i2vEndFrame" accept="image/*" onchange="updateFileLabel(this, 'i2vEndFrameLabel')">
+                                <label for="i2vEndFrame" class="file-input-label" id="i2vEndFrameLabel">Resim Seç</label>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Reference Images -->
+                    <div class="sub-tab-panel" id="subtab-refimages" style="display:none;">
+                        <div class="form-group">
+                            <label for="i2vRefImages">Reference Images (Maks. 3 — Sadece VEO_3_1)</label>
+                            <div class="file-input-wrapper">
+                                <input type="file" id="i2vRefImages" accept="image/*" multiple onchange="onI2vRefChange(this)">
+                                <label for="i2vRefImages" class="file-input-label" id="i2vRefImagesLabel">Resim Seç (Maks. 3)</label>
+                            </div>
+                            <small style="color: #94a3b8; display: block; margin-top: 5px;">En fazla 3 referans görsel seçilebilir</small>
+                        </div>
+                    </div>
+                    <button onclick="generateImageToVideo()" style="margin-top:1.25rem;">Video Oluştur</button>
+                    <div id="i2vResponse" class="response-box" style="display:none;"></div>
                 </div>
-                <small style="color: #94a3b8; display: block; margin-top: 5px;">Resim yüklerseniz img2vid, yoksa text2vid olarak çalışır</small>
-            </div>
-            <div class="form-group" id="endFrameGroup" style="display:none;">
-                <label for="videoEndFrameFile">End Frame (Sadece VEO_3_1 — Start Frame gereklidir)</label>
-                <div class="file-input-wrapper">
-                    <input type="file" id="videoEndFrameFile" accept="image/*" onchange="updateFileLabel(this, 'videoEndFrameLabel'); onStartFrameChange(this)">
-                    <label for="videoEndFrameFile" class="file-input-label" id="videoEndFrameLabel">
-                        Resim Seç
-                    </label>
-                </div>
-            </div>
-            <div class="form-group" id="referenceImagesGroup" style="display:none;">
-                <label for="videoReferenceFiles">Reference Images (Sadece VEO_3_1 — Maks. 3 görsel)</label>
-                <div class="file-input-wrapper">
-                    <input type="file" id="videoReferenceFiles" accept="image/*" multiple onchange="updateFileLabel(this, 'videoReferenceLabel'); onReferenceChange(this)">
-                    <label for="videoReferenceFiles" class="file-input-label" id="videoReferenceLabel">
-                        Resim Seç (Maks. 3)
-                    </label>
-                </div>
-                <small style="color: #94a3b8; display: block; margin-top: 5px;">En fazla 3 referans görsel seçilebilir</small>
-            </div>
-            <button onclick="generateVideo()">Video Oluştur</button>
-            <div id="videoResponse" class="response-box" style="display:none;"></div>
+
             </div>
         </div>
 
@@ -918,7 +1046,8 @@
         window.addEventListener('DOMContentLoaded', () => {
             loadApiSettings();
             updateCounter('imagePrompt', 'imagePromptCounter', 4000);
-            updateCounter('videoPrompt', 'videoPromptCounter', 2000);
+            updateCounter('t2vPrompt', 't2vPromptCounter', 2000);
+            updateCounter('i2vPrompt', 'i2vPromptCounter', 2000);
         });
 
         const API_BASE = () => document.getElementById('apiUrl').value || 'https://api-pe7w.onrender.com';
@@ -1028,66 +1157,97 @@
             counter.style.color = len >= max * 0.9 ? 'var(--warning)' : len >= max ? 'var(--error)' : 'var(--text-muted)';
         }
 
-        // Toggle VEO_3_1 only fields
-        function onVideoModelChange() {
-            const model = document.getElementById('videoModel').value;
-            const isVeo = model === 'VEO_3_1';
-            document.getElementById('endFrameGroup').style.display = isVeo ? 'block' : 'none';
-            document.getElementById('referenceImagesGroup').style.display = isVeo ? 'block' : 'none';
+        // Tab switching
+        function switchTab(id) {
+            document.querySelectorAll('.tab-panel').forEach(p => p.style.display = 'none');
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(id).style.display = 'block';
+            event.currentTarget.classList.add('active');
         }
 
-        // Generate Video
-        async function generateVideo() {
-            const prompt = document.getElementById('videoPrompt').value;
-            if (!prompt) {
-                alert('Lütfen prompt girin!');
-                return;
-            }
+        function switchSubTab(id) {
+            document.querySelectorAll('.sub-tab-panel').forEach(p => p.style.display = 'none');
+            document.querySelectorAll('.sub-tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(id).style.display = 'block';
+            event.currentTarget.classList.add('active');
+        }
+
+        // Generate Text to Video
+        async function generateTextToVideo() {
+            const prompt = document.getElementById('t2vPrompt').value;
+            if (!prompt) { alert('Lütfen prompt girin!'); return; }
 
             const body = {
-                prompt: prompt,
-                model: document.getElementById('videoModel').value,
-                size: document.getElementById('videoSize').value
+                prompt,
+                model: document.getElementById('t2vModel').value,
+                size: document.getElementById('t2vSize').value
             };
 
-            // Start frame (image-to-video)
-            const fileInput = document.getElementById('videoImageFile');
-            if (fileInput.files && fileInput.files.length > 0) {
-                body.image = await fileToBase64(fileInput.files[0]);
+            try {
+                const { response, data } = await apiCall('/api/generate/video', 'POST', body);
+                displayResponse('t2vResponse', data, !response.ok);
+                if (response.ok && data.task_id) document.getElementById('taskId').value = data.task_id;
+            } catch (error) {
+                displayResponse('t2vResponse', { error: error.message }, true);
             }
+        }
 
-            // VEO_3_1 only: end frame
-            if (body.model === 'VEO_3_1') {
-                const endFrameInput = document.getElementById('videoEndFrameFile');
-                if (endFrameInput.files && endFrameInput.files.length > 0) {
-                    if (!body.image) {
-                        alert('End Frame için önce Start Frame (image) seçmelisiniz!');
-                        return;
-                    }
-                    body.end_frame = await fileToBase64(endFrameInput.files[0]);
-                }
+        // Generate Image to Video
+        async function generateImageToVideo() {
+            const prompt = document.getElementById('i2vPrompt').value;
+            if (!prompt) { alert('Lütfen prompt girin!'); return; }
 
-                // VEO_3_1 only: reference images
-                const refInput = document.getElementById('videoReferenceFiles');
-                if (refInput.files && refInput.files.length > 0) {
-                    const refs = [];
-                    for (let i = 0; i < refInput.files.length; i++) {
-                        refs.push(await fileToBase64(refInput.files[i]));
-                    }
-                    body.reference_images = refs;
+            const body = {
+                prompt,
+                model: document.getElementById('i2vModel').value,
+                size: document.getElementById('i2vSize').value
+            };
+
+            // Determine active sub-tab
+            const startEndActive = document.getElementById('subtab-startend').style.display !== 'none';
+
+            if (startEndActive) {
+                const startInput = document.getElementById('i2vStartFrame');
+                if (!startInput.files || startInput.files.length === 0) {
+                    alert('Lütfen Start Frame resmi seçin!'); return;
                 }
+                body.image = await fileToBase64(startInput.files[0]);
+
+                const endInput = document.getElementById('i2vEndFrame');
+                if (endInput.files && endInput.files.length > 0) {
+                    if (body.model !== 'VEO_3_1') { alert('End Frame yalnızca VEO_3_1 modeliyle kullanılabilir!'); return; }
+                    body.end_frame = await fileToBase64(endInput.files[0]);
+                }
+            } else {
+                if (body.model !== 'VEO_3_1') { alert('Reference Images yalnızca VEO_3_1 modeliyle kullanılabilir!'); return; }
+                const refInput = document.getElementById('i2vRefImages');
+                if (!refInput.files || refInput.files.length === 0) {
+                    alert('Lütfen en az 1 referans görsel seçin!'); return;
+                }
+                const refs = [];
+                for (let i = 0; i < refInput.files.length; i++) refs.push(await fileToBase64(refInput.files[i]));
+                body.reference_images = refs;
             }
 
             try {
                 const { response, data } = await apiCall('/api/generate/video', 'POST', body);
-                displayResponse('videoResponse', data, !response.ok);
-                
-                if (response.ok && data.task_id) {
-                    document.getElementById('taskId').value = data.task_id;
-                }
+                displayResponse('i2vResponse', data, !response.ok);
+                if (response.ok && data.task_id) document.getElementById('taskId').value = data.task_id;
             } catch (error) {
-                displayResponse('videoResponse', { error: error.message }, true);
+                displayResponse('i2vResponse', { error: error.message }, true);
             }
+        }
+
+        // Reference images max-3 check
+        function onI2vRefChange(input) {
+            if (input.files && input.files.length > 3) {
+                alert('En fazla 3 referans görsel seçebilirsiniz!');
+                input.value = '';
+                document.getElementById('i2vRefImagesLabel').textContent = 'Resim Seç (Maks. 3)';
+                document.getElementById('i2vRefImagesLabel').classList.remove('file-selected');
+                return;
+            }
+            updateFileLabel(input, 'i2vRefImagesLabel');
         }
 
         // Helper function: File to Base64 (with compression)
@@ -1406,70 +1566,6 @@
                 return;
             }
             updateFileLabel(input, 'imageFileLabel');
-        }
-
-        // Mutual exclusion: start/end frame <-> reference images
-        function onStartFrameChange(input) {
-            const hasFile = input.files && input.files.length > 0;
-            const refInput = document.getElementById('videoReferenceFiles');
-            const refLabel = document.getElementById('videoReferenceLabel');
-            const refGroup = document.getElementById('referenceImagesGroup');
-            if (hasFile) {
-                refInput.value = '';
-                refInput.disabled = true;
-                refLabel.textContent = 'Start/End Frame seçilince kullanılamaz';
-                refLabel.classList.remove('file-selected');
-                refLabel.style.opacity = '0.4';
-                refLabel.style.cursor = 'not-allowed';
-            } else {
-                // Diğer start/end frame input da boşsa kilidi kaldır
-                const startEmpty = !document.getElementById('videoImageFile').files.length;
-                const endEmpty = !document.getElementById('videoEndFrameFile').files.length;
-                if (startEmpty && endEmpty) {
-                    refInput.disabled = false;
-                    refLabel.textContent = 'Resim Seç (Maks. 3)';
-                    refLabel.style.opacity = '';
-                    refLabel.style.cursor = '';
-                }
-            }
-        }
-
-        function onReferenceChange(input) {
-            if (input.files && input.files.length > 3) {
-                alert('En fazla 3 referans görsel seçebilirsiniz!');
-                input.value = '';
-                document.getElementById('videoReferenceLabel').textContent = 'Resim Seç (Maks. 3)';
-                document.getElementById('videoReferenceLabel').classList.remove('file-selected');
-                return;
-            }
-            const hasFile = input.files && input.files.length > 0;
-            const startInput = document.getElementById('videoImageFile');
-            const startLabel = document.getElementById('videoFileLabel');
-            const endInput = document.getElementById('videoEndFrameFile');
-            const endLabel = document.getElementById('videoEndFrameLabel');
-            if (hasFile) {
-                startInput.value = '';
-                startInput.disabled = true;
-                startLabel.textContent = 'Reference Images seçilince kullanılamaz';
-                startLabel.classList.remove('file-selected');
-                startLabel.style.opacity = '0.4';
-                startLabel.style.cursor = 'not-allowed';
-                endInput.value = '';
-                endInput.disabled = true;
-                endLabel.textContent = 'Reference Images seçilince kullanılamaz';
-                endLabel.classList.remove('file-selected');
-                endLabel.style.opacity = '0.4';
-                endLabel.style.cursor = 'not-allowed';
-            } else {
-                startInput.disabled = false;
-                startLabel.textContent = 'Resim Seç';
-                startLabel.style.opacity = '';
-                startLabel.style.cursor = '';
-                endInput.disabled = false;
-                endLabel.textContent = 'Resim Seç';
-                endLabel.style.opacity = '';
-                endLabel.style.cursor = '';
-            }
         }
 
         // Update file input label
