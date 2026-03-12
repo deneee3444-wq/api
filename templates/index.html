@@ -6,159 +6,490 @@
     <title>CreativeLabs API Interface</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
+        /* ═══════════════════════════════════════════
+           ROOT TOKENS — DEEP CINEMA PALETTE
+        ═══════════════════════════════════════════ */
         :root {
-            --primary: #00ff88;
-            --primary-dark: #00cc6e;
-            --secondary: #ff0055;
-            --accent: #00aaff;
-            --bg-main: #0a0f1c;
-            --bg-card: #131926;
-            --bg-input: #1a2234;
-            --text: #e8eaed;
-            --text-muted: #9aa0a6;
-            --border: #2a3344;
-            --success: #00ff88;
-            --error: #ff0055;
-            --warning: #ffaa00;
-            --info: #00aaff;
+            --void:        #03020a;
+            --depth:       #07050f;
+            --surface:     #0e0b1a;
+            --elevated:    #161223;
+            --panel:       #1c1830;
+            --input-bg:    #120f1e;
+            --border:      rgba(139,92,246,0.15);
+            --border-bright: rgba(139,92,246,0.4);
+
+            --violet:      #8b5cf6;
+            --violet-glow: rgba(139,92,246,0.25);
+            --violet-dim:  rgba(139,92,246,0.1);
+            --amber:       #f59e0b;
+            --amber-glow:  rgba(245,158,11,0.2);
+            --amber-dim:   rgba(245,158,11,0.08);
+            --cyan:        #22d3ee;
+            --cyan-dim:    rgba(34,211,238,0.1);
+            --rose:        #f43f5e;
+            --rose-dim:    rgba(244,63,94,0.12);
+            --emerald:     #10b981;
+            --emerald-dim: rgba(16,185,129,0.12);
+
+            --text:        #ede9ff;
+            --text-dim:    #9b93b8;
+            --text-muted:  #5a5270;
+
+            --sidebar-w:   270px;
+            --topbar-h:    60px;
+            --radius:      14px;
+            --radius-sm:   8px;
+            --shadow:      0 20px 60px rgba(0,0,0,0.8);
+            --transition:  0.25s cubic-bezier(0.4,0,0.2,1);
+
+            --success: var(--emerald);
+            --error:   var(--rose);
+            --warning: var(--amber);
+            --info:    var(--cyan);
+            --primary: var(--violet);
+            --primary-dark: #6d28d9;
+            --secondary: #4f46e5;
+            --accent: var(--cyan);
+            --bg-main: var(--void);
+            --bg-card: var(--elevated);
+            --bg-input: var(--input-bg);
         }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        /* ═══════════════════════════════════════════
+           RESET & BASE
+        ═══════════════════════════════════════════ */
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; }
 
         body {
             font-family: 'Outfit', sans-serif;
-            background: var(--bg-main);
+            background: var(--void);
             color: var(--text);
             min-height: 100vh;
             overflow-x: hidden;
-            padding: 0;
+            display: flex;
         }
 
+        /* Film grain overlay */
         body::before {
             content: '';
             position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: 
-                radial-gradient(circle at 20% 30%, rgba(0, 255, 136, 0.08) 0%, transparent 50%),
-                radial-gradient(circle at 80% 70%, rgba(255, 0, 85, 0.08) 0%, transparent 50%);
-            z-index: -1;
-            animation: pulse 15s ease-in-out infinite;
+            inset: 0;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+            background-size: 200px;
+            pointer-events: none;
+            z-index: 9999;
+            opacity: 0.6;
         }
 
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.7; }
+        /* Ambient background glow */
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 80% 50% at 20% 10%, rgba(139,92,246,0.07) 0%, transparent 60%),
+                radial-gradient(ellipse 60% 40% at 80% 80%, rgba(245,158,11,0.05) 0%, transparent 60%),
+                radial-gradient(ellipse 50% 60% at 60% 30%, rgba(34,211,238,0.03) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
         }
 
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: clamp(1rem, 3vw, 2.5rem);
+        /* ═══════════════════════════════════════════
+           SCROLLBAR
+        ═══════════════════════════════════════════ */
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-track { background: var(--void); }
+        ::-webkit-scrollbar-thumb { background: var(--violet-dim); border-radius: 99px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--violet); }
+
+        /* ═══════════════════════════════════════════
+           SIDEBAR
+        ═══════════════════════════════════════════ */
+        .sidebar {
+            position: fixed;
+            top: 0; left: 0; bottom: 0;
+            width: var(--sidebar-w);
+            background: var(--depth);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            z-index: 200;
+            transition: transform var(--transition);
+            overflow: hidden;
         }
 
-        h1 {
-            font-family: 'Space Mono', monospace;
-            font-size: clamp(1.75rem, 5vw, 3rem);
-            font-weight: 700;
-            background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 50%, var(--secondary) 100%);
+        /* Sidebar inner glow */
+        .sidebar::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 300px;
+            background: radial-gradient(ellipse at top left, rgba(139,92,246,0.12), transparent 70%);
+            pointer-events: none;
+        }
+
+        .sidebar-brand {
+            padding: 22px 20px 18px;
+            border-bottom: 1px solid var(--border);
+            position: relative;
+        }
+
+        .brand-logo {
+            font-family: 'Orbitron', monospace;
+            font-weight: 900;
+            font-size: 1.05rem;
+            letter-spacing: 0.06em;
+            background: linear-gradient(135deg, var(--violet) 0%, var(--cyan) 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
-            margin-bottom: 0.5rem;
-            letter-spacing: -0.02em;
-            text-align: center;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
-        .subtitle {
-            text-align: center;
+        .brand-icon {
+            width: 34px; height: 34px;
+            background: linear-gradient(135deg, var(--violet), var(--cyan));
+            border-radius: 9px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            flex-shrink: 0;
+            box-shadow: 0 0 20px var(--violet-glow);
+        }
+
+        .brand-subtitle {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.6rem;
             color: var(--text-muted);
-            font-size: clamp(0.875rem, 2vw, 1.125rem);
-            margin-bottom: 2rem;
-            font-family: 'Space Mono', monospace;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            margin-top: 4px;
         }
 
-        .section {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            margin-bottom: 1.5rem;
-            transition: all 0.3s ease;
-            overflow: hidden;
+        .sidebar-nav {
+            flex: 1;
+            padding: 16px 12px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
         }
 
-        .section:hover {
-            border-color: rgba(0, 255, 136, 0.3);
-            box-shadow: 0 8px 32px rgba(0, 255, 136, 0.1);
+        .nav-section-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.6rem;
+            text-transform: uppercase;
+            letter-spacing: 0.14em;
+            color: var(--text-muted);
+            padding: 10px 10px 6px;
         }
 
-        .section h2 {
-            font-family: 'Space Mono', monospace;
-            font-size: clamp(1.25rem, 3vw, 1.75rem);
-            color: var(--primary);
-            padding: clamp(1.25rem, 4vw, 2rem);
-            margin: 0;
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 11px;
+            padding: 11px 14px;
+            border-radius: var(--radius-sm);
             cursor: pointer;
-            user-select: none;
-            transition: all 0.3s ease;
+            transition: all var(--transition);
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-dim);
+            border: 1px solid transparent;
             position: relative;
-            border-bottom: 2px solid rgba(0, 255, 136, 0.2);
+            text-decoration: none;
         }
 
-        .section h2:hover {
-            background: rgba(0, 255, 136, 0.05);
+        .nav-item .nav-icon {
+            font-size: 1.05rem;
+            width: 22px;
+            text-align: center;
+            flex-shrink: 0;
         }
 
-        .section h2::after {
-            content: '▼';
+        .nav-item .nav-label { flex: 1; }
+
+        .nav-item .nav-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.6rem;
+            background: var(--violet-dim);
+            color: var(--violet);
+            border: 1px solid var(--border-bright);
+            border-radius: 99px;
+            padding: 1px 7px;
+        }
+
+        .nav-item:hover {
+            background: var(--violet-dim);
+            color: var(--text);
+            border-color: var(--border);
+        }
+
+        .nav-item.active {
+            background: linear-gradient(135deg, rgba(139,92,246,0.18), rgba(34,211,238,0.06));
+            color: var(--violet);
+            border-color: var(--border-bright);
+            box-shadow: 0 0 20px rgba(139,92,246,0.1);
+        }
+
+        .nav-item.active::before {
+            content: '';
             position: absolute;
-            right: clamp(1.25rem, 4vw, 2rem);
-            transition: transform 0.3s ease;
-            color: var(--primary);
-            font-size: 0.8em;
+            left: -1px; top: 20%; bottom: 20%;
+            width: 3px;
+            background: var(--violet);
+            border-radius: 0 3px 3px 0;
+            box-shadow: 0 0 10px var(--violet);
         }
 
-        .section.collapsed h2::after {
-            transform: rotate(-90deg);
+        .sidebar-footer {
+            padding: 14px 16px;
+            border-top: 1px solid var(--border);
         }
 
-        .section-content {
-            padding: clamp(1.25rem, 4vw, 2rem);
-            max-height: 5000px;
-            opacity: 1;
-            transition: all 0.4s ease;
-            overflow: visible;
+        .sidebar-footer-info {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.6rem;
+            color: var(--text-muted);
+            text-align: center;
+            letter-spacing: 0.08em;
         }
 
-        .section.collapsed .section-content {
-            max-height: 0;
-            opacity: 0;
-            padding-top: 0;
-            padding-bottom: 0;
-            overflow: hidden;
+        .status-dot {
+            display: inline-block;
+            width: 6px; height: 6px;
+            border-radius: 50%;
+            background: var(--emerald);
+            box-shadow: 0 0 6px var(--emerald);
+            animation: statusPulse 2s ease-in-out infinite;
+            margin-right: 5px;
         }
 
-        .form-group {
+        @keyframes statusPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        /* ═══════════════════════════════════════════
+           MAIN LAYOUT
+        ═══════════════════════════════════════════ */
+        .main-wrapper {
+            margin-left: var(--sidebar-w);
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* ═══════════════════════════════════════════
+           TOPBAR
+        ═══════════════════════════════════════════ */
+        .topbar {
+            height: var(--topbar-h);
+            background: rgba(7,5,15,0.85);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            padding: 0 24px;
+            gap: 14px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .hamburger {
+            display: none;
+            background: none;
+            border: 1px solid var(--border);
+            color: var(--text-dim);
+            width: 36px; height: 36px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            font-size: 1.1rem;
+            align-items: center;
+            justify-content: center;
+            transition: all var(--transition);
+            padding: 0;
+            box-shadow: none;
+            transform: none;
+        }
+        .hamburger::after { display: none; }
+        .hamburger:hover { background: var(--violet-dim); color: var(--violet); transform: none; box-shadow: none; }
+
+        .topbar-page-title {
+            font-family: 'Orbitron', monospace;
+            font-size: 0.8rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            color: var(--text);
+            text-transform: uppercase;
+        }
+
+        .topbar-spacer { flex: 1; }
+
+        .topbar-pill {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--cyan);
+            background: var(--cyan-dim);
+            border: 1px solid rgba(34,211,238,0.2);
+            border-radius: 99px;
+            padding: 4px 12px;
+            letter-spacing: 0.06em;
+        }
+
+        /* ═══════════════════════════════════════════
+           PAGE CONTENT
+        ═══════════════════════════════════════════ */
+        .content {
+            flex: 1;
+            padding: clamp(1rem, 3vw, 2rem);
+        }
+
+        .page { display: none; }
+        .page.active { display: block; }
+
+        .page-header {
+            margin-bottom: 2rem;
+        }
+
+        .page-eyebrow {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+            color: var(--violet);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .page-eyebrow::before {
+            content: '';
+            width: 20px; height: 1px;
+            background: var(--violet);
+        }
+
+        .page-title {
+            font-family: 'Orbitron', monospace;
+            font-size: clamp(1.4rem, 3vw, 2rem);
+            font-weight: 900;
+            letter-spacing: -0.01em;
+            color: var(--text);
+        }
+
+        .page-title span { color: var(--violet); }
+
+        .page-desc {
+            color: var(--text-dim);
+            font-size: 0.875rem;
+            margin-top: 6px;
+        }
+
+        /* ═══════════════════════════════════════════
+           CARDS / PANELS
+        ═══════════════════════════════════════════ */
+        .card {
+            background: var(--elevated);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: clamp(1.25rem, 3vw, 1.75rem);
             margin-bottom: 1.25rem;
+            position: relative;
+            overflow: hidden;
+            transition: border-color var(--transition), box-shadow var(--transition);
         }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(139,92,246,0.4), transparent);
+        }
+
+        .card:hover {
+            border-color: rgba(139,92,246,0.3);
+            box-shadow: 0 8px 40px rgba(139,92,246,0.08);
+        }
+
+        .card-title {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: var(--violet);
+            margin-bottom: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .card-title::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border);
+        }
+
+        /* ═══════════════════════════════════════════
+           QUOTA STATS
+        ═══════════════════════════════════════════ */
+        .quota-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .quota-stat {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .quota-stat-num {
+            font-family: 'Orbitron', monospace;
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--violet);
+        }
+
+        .quota-stat-label {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-top: 4px;
+        }
+
+        /* ═══════════════════════════════════════════
+           FORM ELEMENTS
+        ═══════════════════════════════════════════ */
+        .form-group { margin-bottom: 1.25rem; }
 
         label {
             display: block;
-            color: var(--text);
-            font-weight: 600;
-            margin-bottom: 0.5rem;
-            font-size: 0.875rem;
-            font-family: 'Space Mono', monospace;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 0.05em;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+            margin-bottom: 0.5rem;
         }
 
         input[type="text"],
@@ -166,17 +497,63 @@
         select {
             width: 100%;
             padding: 0.875rem 1rem;
-            background: var(--bg-input);
+            background: var(--input-bg);
             border: 1px solid var(--border);
-            border-radius: 10px;
+            border-radius: var(--radius-sm);
             color: var(--text);
-            font-size: 0.9375rem;
+            font-size: 0.9rem;
             font-family: 'Outfit', sans-serif;
-            transition: all 0.3s;
+            transition: all var(--transition);
+            outline: none;
         }
 
-        input[type="file"] {
-            display: none;
+        input[type="text"]:focus,
+        textarea:focus,
+        select:focus {
+            border-color: var(--violet);
+            box-shadow: 0 0 0 3px var(--violet-glow), 0 0 20px rgba(139,92,246,0.1);
+        }
+
+        input[type="text"]:hover:not(:focus),
+        textarea:hover:not(:focus),
+        select:hover:not(:focus) {
+            border-color: rgba(139,92,246,0.3);
+        }
+
+        select {
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238b5cf6' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            padding-right: 2.5rem;
+        }
+
+        select option {
+            background: var(--surface);
+            color: var(--text);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 110px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82rem;
+            line-height: 1.7;
+        }
+
+        input[type="file"] { display: none; }
+
+        input[type="checkbox"] {
+            width: 18px; height: 18px;
+            cursor: pointer;
+            accent-color: var(--violet);
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
         }
 
         .file-input-wrapper {
@@ -192,336 +569,102 @@
             gap: 0.75rem;
             width: 100%;
             padding: 0.875rem 1rem;
-            background: var(--bg-input);
-            border: 2px dashed var(--border);
-            border-radius: 10px;
+            background: var(--input-bg);
+            border: 2px dashed rgba(139,92,246,0.25);
+            border-radius: var(--radius-sm);
             color: var(--text-muted);
-            font-size: 0.9375rem;
+            font-size: 0.875rem;
             font-family: 'Outfit', sans-serif;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: all var(--transition);
             text-align: center;
-        }
-
-        .file-input-label:hover {
-            border-color: var(--primary);
-            background: rgba(0, 255, 136, 0.05);
-            color: var(--primary);
         }
 
         .file-input-label::before {
             content: '📁';
-            font-size: 1.5rem;
+            font-size: 1.3rem;
+        }
+
+        .file-input-label:hover {
+            border-color: var(--violet);
+            background: var(--violet-dim);
+            color: var(--violet);
         }
 
         .file-selected {
-            border-color: var(--primary);
+            border-color: var(--violet);
             border-style: solid;
-            background: rgba(0, 255, 136, 0.1);
-            color: var(--primary);
+            background: rgba(139,92,246,0.08);
+            color: var(--violet);
         }
 
-        .file-selected::before {
-            content: '✓';
-        }
+        .file-selected::before { content: '✓'; }
 
-        input[type="text"]:focus,
-        textarea:focus,
-        select:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(0, 255, 136, 0.15);
-        }
-
-        textarea {
-            resize: vertical;
-            min-height: 100px;
-            font-family: 'Space Mono', monospace;
-            font-size: 0.875rem;
-            line-height: 1.6;
-        }
-
-        .checkbox-group {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-        }
-
-        input[type="checkbox"] {
-            width: 20px;
-            height: 20px;
-            cursor: pointer;
-            accent-color: var(--primary);
-        }
-
+        /* ═══════════════════════════════════════════
+           BUTTONS
+        ═══════════════════════════════════════════ */
         button {
-            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            background: linear-gradient(135deg, var(--violet) 0%, #6d28d9 100%);
             border: none;
-            padding: clamp(0.75rem, 2vw, 1rem) clamp(1.5rem, 4vw, 2rem);
-            border-radius: 10px;
-            color: var(--bg-main);
-            font-family: 'Space Mono', monospace;
-            font-size: clamp(0.8125rem, 2vw, 0.9375rem);
+            padding: 0.75rem 1.5rem;
+            border-radius: var(--radius-sm);
+            color: #fff;
+            font-family: 'Orbitron', monospace;
+            font-size: 0.72rem;
             font-weight: 700;
             cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: all var(--transition);
             text-transform: uppercase;
-            letter-spacing: 0.05em;
+            letter-spacing: 0.1em;
             position: relative;
             overflow: hidden;
+            box-shadow: 0 4px 20px rgba(139,92,246,0.25);
         }
 
         button::after {
             content: '';
             position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 0;
-            height: 0;
-            background: rgba(255, 255, 255, 0.3);
-            border-radius: 50%;
-            transform: translate(-50%, -50%);
-            transition: width 0.6s, height 0.6s;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(255,255,255,0.15), transparent);
+            opacity: 0;
+            transition: opacity var(--transition);
         }
 
-        button:hover::after {
-            width: 300px;
-            height: 300px;
-        }
-
+        button:hover::after { opacity: 1; }
         button:hover {
             transform: translateY(-2px);
-            box-shadow: 0 10px 30px rgba(0, 255, 136, 0.3);
+            box-shadow: 0 8px 30px rgba(139,92,246,0.4);
         }
-
-        button:active {
-            transform: translateY(0);
-        }
+        button:active { transform: translateY(0); }
 
         button:disabled {
-            background: var(--border);
+            background: var(--panel);
+            color: var(--text-muted);
             cursor: not-allowed;
             transform: none;
+            box-shadow: none;
+            border: 1px solid var(--border);
         }
+        button:disabled::after { display: none; }
 
         .btn-secondary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%);
+            box-shadow: 0 4px 20px rgba(79,70,229,0.25);
         }
-
-        .btn-secondary:hover {
-            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
-        }
+        .btn-secondary:hover { box-shadow: 0 8px 30px rgba(79,70,229,0.4); }
 
         .btn-danger {
-            background: linear-gradient(135deg, var(--secondary) 0%, #cc0044 100%);
+            background: linear-gradient(135deg, var(--rose) 0%, #be123c 100%);
+            box-shadow: 0 4px 20px rgba(244,63,94,0.2);
         }
+        .btn-danger:hover { box-shadow: 0 8px 30px rgba(244,63,94,0.4); }
 
-        .btn-danger:hover {
-            box-shadow: 0 10px 30px rgba(255, 0, 85, 0.3);
+        .btn-amber {
+            background: linear-gradient(135deg, var(--amber) 0%, #d97706 100%);
+            box-shadow: 0 4px 20px rgba(245,158,11,0.2);
+            color: #000;
         }
-
-        .response-box {
-            background: var(--bg-input);
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            padding: 1.25rem;
-            margin-top: 1.25rem;
-            font-family: 'Space Mono', monospace;
-            font-size: 0.8125rem;
-            max-height: 400px;
-            overflow-y: auto;
-            white-space: pre-wrap;
-            word-wrap: break-word;
-            line-height: 1.6;
-        }
-
-        .response-box::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        .response-box::-webkit-scrollbar-track {
-            background: var(--bg-card);
-            border-radius: 4px;
-        }
-
-        .response-box::-webkit-scrollbar-thumb {
-            background: var(--primary);
-            border-radius: 4px;
-        }
-
-        .success {
-            color: var(--success);
-            font-weight: 600;
-        }
-
-        .error {
-            color: var(--error);
-            font-weight: 600;
-        }
-
-        .warning {
-            color: var(--warning);
-            font-weight: 600;
-        }
-
-        .info {
-            color: var(--info);
-            font-weight: 600;
-        }
-
-        .task-card {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 1.5rem;
-            margin-bottom: 1rem;
-            transition: all 0.3s;
-            break-inside: avoid;
-        }
-
-        .task-card:hover {
-            border-color: var(--primary);
-            box-shadow: 0 6px 24px rgba(0, 255, 136, 0.15);
-        }
-
-        .task-card h3 {
-            font-family: 'Space Mono', monospace;
-            color: var(--primary);
-            margin-bottom: 1rem;
-            font-size: 1.125rem;
-        }
-
-        .single-task-view #tasksContainer {
-            display: block;
-        }
-
-        .single-task-view .task-card {
-            max-width: 100%;
-        }
-
-        #tasksContainer {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(min(100%, 400px), 1fr));
-            gap: 1.5rem;
-            margin-top: 1.5rem;
-            margin-bottom: 2rem;
-        }
-
-        .task-info {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 0.75rem;
-            margin-top: 1rem;
-        }
-
-        .task-info-item {
-            background: var(--bg-input);
-            padding: 0.75rem;
-            border-radius: 8px;
-            font-size: 0.875rem;
-            color: var(--text-muted);
-        }
-
-        .task-info-item strong {
-            color: var(--primary);
-            font-family: 'Space Mono', monospace;
-        }
-
-        .task-info-item a {
-            color: var(--info);
-            text-decoration: none;
-            transition: color 0.3s;
-        }
-
-        .task-info-item a:hover {
-            color: var(--primary);
-            text-decoration: underline;
-        }
-
-        .status-badge {
-            display: inline-block;
-            padding: 0.5rem 1rem;
-            border-radius: 8px;
-            font-family: 'Space Mono', monospace;
-            font-size: 0.75rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
-
-        .status-pending {
-            background: rgba(255, 170, 0, 0.15);
-            color: var(--warning);
-            border: 1px solid var(--warning);
-        }
-
-        .status-running {
-            background: rgba(0, 170, 255, 0.15);
-            color: var(--info);
-            border: 1px solid var(--info);
-            animation: blink 2s infinite;
-        }
-
-        .status-completed {
-            background: rgba(0, 255, 136, 0.15);
-            color: var(--success);
-            border: 1px solid var(--success);
-        }
-
-        .status-failed, .status-error, .status-timeout {
-            background: rgba(255, 0, 85, 0.15);
-            color: var(--error);
-            border: 1px solid var(--error);
-        }
-
-        @keyframes blink {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.6; }
-        }
-
-        .result-image {
-            max-width: 100%;
-            max-height: 500px;
-            width: auto;
-            height: auto;
-            border-radius: 12px;
-            margin: 1rem auto;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-            display: block;
-            border: 1px solid var(--border);
-        }
-
-        .result-video {
-            max-width: 100%;
-            max-height: 500px;
-            border-radius: 12px;
-            margin: 1rem auto;
-            display: block;
-            border: 1px solid var(--border);
-        }
-
-        .logs {
-            background: var(--bg-input);
-            padding: 1rem;
-            border-radius: 8px;
-            margin-top: 1rem;
-            font-family: 'Space Mono', monospace;
-            font-size: 0.8125rem;
-            max-height: 150px;
-            overflow-y: auto;
-            color: var(--text-muted);
-            border: 1px solid var(--border);
-            line-height: 1.6;
-        }
-
-        .logs::-webkit-scrollbar {
-            width: 6px;
-        }
-
-        .logs::-webkit-scrollbar-thumb {
-            background: var(--primary);
-            border-radius: 3px;
-        }
+        .btn-amber:hover { box-shadow: 0 8px 30px rgba(245,158,11,0.4); }
 
         .btn-group {
             display: flex;
@@ -529,132 +672,357 @@
             flex-wrap: wrap;
         }
 
-        .btn-group button {
-            flex: 1;
-            min-width: 200px;
+        /* ═══════════════════════════════════════════
+           FORM ROWS / GRIDS
+        ═══════════════════════════════════════════ */
+        .form-row { display: grid; grid-template-columns: 1fr; gap: 1.25rem; }
+        .form-row.cols-2 { grid-template-columns: repeat(2, 1fr); }
+        .form-row.cols-3 { grid-template-columns: repeat(3, 1fr); }
+        .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.25rem; }
+        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; }
+        .grid-auto { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.25rem; }
+
+        /* ═══════════════════════════════════════════
+           RESPONSE BOX
+        ═══════════════════════════════════════════ */
+        .response-box {
+            background: var(--void);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 1.25rem;
+            margin-top: 1.25rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.78rem;
+            max-height: 380px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            line-height: 1.7;
+            border-left: 3px solid var(--violet);
         }
 
+        .response-box::-webkit-scrollbar { width: 4px; }
+        .response-box::-webkit-scrollbar-thumb { background: var(--violet-dim); border-radius: 2px; }
+
+        /* ═══════════════════════════════════════════
+           STATUS COLORS
+        ═══════════════════════════════════════════ */
+        .success { color: var(--emerald); font-weight: 600; }
+        .error    { color: var(--rose);    font-weight: 600; }
+        .warning  { color: var(--amber);   font-weight: 600; }
+        .info     { color: var(--cyan);    font-weight: 600; }
+
+        /* ═══════════════════════════════════════════
+           ALERTS
+        ═══════════════════════════════════════════ */
+        .alert {
+            padding: 0.875rem 1.25rem;
+            border-radius: var(--radius-sm);
+            margin-bottom: 1.25rem;
+            font-size: 0.875rem;
+            border: 1px solid;
+        }
+        .alert-info    { background: var(--cyan-dim);    color: var(--cyan);    border-color: rgba(34,211,238,0.3); }
+        .alert-warning { background: var(--amber-dim);   color: var(--amber);   border-color: rgba(245,158,11,0.3); }
+
+        /* ═══════════════════════════════════════════
+           TABS (Main)
+        ═══════════════════════════════════════════ */
+        .tab-nav {
+            display: flex;
+            gap: 0;
+            margin-bottom: 1.75rem;
+            background: var(--void);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 4px;
+            flex-wrap: wrap;
+        }
+
+        .tab-btn {
+            background: transparent;
+            border: none;
+            border-radius: 6px;
+            color: var(--text-muted);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 8px 14px;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            transition: all var(--transition);
+            box-shadow: none;
+            transform: none;
+            flex: 1;
+            white-space: nowrap;
+        }
+        .tab-btn::after  { display: none; }
+        .tab-btn:hover   { color: var(--text); background: var(--violet-dim); transform: none; box-shadow: none; }
+        .tab-btn.active  { background: var(--violet); color: #fff; box-shadow: 0 2px 12px rgba(139,92,246,0.4); }
+
+        .tab-panel { display: block; }
+
+        /* ═══════════════════════════════════════════
+           SUB-TABS (VEO inner tabs)
+        ═══════════════════════════════════════════ */
+        .sub-tab-nav {
+            display: flex;
+            gap: 0;
+            margin-bottom: 1.25rem;
+            background: var(--input-bg);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 3px;
+            flex-wrap: wrap;
+        }
+
+        .sub-tab-btn {
+            background: transparent;
+            border: none;
+            border-radius: 5px;
+            color: var(--text-muted);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            font-weight: 700;
+            padding: 7px 12px;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 0.07em;
+            transition: all var(--transition);
+            box-shadow: none;
+            transform: none;
+            flex: 1;
+        }
+        .sub-tab-btn::after { display: none; }
+        .sub-tab-btn:hover  { color: var(--cyan); background: var(--cyan-dim); transform: none; box-shadow: none; }
+        .sub-tab-btn.active { background: linear-gradient(135deg, rgba(34,211,238,0.2), rgba(139,92,246,0.15)); color: var(--cyan); }
+
+        .sub-tab-panel { display: block; }
+
+        /* ═══════════════════════════════════════════
+           TASK CARDS
+        ═══════════════════════════════════════════ */
+        #tasksContainer {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(min(100%, 400px), 1fr));
+            gap: 1.25rem;
+            margin-top: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .single-task-view #tasksContainer { display: block; }
+        .single-task-view .task-card { max-width: 100%; }
+
+        .task-card {
+            background: var(--elevated);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            transition: all var(--transition);
+            break-inside: avoid;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .task-card::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--violet), transparent);
+            opacity: 0;
+            transition: opacity var(--transition);
+        }
+
+        .task-card:hover {
+            border-color: var(--border-bright);
+            box-shadow: 0 8px 30px rgba(139,92,246,0.1);
+        }
+        .task-card:hover::after { opacity: 1; }
+
+        .task-card h3 {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.78rem;
+            color: var(--text-dim);
+            margin-bottom: 1rem;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .task-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+            gap: 0.625rem;
+            margin-top: 1rem;
+        }
+
+        .task-info-item {
+            background: var(--panel);
+            padding: 0.625rem 0.875rem;
+            border-radius: var(--radius-sm);
+            font-size: 0.82rem;
+            color: var(--text-dim);
+            border: 1px solid transparent;
+        }
+
+        .task-info-item strong {
+            color: var(--violet);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.68rem;
+            text-transform: uppercase;
+            display: block;
+            margin-bottom: 2px;
+        }
+
+        .task-info-item a {
+            color: var(--cyan);
+            text-decoration: none;
+            transition: color var(--transition);
+        }
+        .task-info-item a:hover { color: var(--violet); text-decoration: underline; }
+
+        /* Status badges */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 4px 10px;
+            border-radius: 99px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.07em;
+        }
+
+        .status-badge::before {
+            content: '';
+            width: 5px; height: 5px;
+            border-radius: 50%;
+            background: currentColor;
+        }
+
+        .status-pending  { background: var(--amber-dim);   color: var(--amber);   border: 1px solid rgba(245,158,11,0.3); }
+        .status-running  { background: var(--cyan-dim);    color: var(--cyan);    border: 1px solid rgba(34,211,238,0.3); animation: pulseStatus 1.5s ease-in-out infinite; }
+        .status-completed{ background: var(--emerald-dim); color: var(--emerald); border: 1px solid rgba(16,185,129,0.3); }
+        .status-failed, .status-error, .status-timeout { background: var(--rose-dim); color: var(--rose); border: 1px solid rgba(244,63,94,0.3); }
+
+        @keyframes pulseStatus {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(34,211,238,0.3); }
+            50%       { box-shadow: 0 0 0 4px rgba(34,211,238,0); }
+        }
+
+        /* Media results */
+        .result-image {
+            max-width: 100%;
+            max-height: 500px;
+            width: auto;
+            height: auto;
+            border-radius: var(--radius-sm);
+            margin: 1rem auto;
+            box-shadow: var(--shadow);
+            display: block;
+            border: 1px solid var(--border);
+        }
+
+        .result-video {
+            max-width: 100%;
+            max-height: 500px;
+            border-radius: var(--radius-sm);
+            margin: 1rem auto;
+            display: block;
+            border: 1px solid var(--border);
+        }
+
+        /* Logs */
+        .logs {
+            background: var(--void);
+            padding: 0.875rem 1rem;
+            border-radius: var(--radius-sm);
+            margin-top: 1rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.72rem;
+            max-height: 130px;
+            overflow-y: auto;
+            color: var(--text-muted);
+            border: 1px solid var(--border);
+            border-left: 2px solid var(--amber);
+            line-height: 1.7;
+        }
+        .logs::-webkit-scrollbar { width: 3px; }
+        .logs::-webkit-scrollbar-thumb { background: var(--amber); border-radius: 2px; }
+
+        /* Loading spinner */
         .loading {
             display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid rgba(0, 255, 136, 0.2);
-            border-top: 3px solid var(--primary);
+            width: 18px; height: 18px;
+            border: 2px solid rgba(139,92,246,0.2);
+            border-top: 2px solid var(--violet);
             border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin-left: 10px;
+            animation: spin 0.8s linear infinite;
+            margin-left: 8px;
+            vertical-align: middle;
         }
 
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
+        @keyframes spin { to { transform: rotate(360deg); } }
 
-        .grid-2 {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 1.25rem;
-        }
-
-        .grid-3 {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 1.25rem;
-        }
-
-        .grid-auto {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 1.25rem;
-        }
-
-        .form-row {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 1.25rem;
-        }
-
-        .form-row.cols-2 {
-            grid-template-columns: repeat(2, 1fr);
-        }
-
-        .form-row.cols-3 {
-            grid-template-columns: repeat(3, 1fr);
-        }
-
-        .alert {
-            padding: 1rem 1.25rem;
-            border-radius: 10px;
-            margin-bottom: 1.25rem;
-            font-weight: 500;
-            font-family: 'Space Mono', monospace;
-            font-size: 0.875rem;
-        }
-
-        .alert-info {
-            background: rgba(0, 170, 255, 0.15);
-            color: var(--info);
-            border: 1px solid var(--info);
-        }
-
-        .alert-warning {
-            background: rgba(255, 170, 0, 0.15);
-            color: var(--warning);
-            border: 1px solid var(--warning);
+        /* ═══════════════════════════════════════════
+           PAGINATION
+        ═══════════════════════════════════════════ */
+        #paginationContainer {
+            width: 100%;
+            display: block;
+            min-height: 50px;
+            margin-top: 1rem;
         }
 
         .pagination {
             display: flex;
             justify-content: center;
             align-items: center;
-            gap: 0.5rem;
-            margin-top: 0;
-            padding: 1.5rem 0;
+            gap: 0.375rem;
+            padding: 1.25rem 0;
             flex-wrap: wrap;
         }
 
         .pagination button {
-            padding: 0.625rem 1rem;
-            font-size: 0.875rem;
-            min-width: 40px;
-        }
-
-        .pagination .page-btn {
-            background: var(--bg-card);
+            padding: 7px 12px;
+            font-size: 0.65rem;
+            min-width: 36px;
+            background: var(--panel);
             border: 1px solid var(--border);
+            color: var(--text-dim);
+            box-shadow: none;
+            transform: none;
         }
 
-        .pagination .page-btn:hover:not(:disabled) {
-            border-color: var(--primary);
-            color: var(--primary);
+        .pagination button:hover:not(:disabled) {
+            background: var(--violet-dim);
+            color: var(--violet);
+            border-color: var(--border-bright);
+            transform: none;
+            box-shadow: none;
         }
 
+        .pagination button::after { display: none; }
+
+        .pagination .page-btn { }
         .pagination .page-btn.active {
-            background: var(--primary);
-            color: var(--bg-main);
-            border-color: var(--primary);
-        }
-
-        .pagination .page-btn:disabled {
-            opacity: 0.3;
+            background: var(--violet);
+            color: #fff;
+            border-color: var(--violet);
+            box-shadow: 0 0 12px var(--violet-glow);
         }
 
         .pagination-info {
             color: var(--text-muted);
-            font-family: 'Space Mono', monospace;
-            font-size: 0.8125rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
             text-align: center;
-            margin-top: 0.75rem;
+            margin-top: 0.5rem;
             flex-basis: 100%;
-        }
-
-        #paginationContainer {
-            width: 100%;
-            display: block;
-            visibility: visible;
-            clear: both;
-            min-height: 50px;
-            margin-top: 1rem;
         }
 
         .pagination-goto {
@@ -662,62 +1030,102 @@
             justify-content: center;
             align-items: center;
             gap: 0.625rem;
-            padding: 0.75rem 0 1rem;
+            padding: 0.5rem 0 1rem;
             flex-wrap: wrap;
         }
 
         .pagination-goto label {
             color: var(--text-muted);
-            font-family: 'Space Mono', monospace;
-            font-size: 0.8125rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
+            font-size: 0.68rem;
             margin: 0;
         }
 
         .pagination-goto input[type="number"] {
-            width: 72px;
-            padding: 0.5rem 0.75rem;
-            background: var(--bg-input);
+            width: 64px;
+            padding: 6px 10px;
+            background: var(--input-bg);
             border: 1px solid var(--border);
-            border-radius: 10px;
+            border-radius: var(--radius-sm);
             color: var(--text);
-            font-family: 'Space Mono', monospace;
-            font-size: 0.875rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
             text-align: center;
-            transition: all 0.3s;
             -moz-appearance: textfield;
         }
-
         .pagination-goto input[type="number"]::-webkit-inner-spin-button,
-        .pagination-goto input[type="number"]::-webkit-outer-spin-button {
-            -webkit-appearance: none;
+        .pagination-goto input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; }
+        .pagination-goto input[type="number"]:focus { outline: none; border-color: var(--violet); box-shadow: 0 0 0 2px var(--violet-dim); }
+        .pagination-goto button { padding: 6px 14px; font-size: 0.65rem; }
+
+        /* ═══════════════════════════════════════════
+           SIDEBAR OVERLAY (mobile)
+        ═══════════════════════════════════════════ */
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(4px);
+            z-index: 199;
         }
 
-        .pagination-goto input[type="number"]:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(0, 255, 136, 0.15);
+        /* ═══════════════════════════════════════════
+           PROMPT COUNTER
+        ═══════════════════════════════════════════ */
+        .prompt-wrap { position: relative; }
+        .prompt-counter {
+            position: absolute;
+            bottom: 8px;
+            right: 12px;
+            font-size: 0.68rem;
+            color: var(--text-muted);
+            font-family: 'JetBrains Mono', monospace;
+            pointer-events: none;
         }
 
-        .pagination-goto button {
-            padding: 0.5rem 1.25rem;
-            font-size: 0.8125rem;
+        /* ═══════════════════════════════════════════
+           SETTINGS SAVE BUTTON ROW
+        ═══════════════════════════════════════════ */
+        .btn-row {
+            display: flex;
+            gap: 0.75rem;
+            margin-top: 1.25rem;
+            flex-wrap: wrap;
         }
 
-        @media (max-width: 768px) {
-            .grid-2,
-            .grid-3,
+        /* ═══════════════════════════════════════════
+           SECTION compat shim (kept for JS)
+        ═══════════════════════════════════════════ */
+        .section { display: none; }
+        .section.collapsed { display: none; }
+
+        /* ═══════════════════════════════════════════
+           RESPONSIVE
+        ═══════════════════════════════════════════ */
+        @media (max-width: 900px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            .sidebar.open {
+                transform: translateX(0);
+                box-shadow: 30px 0 80px rgba(0,0,0,0.6);
+            }
+            .sidebar-overlay.open {
+                display: block;
+            }
+            .main-wrapper {
+                margin-left: 0;
+            }
+            .hamburger {
+                display: flex;
+            }
+        }
+
+        @media (max-width: 640px) {
             .form-row.cols-2,
-            .form-row.cols-3 {
+            .form-row.cols-3,
+            .grid-2, .grid-3 {
                 grid-template-columns: 1fr;
-            }
-            .container {
-                padding: 1rem;
-            }
-            .section {
-                padding: 1.25rem;
             }
             .btn-group {
                 flex-direction: column;
@@ -731,114 +1139,16 @@
             #tasksContainer {
                 grid-template-columns: 1fr;
             }
-        }
-
-        @media (max-width: 480px) {
-            h1 {
-                font-size: 1.5rem;
+            .tab-btn {
+                font-size: 0.6rem;
+                padding: 7px 8px;
             }
-            .subtitle {
-                font-size: 0.8125rem;
+            .content {
+                padding: 1rem;
             }
         }
-
-        /* ── Tab Navigation ── */
-        .tab-nav {
-            display: flex;
-            gap: 0.375rem;
-            margin-bottom: 1.5rem;
-            border-bottom: 2px solid var(--border);
-            padding-bottom: 0;
-            flex-wrap: wrap;
-        }
-
-        .tab-btn {
-            background: transparent;
-            border: none;
-            border-bottom: 3px solid transparent;
-            border-radius: 0;
-            color: var(--text-muted);
-            font-family: 'Space Mono', monospace;
-            font-size: 0.8125rem;
-            font-weight: 700;
-            padding: 0.625rem 1.25rem;
-            cursor: pointer;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            transition: all 0.2s ease;
-            margin-bottom: -2px;
-            box-shadow: none;
-            transform: none;
-        }
-
-        .tab-btn:hover {
-            color: var(--primary);
-            background: rgba(0, 255, 136, 0.05);
-            transform: none;
-            box-shadow: none;
-        }
-
-        .tab-btn:hover::after { display: none; }
-        .tab-btn::after { display: none; }
-
-        .tab-btn.active {
-            color: var(--primary);
-            border-bottom-color: var(--primary);
-            background: rgba(0, 255, 136, 0.07);
-        }
-
-        .tab-panel { display: block; }
-
-        /* ── Sub Tab Navigation ── */
-        .sub-tab-nav {
-            display: flex;
-            gap: 0.375rem;
-            margin-bottom: 1.25rem;
-            border-bottom: 2px solid var(--border);
-            flex-wrap: wrap;
-        }
-
-        .sub-tab-btn {
-            background: transparent;
-            border: none;
-            border-bottom: 3px solid transparent;
-            border-radius: 0;
-            color: var(--text-muted);
-            font-family: 'Space Mono', monospace;
-            font-size: 0.75rem;
-            font-weight: 700;
-            padding: 0.5rem 1rem;
-            cursor: pointer;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            transition: all 0.2s ease;
-            margin-bottom: -2px;
-            box-shadow: none;
-            transform: none;
-        }
-
-        .sub-tab-btn:hover {
-            color: var(--accent);
-            background: rgba(0, 170, 255, 0.05);
-            transform: none;
-            box-shadow: none;
-        }
-
-        .sub-tab-btn:hover::after { display: none; }
-        .sub-tab-btn::after { display: none; }
-
-        .sub-tab-btn.active {
-            color: var(--accent);
-            border-bottom-color: var(--accent);
-            background: rgba(0, 170, 255, 0.07);
-        }
-
-        .sub-tab-panel { display: block; }
 
         @media (min-width: 1200px) {
-            .grid-auto {
-                grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            }
             #tasksContainer {
                 grid-template-columns: repeat(auto-fill, minmax(450px, 1fr));
             }
@@ -846,266 +1156,383 @@
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>🎨 CreativeLabs API Interface</h1>
-        <p class="subtitle">Tüm API özelliklerini kullanabileceğiniz interaktif arayüz</p>
 
-        <!-- API Key Section -->
-        <div class="section">
-            <h2 onclick="toggleSection(this)">🔑 API Ayarları</h2>
-            <div class="section-content">
-                <div class="form-row cols-2">
-                    <div class="form-group">
-                        <label for="apiKey">API Key</label>
-                        <input type="text" id="apiKey" value="" placeholder="API anahtarınızı girin">
-                    </div>
-                    <div class="form-group">
-                        <label for="apiUrl">API Base URL</label>
-                        <input type="text" id="apiUrl" value="" placeholder="https://api.example.com">
-                    </div>
-                </div>
-                <div style="display: flex; gap: 0.75rem; margin-top: 1rem;">
-                    <button type="button" class="btn" onclick="saveApiSettings()">💾 Kaydet</button>
-                    <button type="button" class="btn" onclick="clearApiSettings()">🗑️ Temizle</button>
+    <!-- ══════════════ SIDEBAR ══════════════ -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-brand">
+            <div class="brand-logo">
+                <div class="brand-icon">🎬</div>
+                <div>
+                    <div>CreativeLabs</div>
+                    <div class="brand-subtitle">AI Studio Interface</div>
                 </div>
             </div>
         </div>
 
-        <!-- Quota Check Section -->
-        <div class="section collapsed">
-            <h2 onclick="toggleSection(this)">📊 Quota Kontrolü</h2>
-            <div class="section-content">
-                <button onclick="checkQuota()">Quota'yı Kontrol Et</button>
-                <div id="quotaResponse" class="response-box" style="display:none;"></div>
+        <nav class="sidebar-nav">
+            <div class="nav-section-label">Studio</div>
+
+            <a class="nav-item active" id="nav-settings" onclick="showPage('page-settings', this)">
+                <span class="nav-icon">🔑</span>
+                <span class="nav-label">API Ayarları</span>
+            </a>
+
+            <a class="nav-item" id="nav-quota" onclick="showPage('page-quota', this)">
+                <span class="nav-icon">📊</span>
+                <span class="nav-label">Quota Kontrolü</span>
+            </a>
+
+            <div class="nav-section-label">Üretim</div>
+
+            <a class="nav-item" id="nav-generate" onclick="showPage('page-generate', this)">
+                <span class="nav-icon">🎨</span>
+                <span class="nav-label">Oluşturma</span>
+                <span class="nav-badge">4 mod</span>
+            </a>
+
+            <a class="nav-item" id="nav-tasks" onclick="showPage('page-tasks', this)">
+                <span class="nav-icon">📋</span>
+                <span class="nav-label">Task Durumu</span>
+            </a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <div class="sidebar-footer-info">
+                <span class="status-dot"></span>API CONNECTED
             </div>
         </div>
+    </aside>
 
-        <!-- Generation Section (Tabbed) -->
-        <div class="section collapsed">
-            <h2 onclick="toggleSection(this)">🎨 Oluşturma</h2>
-            <div class="section-content">
+    <!-- Mobile overlay -->
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
 
-                <!-- Main Tabs -->
-                <div class="tab-nav">
-                    <button class="tab-btn active" onclick="switchTab('tab-t2i')">🖼️ Text to Image</button>
-                    <button class="tab-btn" onclick="switchTab('tab-i2i')">🔄 Image to Image</button>
-                    <button class="tab-btn" onclick="switchTab('tab-t2v')">🎬 Text to Video</button>
-                    <button class="tab-btn" onclick="switchTab('tab-i2v')">🎞️ Image to Video</button>
+    <!-- ══════════════ MAIN ══════════════ -->
+    <div class="main-wrapper">
+
+        <!-- Top bar -->
+        <header class="topbar">
+            <button class="hamburger" onclick="toggleSidebar()" aria-label="Menü">☰</button>
+            <div class="topbar-page-title" id="topbarPageTitle">API Ayarları</div>
+            <div class="topbar-spacer"></div>
+            <div class="topbar-pill">🎬 Studio v1.0</div>
+        </header>
+
+        <!-- ══ CONTENT ══ -->
+        <main class="content">
+
+            <!-- ─── PAGE: API SETTINGS ─── -->
+            <div class="page active" id="page-settings">
+                <div class="page-header">
+                    <div class="page-eyebrow">Yapılandırma</div>
+                    <div class="page-title">API <span>Ayarları</span></div>
+                    <div class="page-desc">API anahtarınızı ve bağlantı adresinizi kaydedin</div>
                 </div>
 
-                <!-- Text to Image -->
-                <div class="tab-panel" id="tab-t2i">
-                    <div class="form-group">
-                        <label for="imagePrompt">Prompt *</label>
-                        <div style="position:relative;">
-                            <textarea id="imagePrompt" maxlength="4000" oninput="updateCounter('imagePrompt','imagePromptCounter',4000)" placeholder="Oluşturmak istediğiniz görselin detaylı açıklaması...">A futuristic cyberpunk city at night with neon lights</textarea>
-                            <span id="imagePromptCounter" style="position:absolute;bottom:8px;right:12px;font-size:0.75rem;color:var(--text-muted);font-family:'Space Mono',monospace;">52/4000</span>
-                        </div>
-                    </div>
+                <div class="card">
+                    <div class="card-title">🔑 Kimlik Bilgileri</div>
                     <div class="form-row cols-2">
                         <div class="form-group">
-                            <label for="imageModel">Model</label>
-                            <select id="imageModel" onchange="onImageModelChange()">
-                                <option value="MODEL_FOUR_NANO_BANANA_PRO" selected>MODEL_FOUR_NANO_BANANA_PRO</option>
-                                <option value="MODEL_FOUR_NANO_BANANA">MODEL_FOUR_NANO_BANANA</option>
-                            </select>
+                            <label for="apiKey">API Key</label>
+                            <input type="text" id="apiKey" value="" placeholder="API anahtarınızı girin">
                         </div>
                         <div class="form-group">
-                            <label for="imageSize">Boyut (imageSize)</label>
-                            <select id="imageSize">
-                                <option value="SIXTEEN_BY_NINE" selected>SIXTEEN_BY_NINE (16:9)</option>
-                                <option value="NINE_BY_SIXTEEN">NINE_BY_SIXTEEN (9:16)</option>
-                                <option value="ONE_BY_ONE">ONE_BY_ONE (1:1)</option>
-                                <option value="THREE_BY_FOUR">THREE_BY_FOUR (3:4)</option>
-                                <option value="FOUR_BY_THREE">FOUR_BY_THREE (4:3)</option>
-                                <option value="THREE_BY_TWO">THREE_BY_TWO (3:2)</option>
-                            </select>
+                            <label for="apiUrl">API Base URL</label>
+                            <input type="text" id="apiUrl" value="" placeholder="https://api.example.com">
                         </div>
                     </div>
-                    <div class="form-group" id="imageResolutionGroup">
-                        <label for="imageResolution">Resolution (Sadece NANO_PRO için)</label>
-                        <select id="imageResolution">
-                            <option value="2K" selected>2K (Varsayılan)</option>
-                            <option value="1K">1K</option>
-                            <option value="4K">4K</option>
-                        </select>
+                    <div class="btn-row">
+                        <button type="button" onclick="saveApiSettings()">💾 Kaydet</button>
+                        <button type="button" class="btn-danger" onclick="clearApiSettings()">🗑️ Temizle</button>
                     </div>
-                    <button onclick="generateImage()">Görsel Oluştur</button>
-                    <div id="imageResponse" class="response-box" style="display:none;"></div>
+                </div>
+            </div>
+
+            <!-- ─── PAGE: QUOTA ─── -->
+            <div class="page" id="page-quota">
+                <div class="page-header">
+                    <div class="page-eyebrow">Sistem</div>
+                    <div class="page-title">Quota <span>Kontrolü</span></div>
+                    <div class="page-desc">Mevcut kapasitenizi ve çalışan task sayısını görün</div>
                 </div>
 
-                <!-- Image to Image -->
-                <div class="tab-panel" id="tab-i2i" style="display:none;">
-                    <div class="form-group">
-                        <label for="i2iPrompt">Prompt *</label>
-                        <div style="position:relative;">
-                            <textarea id="i2iPrompt" maxlength="4000" oninput="updateCounter('i2iPrompt','i2iPromptCounter',4000)" placeholder="Görseli nasıl dönüştürmek istediğinizi açıklayın..."></textarea>
-                            <span id="i2iPromptCounter" style="position:absolute;bottom:8px;right:12px;font-size:0.75rem;color:var(--text-muted);font-family:'Space Mono',monospace;">0/4000</span>
-                        </div>
-                    </div>
-                    <div class="form-row cols-2">
-                        <div class="form-group">
-                            <label for="i2iModel">Model</label>
-                            <select id="i2iModel" onchange="onI2iModelChange()">
-                                <option value="MODEL_FOUR_NANO_BANANA_PRO" selected>MODEL_FOUR_NANO_BANANA_PRO</option>
-                                <option value="MODEL_FOUR_NANO_BANANA">MODEL_FOUR_NANO_BANANA</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="i2iSize">Boyut (imageSize)</label>
-                            <select id="i2iSize">
-                                <option value="SIXTEEN_BY_NINE" selected>SIXTEEN_BY_NINE (16:9)</option>
-                                <option value="NINE_BY_SIXTEEN">NINE_BY_SIXTEEN (9:16)</option>
-                                <option value="ONE_BY_ONE">ONE_BY_ONE (1:1)</option>
-                                <option value="THREE_BY_FOUR">THREE_BY_FOUR (3:4)</option>
-                                <option value="FOUR_BY_THREE">FOUR_BY_THREE (4:3)</option>
-                                <option value="THREE_BY_TWO">THREE_BY_TWO (3:2)</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="form-group" id="i2iResolutionGroup">
-                        <label for="i2iResolution">Resolution (Sadece NANO_PRO için)</label>
-                        <select id="i2iResolution">
-                            <option value="2K" selected>2K (Varsayılan)</option>
-                            <option value="1K">1K</option>
-                            <option value="4K">4K</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="i2iRefImages">Reference Images (İsteğe bağlı — Maks. 5)</label>
-                        <div class="file-input-wrapper">
-                            <input type="file" id="i2iRefImages" accept="image/*" multiple onchange="onI2iRefChange(this)">
-                            <label for="i2iRefImages" class="file-input-label" id="i2iRefImagesLabel">Resim Seç (Maks. 5)</label>
-                        </div>
-                        <small style="color: #94a3b8; display: block; margin-top: 5px;">Birden fazla resim seçebilirsiniz (character references için)</small>
-                    </div>
-                    <button onclick="generateImageToImage()">Görsel Dönüştür</button>
-                    <div id="i2iResponse" class="response-box" style="display:none;"></div>
+                <div class="card">
+                    <div class="card-title">📊 Kullanım Durumu</div>
+                    <button onclick="checkQuota()">Quota'yı Kontrol Et</button>
+                    <div id="quotaResponse" class="response-box" style="display:none;"></div>
+                </div>
+            </div>
+
+            <!-- ─── PAGE: GENERATE ─── -->
+            <div class="page" id="page-generate">
+                <div class="page-header">
+                    <div class="page-eyebrow">Üretim Merkezi</div>
+                    <div class="page-title">İçerik <span>Oluşturma</span></div>
+                    <div class="page-desc">Görsel, video ve ses üretimi için tüm araçlar</div>
                 </div>
 
-                <!-- Text to Video -->
-                <div class="tab-panel" id="tab-t2v" style="display:none;">
-                    <div class="form-group">
-                        <label for="t2vPrompt">Prompt *</label>
-                        <div style="position:relative;">
-                            <textarea id="t2vPrompt" maxlength="2000" oninput="updateCounter('t2vPrompt','t2vPromptCounter',2000)" placeholder="Oluşturmak istediğiniz videonun detaylı açıklaması...">A serene ocean sunset with waves gently crashing on the shore, cinematic camera movement</textarea>
-                            <span id="t2vPromptCounter" style="position:absolute;bottom:8px;right:12px;font-size:0.75rem;color:var(--text-muted);font-family:'Space Mono',monospace;">87/2000</span>
-                        </div>
+                <div class="card">
+                    <!-- Main Tabs -->
+                    <div class="tab-nav">
+                        <button class="tab-btn active" onclick="switchTab('tab-t2i')">🖼️ Text to Image</button>
+                        <button class="tab-btn" onclick="switchTab('tab-i2i')">🔄 Image to Image</button>
+                        <button class="tab-btn" onclick="switchTab('tab-t2v')">🎬 Text to Video</button>
+                        <button class="tab-btn" onclick="switchTab('tab-i2v')">🎞️ Image to Video</button>
                     </div>
-                    <div class="form-row cols-2">
-                        <div class="form-group">
-                            <label for="t2vModel">Model</label>
-                            <select id="t2vModel">
-                                <option value="SORA2" selected>SORA2 (10 saniye)</option>
-                                <option value="VEO_3_1">VEO_3_1 (8 saniye)</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="t2vSize">Boyut (size)</label>
-                            <select id="t2vSize">
-                                <option value="SIXTEEN_BY_NINE" selected>SIXTEEN_BY_NINE (16:9)</option>
-                                <option value="NINE_BY_SIXTEEN">NINE_BY_SIXTEEN (9:16)</option>
-                            </select>
-                        </div>
-                    </div>
-                    <button onclick="generateTextToVideo()">Video Oluştur</button>
-                    <div id="t2vResponse" class="response-box" style="display:none;"></div>
-                </div>
 
-                <!-- Image to Video -->
-                <div class="tab-panel" id="tab-i2v" style="display:none;">
-                    <div class="form-group">
-                        <label for="i2vPrompt">Prompt *</label>
-                        <div style="position:relative;">
-                            <textarea id="i2vPrompt" maxlength="2000" oninput="updateCounter('i2vPrompt','i2vPromptCounter',2000)" placeholder="Oluşturmak istediğiniz videonun detaylı açıklaması..."></textarea>
-                            <span id="i2vPromptCounter" style="position:absolute;bottom:8px;right:12px;font-size:0.75rem;color:var(--text-muted);font-family:'Space Mono',monospace;">0/2000</span>
-                        </div>
-                    </div>
-                    <div class="form-row cols-2">
+                    <!-- Text to Image -->
+                    <div class="tab-panel" id="tab-t2i">
                         <div class="form-group">
-                            <label for="i2vModel">Model</label>
-                            <select id="i2vModel" onchange="onI2vModelChange()">
-                                <option value="SORA2" selected>SORA2 (10 saniye)</option>
-                                <option value="VEO_3_1">VEO_3_1 (8 saniye)</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="i2vSize">Boyut (size)</label>
-                            <select id="i2vSize">
-                                <option value="SIXTEEN_BY_NINE" selected>SIXTEEN_BY_NINE (16:9)</option>
-                                <option value="NINE_BY_SIXTEEN">NINE_BY_SIXTEEN (9:16)</option>
-                            </select>
-                        </div>
-                    </div>
-                    <!-- Sub Tabs -->
-                    <div class="sub-tab-nav" id="i2vSubTabNav" style="display:none;">
-                        <button class="sub-tab-btn active" onclick="switchSubTab('subtab-startend')">🎬 Start / End Frame</button>
-                        <button class="sub-tab-btn" onclick="switchSubTab('subtab-refimages')">🖼️ Reference Images</button>
-                    </div>
-                    <!-- Start / End Frame -->
-                    <div class="sub-tab-panel" id="subtab-startend">
-                        <div class="form-group">
-                            <label for="i2vStartFrame">Start Frame *</label>
-                            <div class="file-input-wrapper">
-                                <input type="file" id="i2vStartFrame" accept="image/*" onchange="updateFileLabel(this, 'i2vStartFrameLabel')">
-                                <label for="i2vStartFrame" class="file-input-label" id="i2vStartFrameLabel">Resim Seç</label>
+                            <label for="imagePrompt">Prompt *</label>
+                            <div class="prompt-wrap">
+                                <textarea id="imagePrompt" maxlength="4000" oninput="updateCounter('imagePrompt','imagePromptCounter',4000)" placeholder="Oluşturmak istediğiniz görselin detaylı açıklaması...">A futuristic cyberpunk city at night with neon lights</textarea>
+                                <span id="imagePromptCounter" class="prompt-counter">52/4000</span>
                             </div>
                         </div>
-                        <div class="form-group" id="i2vEndFrameGroup" style="display:none;">
-                            <label for="i2vEndFrame">End Frame *</label>
-                            <div class="file-input-wrapper">
-                                <input type="file" id="i2vEndFrame" accept="image/*" onchange="updateFileLabel(this, 'i2vEndFrameLabel')">
-                                <label for="i2vEndFrame" class="file-input-label" id="i2vEndFrameLabel">Resim Seç</label>
+                        <div class="form-row cols-2">
+                            <div class="form-group">
+                                <label for="imageModel">Model</label>
+                                <select id="imageModel" onchange="onImageModelChange()">
+                                    <option value="MODEL_FOUR_NANO_BANANA_PRO" selected>MODEL_FOUR_NANO_BANANA_PRO</option>
+                                    <option value="MODEL_FOUR_NANO_BANANA">MODEL_FOUR_NANO_BANANA</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="imageSize">Boyut (imageSize)</label>
+                                <select id="imageSize">
+                                    <option value="SIXTEEN_BY_NINE" selected>SIXTEEN_BY_NINE (16:9)</option>
+                                    <option value="NINE_BY_SIXTEEN">NINE_BY_SIXTEEN (9:16)</option>
+                                    <option value="ONE_BY_ONE">ONE_BY_ONE (1:1)</option>
+                                    <option value="THREE_BY_FOUR">THREE_BY_FOUR (3:4)</option>
+                                    <option value="FOUR_BY_THREE">FOUR_BY_THREE (4:3)</option>
+                                    <option value="THREE_BY_TWO">THREE_BY_TWO (3:2)</option>
+                                </select>
                             </div>
                         </div>
+                        <div class="form-group" id="imageResolutionGroup">
+                            <label for="imageResolution">Resolution (Sadece NANO_PRO için)</label>
+                            <select id="imageResolution">
+                                <option value="2K" selected>2K (Varsayılan)</option>
+                                <option value="1K">1K</option>
+                                <option value="4K">4K</option>
+                            </select>
+                        </div>
+                        <button onclick="generateImage()">✨ Görsel Oluştur</button>
+                        <div id="imageResponse" class="response-box" style="display:none;"></div>
                     </div>
-                    <!-- Reference Images -->
-                    <div class="sub-tab-panel" id="subtab-refimages" style="display:none;">
+
+                    <!-- Image to Image -->
+                    <div class="tab-panel" id="tab-i2i" style="display:none;">
                         <div class="form-group">
-                            <label for="i2vRefImages">Reference Images (Maks. 3 — Sadece VEO_3_1)</label>
-                            <div class="file-input-wrapper">
-                                <input type="file" id="i2vRefImages" accept="image/*" multiple onchange="onI2vRefChange(this)">
-                                <label for="i2vRefImages" class="file-input-label" id="i2vRefImagesLabel">Resim Seç (Maks. 3)</label>
+                            <label for="i2iPrompt">Prompt *</label>
+                            <div class="prompt-wrap">
+                                <textarea id="i2iPrompt" maxlength="4000" oninput="updateCounter('i2iPrompt','i2iPromptCounter',4000)" placeholder="Görseli nasıl dönüştürmek istediğinizi açıklayın..."></textarea>
+                                <span id="i2iPromptCounter" class="prompt-counter">0/4000</span>
                             </div>
-                            <small style="color: #94a3b8; display: block; margin-top: 5px;">En fazla 3 referans görsel seçilebilir</small>
                         </div>
+                        <div class="form-row cols-2">
+                            <div class="form-group">
+                                <label for="i2iModel">Model</label>
+                                <select id="i2iModel" onchange="onI2iModelChange()">
+                                    <option value="MODEL_FOUR_NANO_BANANA_PRO" selected>MODEL_FOUR_NANO_BANANA_PRO</option>
+                                    <option value="MODEL_FOUR_NANO_BANANA">MODEL_FOUR_NANO_BANANA</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="i2iSize">Boyut (imageSize)</label>
+                                <select id="i2iSize">
+                                    <option value="SIXTEEN_BY_NINE" selected>SIXTEEN_BY_NINE (16:9)</option>
+                                    <option value="NINE_BY_SIXTEEN">NINE_BY_SIXTEEN (9:16)</option>
+                                    <option value="ONE_BY_ONE">ONE_BY_ONE (1:1)</option>
+                                    <option value="THREE_BY_FOUR">THREE_BY_FOUR (3:4)</option>
+                                    <option value="FOUR_BY_THREE">FOUR_BY_THREE (4:3)</option>
+                                    <option value="THREE_BY_TWO">THREE_BY_TWO (3:2)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group" id="i2iResolutionGroup">
+                            <label for="i2iResolution">Resolution (Sadece NANO_PRO için)</label>
+                            <select id="i2iResolution">
+                                <option value="2K" selected>2K (Varsayılan)</option>
+                                <option value="1K">1K</option>
+                                <option value="4K">4K</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="i2iRefImages">Reference Images (İsteğe bağlı — Maks. 5)</label>
+                            <div class="file-input-wrapper">
+                                <input type="file" id="i2iRefImages" accept="image/*" multiple onchange="onI2iRefChange(this)">
+                                <label for="i2iRefImages" class="file-input-label" id="i2iRefImagesLabel">Resim Seç (Maks. 5)</label>
+                            </div>
+                            <small style="color: var(--text-muted); display: block; margin-top: 5px; font-size: 0.75rem;">Birden fazla resim seçebilirsiniz (character references için)</small>
+                        </div>
+                        <button onclick="generateImageToImage()">🔄 Görsel Dönüştür</button>
+                        <div id="i2iResponse" class="response-box" style="display:none;"></div>
                     </div>
-                    <button onclick="generateImageToVideo()" style="margin-top:1.25rem;">Video Oluştur</button>
-                    <div id="i2vResponse" class="response-box" style="display:none;"></div>
+
+                    <!-- Text to Video -->
+                    <div class="tab-panel" id="tab-t2v" style="display:none;">
+                        <div class="form-group">
+                            <label for="t2vPrompt">Prompt *</label>
+                            <div class="prompt-wrap">
+                                <textarea id="t2vPrompt" maxlength="2000" oninput="updateCounter('t2vPrompt','t2vPromptCounter',2000)" placeholder="Oluşturmak istediğiniz videonun detaylı açıklaması...">A serene ocean sunset with waves gently crashing on the shore, cinematic camera movement</textarea>
+                                <span id="t2vPromptCounter" class="prompt-counter">87/2000</span>
+                            </div>
+                        </div>
+                        <div class="form-row cols-2">
+                            <div class="form-group">
+                                <label for="t2vModel">Model</label>
+                                <select id="t2vModel">
+                                    <option value="SORA2" selected>SORA2 (10 saniye)</option>
+                                    <option value="VEO_3_1">VEO_3_1 (8 saniye)</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="t2vSize">Boyut (size)</label>
+                                <select id="t2vSize">
+                                    <option value="SIXTEEN_BY_NINE" selected>SIXTEEN_BY_NINE (16:9)</option>
+                                    <option value="NINE_BY_SIXTEEN">NINE_BY_SIXTEEN (9:16)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button onclick="generateTextToVideo()">🎬 Video Oluştur</button>
+                        <div id="t2vResponse" class="response-box" style="display:none;"></div>
+                    </div>
+
+                    <!-- Image to Video -->
+                    <div class="tab-panel" id="tab-i2v" style="display:none;">
+                        <div class="form-group">
+                            <label for="i2vPrompt">Prompt *</label>
+                            <div class="prompt-wrap">
+                                <textarea id="i2vPrompt" maxlength="2000" oninput="updateCounter('i2vPrompt','i2vPromptCounter',2000)" placeholder="Oluşturmak istediğiniz videonun detaylı açıklaması..."></textarea>
+                                <span id="i2vPromptCounter" class="prompt-counter">0/2000</span>
+                            </div>
+                        </div>
+                        <div class="form-row cols-2">
+                            <div class="form-group">
+                                <label for="i2vModel">Model</label>
+                                <select id="i2vModel" onchange="onI2vModelChange()">
+                                    <option value="SORA2" selected>SORA2 (10 saniye)</option>
+                                    <option value="VEO_3_1">VEO_3_1 (8 saniye)</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="i2vSize">Boyut (size)</label>
+                                <select id="i2vSize">
+                                    <option value="SIXTEEN_BY_NINE" selected>SIXTEEN_BY_NINE (16:9)</option>
+                                    <option value="NINE_BY_SIXTEEN">NINE_BY_SIXTEEN (9:16)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <!-- Sub Tabs -->
+                        <div class="sub-tab-nav" id="i2vSubTabNav" style="display:none;">
+                            <button class="sub-tab-btn active" onclick="switchSubTab('subtab-startend')">🎬 Start / End Frame</button>
+                            <button class="sub-tab-btn" onclick="switchSubTab('subtab-refimages')">🖼️ Reference Images</button>
+                        </div>
+                        <!-- Start / End Frame -->
+                        <div class="sub-tab-panel" id="subtab-startend">
+                            <div class="form-group">
+                                <label for="i2vStartFrame">Start Frame *</label>
+                                <div class="file-input-wrapper">
+                                    <input type="file" id="i2vStartFrame" accept="image/*" onchange="updateFileLabel(this, 'i2vStartFrameLabel')">
+                                    <label for="i2vStartFrame" class="file-input-label" id="i2vStartFrameLabel">Resim Seç</label>
+                                </div>
+                            </div>
+                            <div class="form-group" id="i2vEndFrameGroup" style="display:none;">
+                                <label for="i2vEndFrame">End Frame *</label>
+                                <div class="file-input-wrapper">
+                                    <input type="file" id="i2vEndFrame" accept="image/*" onchange="updateFileLabel(this, 'i2vEndFrameLabel')">
+                                    <label for="i2vEndFrame" class="file-input-label" id="i2vEndFrameLabel">Resim Seç</label>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Reference Images -->
+                        <div class="sub-tab-panel" id="subtab-refimages" style="display:none;">
+                            <div class="form-group">
+                                <label for="i2vRefImages">Reference Images (Maks. 3 — Sadece VEO_3_1)</label>
+                                <div class="file-input-wrapper">
+                                    <input type="file" id="i2vRefImages" accept="image/*" multiple onchange="onI2vRefChange(this)">
+                                    <label for="i2vRefImages" class="file-input-label" id="i2vRefImagesLabel">Resim Seç (Maks. 3)</label>
+                                </div>
+                                <small style="color: var(--text-muted); display: block; margin-top: 5px; font-size: 0.75rem;">En fazla 3 referans görsel seçilebilir</small>
+                            </div>
+                        </div>
+                        <button onclick="generateImageToVideo()" style="margin-top:1.25rem;">🎞️ Video Oluştur</button>
+                        <div id="i2vResponse" class="response-box" style="display:none;"></div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- ─── PAGE: TASK STATUS ─── -->
+            <div class="page" id="page-tasks">
+                <div class="page-header">
+                    <div class="page-eyebrow">İzleme</div>
+                    <div class="page-title">Task <span>Durumu</span></div>
+                    <div class="page-desc">Görev takibi ve otomatik yenileme</div>
                 </div>
 
+                <div class="card">
+                    <div class="card-title">🔍 Sorgulama</div>
+                    <div class="form-group">
+                        <label for="taskId">Task ID (İsteğe bağlı - boş bırakırsanız tüm tasklar gösterilir)</label>
+                        <input type="text" id="taskId" placeholder="Örn: abc123-def456">
+                    </div>
+                    <div class="btn-group">
+                        <button onclick="checkTaskStatus()">🔎 Durumu Kontrol Et</button>
+                        <button class="btn-secondary" onclick="checkAllTasks()">📋 Tüm Taskleri Göster</button>
+                        <button class="btn-amber" onclick="startAutoRefresh()">⏱️ Otomatik Yenileme Başlat (5sn)</button>
+                        <button class="btn-danger" onclick="stopAutoRefresh()">⏹️ Otomatik Yenileme Durdur</button>
+                    </div>
+                    <div id="statusResponse" class="response-box" style="display:none;"></div>
+                    <div id="tasksContainer"></div>
+                    <div id="paginationContainer"></div>
+                </div>
             </div>
-        </div>
 
-        <!-- Task Status Section -->
-        <div class="section collapsed">
-            <h2 onclick="toggleSection(this)">📋 Task Durumu Kontrolü</h2>
-            <div class="section-content">
-            <div class="form-group">
-                <label for="taskId">Task ID (İsteğe bağlı - boş bırakırsanız tüm tasklar gösterilir)</label>
-                <input type="text" id="taskId" placeholder="Örn: abc123-def456">
-            </div>
-            <div class="btn-group">
-                <button onclick="checkTaskStatus()">Durumu Kontrol Et</button>
-                <button class="btn-secondary" onclick="checkAllTasks()">Tüm Taskleri Göster</button>
-                <button class="btn-secondary" onclick="startAutoRefresh()">Otomatik Yenileme Başlat (5sn)</button>
-                <button class="btn-danger" onclick="stopAutoRefresh()">Otomatik Yenileme Durdur</button>
-            </div>
-            <div id="statusResponse" class="response-box" style="display:none;"></div>
-            <div id="tasksContainer"></div>
-            <div id="paginationContainer"></div>
-            </div>
-        </div>
+        </main>
     </div>
 
     <script>
-        // Accordion toggle function
+        /* ══════════════════════════════════════
+           PAGE NAVIGATION (sidebar)
+        ══════════════════════════════════════ */
+        const PAGE_TITLES = {
+            'page-settings': 'API Ayarları',
+            'page-quota':    'Quota Kontrolü',
+            'page-generate': 'İçerik Oluşturma',
+            'page-tasks':    'Task Durumu',
+        };
+
+        function showPage(pageId, navEl) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.getElementById(pageId).classList.add('active');
+            if (navEl) navEl.classList.add('active');
+            document.getElementById('topbarPageTitle').textContent = PAGE_TITLES[pageId] || '';
+            closeSidebar();
+        }
+
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('open');
+            document.getElementById('sidebarOverlay').classList.toggle('open');
+        }
+
+        function closeSidebar() {
+            document.getElementById('sidebar').classList.remove('open');
+            document.getElementById('sidebarOverlay').classList.remove('open');
+        }
+
+        /* ══════════════════════════════════════
+           ACCORDION COMPAT SHIM (JS kept intact)
+        ══════════════════════════════════════ */
         function toggleSection(headerElement) {
             const section = headerElement.parentElement;
             section.classList.toggle('collapsed');
         }
 
-        // LocalStorage functions
+        /* ══════════════════════════════════════
+           LOCALSTORAGE — API SETTINGS
+        ══════════════════════════════════════ */
         function saveApiSettings() {
             const apiKey = document.getElementById('apiKey').value.trim();
             const apiUrl = document.getElementById('apiUrl').value.trim();
@@ -1216,7 +1643,7 @@
 
             // Image-to-Image için base64 dönüşümü
             const fileInput = document.getElementById('imageFile');
-            if (fileInput.files && fileInput.files.length > 0) {
+            if (fileInput && fileInput.files && fileInput.files.length > 0) {
                 const images = [];
                 for (let i = 0; i < fileInput.files.length; i++) {
                     const base64 = await fileToBase64(fileInput.files[i]);
@@ -1505,7 +1932,7 @@
         function displayTaskCard(taskId, taskData) {
             const container = document.getElementById('tasksContainer');
             const paginationContainer = document.getElementById('paginationContainer');
-            const section = document.querySelector('.section:has(#tasksContainer)');
+            const section = document.querySelector('.card:has(#tasksContainer)');
             const statusClass = `status-${taskData.status}`;
             
             // Add single task view class
@@ -1561,7 +1988,7 @@
         function displayAllTasks(data) {
             const container = document.getElementById('tasksContainer');
             const paginationContainer = document.getElementById('paginationContainer');
-            const section = document.querySelector('.section:has(#tasksContainer)');
+            const section = document.querySelector('.card:has(#tasksContainer)');
             
             // Remove single task view class
             if (section) {
@@ -1662,7 +2089,7 @@
                         </button>
                     `;
                 } else if (i === currentPage - 2 || i === currentPage + 2) {
-                    paginationHTML += '<span style="color: #94a3b8;">...</span>';
+                    paginationHTML += '<span style="color: var(--text-muted);">...</span>';
                 }
             }
             
