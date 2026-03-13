@@ -162,6 +162,8 @@
             font-size: 1rem;
             flex-shrink: 0;
             box-shadow: 0 0 20px var(--violet-glow);
+            -webkit-text-fill-color: initial;
+            color: white;
         }
 
         .brand-subtitle {
@@ -695,8 +697,10 @@
             font-size: 0.78rem;
             max-height: 380px;
             overflow-y: auto;
+            overflow-x: hidden;
             white-space: pre-wrap;
             word-wrap: break-word;
+            word-break: break-all;
             line-height: 1.7;
             border-left: 3px solid var(--violet);
         }
@@ -756,6 +760,10 @@
             transform: none;
             flex: 1;
             white-space: nowrap;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
         }
         .tab-btn::after  { display: none; }
         .tab-btn:hover   { color: var(--text); background: var(--violet-dim); transform: none; box-shadow: none; }
@@ -809,6 +817,8 @@
             gap: 1.25rem;
             margin-top: 1.5rem;
             margin-bottom: 2rem;
+            width: 100%;
+            min-width: 0;
         }
 
         .single-task-view #tasksContainer { display: block; }
@@ -823,6 +833,10 @@
             break-inside: avoid;
             position: relative;
             overflow: hidden;
+            min-width: 0;
+            max-width: 100%;
+            overflow-wrap: break-word;
+            word-break: break-word;
         }
 
         .task-card::after {
@@ -849,6 +863,14 @@
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
+            max-width: 100%;
+        }
+
+        @media (max-width: 640px) {
+            .task-card h3 {
+                white-space: normal;
+                word-break: break-all;
+            }
         }
 
         .task-info {
@@ -1139,9 +1161,25 @@
             #tasksContainer {
                 grid-template-columns: 1fr;
             }
+            /* 2×2 grid for mode tabs, icons stacked above text */
+            .tab-nav {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 3px;
+                padding: 3px;
+            }
             .tab-btn {
-                font-size: 0.6rem;
-                padding: 7px 8px;
+                flex-direction: column;
+                gap: 4px;
+                font-size: 0.58rem;
+                padding: 9px 4px;
+                white-space: normal;
+                text-align: center;
+                letter-spacing: 0.04em;
+            }
+            .tab-icon {
+                font-size: 1.1rem;
+                line-height: 1;
             }
             .content {
                 padding: 1rem;
@@ -1214,7 +1252,7 @@
             <button class="hamburger" onclick="toggleSidebar()" aria-label="Menü">☰</button>
             <div class="topbar-page-title" id="topbarPageTitle">API Ayarları</div>
             <div class="topbar-spacer"></div>
-            <div class="topbar-pill">🎬 Studio v1.0</div>
+
         </header>
 
         <!-- ══ CONTENT ══ -->
@@ -1273,10 +1311,10 @@
                 <div class="card">
                     <!-- Main Tabs -->
                     <div class="tab-nav">
-                        <button class="tab-btn active" onclick="switchTab('tab-t2i')">🖼️ Text to Image</button>
-                        <button class="tab-btn" onclick="switchTab('tab-i2i')">🔄 Image to Image</button>
-                        <button class="tab-btn" onclick="switchTab('tab-t2v')">🎬 Text to Video</button>
-                        <button class="tab-btn" onclick="switchTab('tab-i2v')">🎞️ Image to Video</button>
+                        <button class="tab-btn active" onclick="switchTab('tab-t2i')"><span class="tab-icon">🖼️</span> Text to Image</button>
+                        <button class="tab-btn" onclick="switchTab('tab-i2i')"><span class="tab-icon">🔄</span> Image to Image</button>
+                        <button class="tab-btn" onclick="switchTab('tab-t2v')"><span class="tab-icon">🎬</span> Text to Video</button>
+                        <button class="tab-btn" onclick="switchTab('tab-i2v')"><span class="tab-icon">🎞️</span> Image to Video</button>
                     </div>
 
                     <!-- Text to Image -->
@@ -1438,10 +1476,10 @@
                                 </div>
                             </div>
                             <div class="form-group" id="i2vEndFrameGroup" style="display:none;">
-                                <label for="i2vEndFrame">End Frame *</label>
+                                <label for="i2vEndFrame" id="i2vEndFrameLabel">End Frame *</label>
                                 <div class="file-input-wrapper">
-                                    <input type="file" id="i2vEndFrame" accept="image/*" onchange="updateFileLabel(this, 'i2vEndFrameLabel')">
-                                    <label for="i2vEndFrame" class="file-input-label" id="i2vEndFrameLabel">Resim Seç</label>
+                                    <input type="file" id="i2vEndFrame" accept="image/*" onchange="updateFileLabel(this, 'i2vEndFrameLabel2')">
+                                    <label for="i2vEndFrame" class="file-input-label" id="i2vEndFrameLabel2">Resim Seç</label>
                                 </div>
                             </div>
                         </div>
@@ -1673,6 +1711,12 @@
 
             // End Frame: sadece VEO_3_1'de göster
             document.getElementById('i2vEndFrameGroup').style.display = isVeo ? 'block' : 'none';
+
+            // End Frame label: VEO_3_1'de isteğe bağlı olduğunu belirt
+            const endFrameLabel = document.getElementById('i2vEndFrameLabel');
+            if (endFrameLabel) {
+                endFrameLabel.textContent = isVeo ? 'End Frame (isteğe bağlı)' : 'End Frame *';
+            }
 
             // Reference Images paneli: sadece VEO_3_1'de erişilebilir
             document.getElementById('subtab-refimages').style.display = 'none';
