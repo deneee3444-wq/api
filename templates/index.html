@@ -2012,6 +2012,14 @@
                 ).join('')}</div>`
                 : '';
 
+            const frameImagesHTML = [
+                taskData.start_frame_url ? `<a href="${taskData.start_frame_url}" target="_blank"><img src="${taskData.start_frame_url}" style="height:60px;border-radius:6px;margin:4px;object-fit:cover;" title="Start Frame"></a>` : '',
+                taskData.end_frame_url   ? `<a href="${taskData.end_frame_url}"   target="_blank"><img src="${taskData.end_frame_url}"   style="height:60px;border-radius:6px;margin:4px;object-fit:cover;" title="End Frame"></a>`   : ''
+            ].filter(Boolean).join('');
+            const frameHTML = frameImagesHTML
+                ? `<div class="task-info-item" style="grid-column:1/-1"><strong>${taskData.start_frame_url && taskData.end_frame_url ? 'Start / End Frame:' : taskData.start_frame_url ? 'Start Frame:' : 'End Frame:'}</strong><br>${frameImagesHTML}</div>`
+                : '';
+
             container.innerHTML = `
                 <div class="task-card">
                     <h3>Task: ${taskId}</h3>
@@ -2024,6 +2032,7 @@
                         <div class="task-info-item">
                             <strong>Sonuç URL:</strong> <a href="${taskData.result_url}" target="_blank">Aç</a>
                         </div>` : ''}
+                        ${frameHTML}
                         ${refImagesHTML}
                     </div>
                     ${logsHTML}
@@ -2084,6 +2093,14 @@
                     ).join('')}</div>`
                     : '';
 
+                const frameImagesHTML2 = [
+                    taskData.start_frame_url ? `<a href="${taskData.start_frame_url}" target="_blank"><img src="${taskData.start_frame_url}" style="height:60px;border-radius:6px;margin:4px;object-fit:cover;" title="Start Frame"></a>` : '',
+                    taskData.end_frame_url   ? `<a href="${taskData.end_frame_url}"   target="_blank"><img src="${taskData.end_frame_url}"   style="height:60px;border-radius:6px;margin:4px;object-fit:cover;" title="End Frame"></a>`   : ''
+                ].filter(Boolean).join('');
+                const frameHTML2 = frameImagesHTML2
+                    ? `<div class="task-info-item" style="grid-column:1/-1"><strong>${taskData.start_frame_url && taskData.end_frame_url ? 'Start / End Frame:' : taskData.start_frame_url ? 'Start Frame:' : 'End Frame:'}</strong><br>${frameImagesHTML2}</div>`
+                    : '';
+
                 const card = document.createElement('div');
                 card.className = 'task-card';
                 card.innerHTML = `
@@ -2097,6 +2114,7 @@
                         <div class="task-info-item">
                             <strong>Sonuç URL:</strong> <a href="${taskData.result_url}" target="_blank">Aç</a>
                         </div>` : ''}
+                        ${frameHTML2}
                         ${refImagesHTML}
                     </div>
                     ${logsHTML}
