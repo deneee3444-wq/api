@@ -41,6 +41,28 @@ ELEVENLABS_API_KEY = "sk_d7cd9c0991b928ab3a7b9f04b0dedfcd7d56d790f2cca302"
 ELEVENLABS_TTS_URL = "https://api.elevenlabs.io/v1/text-to-speech"
 ELEVENLABS_VOICES_URL = "https://api.elevenlabs.io/v1/voices"
 
+# Frontend model name → Deevid model version mapping
+IMAGE_MODEL_MAP = {
+    'NANO_BANANA_PRO': 'MODEL_FOUR_NANO_BANANA_PRO',
+    'NANO_BANANA':     'MODEL_FOUR_NANO_BANANA',
+    'NANO_BANANA_2':   'MODEL_FOUR_NANO_BANANA_2',
+}
+
+VIDEO_MODEL_MAP = {
+    'SORA_2': 'SORA2',
+    'VEO_3':  'VEO_3_1',
+}
+
+# Frontend size value → Deevid size value mapping
+SIZE_MAP = {
+    '16:9': 'SIXTEEN_BY_NINE',
+    '9:16': 'NINE_BY_SIXTEEN',
+    '1:1':  'ONE_BY_ONE',
+    '3:4':  'THREE_BY_FOUR',
+    '4:3':  'FOUR_BY_THREE',
+    '3:2':  'THREE_BY_TWO',
+}
+
 DEVICE_HEADERS = {
     "x-device": "TABLET",
     "x-device-id": "3401879229",
@@ -192,16 +214,19 @@ def process_image_task(task_id, params, api_key_id):
                     db.release_account(api_key_id, account['email'])
                     return
 
-            model_version = params.get('model', 'MODEL_FOUR_NANO_BANANA_PRO')
+            model_version_raw = params.get('model', 'NANO_BANANA_PRO')
+            model_version = IMAGE_MODEL_MAP.get(model_version_raw, model_version_raw)
+            image_size_raw = params.get('imageSize', '16:9')
+            image_size = SIZE_MAP.get(image_size_raw, image_size_raw)
             payload = {
                 "prompt": params.get('prompt', ''),
-                "imageSize": params.get('imageSize', 'SIXTEEN_BY_NINE'),
+                "imageSize": image_size,
                 "count": 1,
                 "modelType": "MODEL_FOUR",
                 "modelVersion": model_version
             }
             
-            if model_version == 'MODEL_FOUR_NANO_BANANA_PRO':
+            if model_version in ('MODEL_FOUR_NANO_BANANA_PRO', 'MODEL_FOUR_NANO_BANANA_2'):
                 payload["resolution"] = params.get('resolution', '2K')
                 
             if user_image_ids:
@@ -277,8 +302,11 @@ def process_video_task(task_id, params, api_key_id):
 
             headers = {"authorization": f"Bearer {token}", **DEVICE_HEADERS}
             
-            # Model parametresini al (varsayılan: SORA2)
-            model = params.get('model', 'SORA2')
+            # Model parametresini al ve Deevid formatına çevir
+            model_raw = params.get('model', 'SORA_2')
+            model = VIDEO_MODEL_MAP.get(model_raw, model_raw)
+            size_raw = params.get('size', '16:9')
+            size = SIZE_MAP.get(size_raw, size_raw)
             is_i2v = params.get('image') is not None
             
             # VEO_3_1 modeli için
@@ -289,7 +317,7 @@ def process_video_task(task_id, params, api_key_id):
                     "resolution": "720p",
                     "lengthOfSecond": 8,
                     "aiPromptEnhance": params.get('aiPromptEnhance', True),
-                    "size": params.get('size', 'SIXTEEN_BY_NINE'),
+                    "size": size,
                     "addEndFrame": bool(end_frame),
                     "modelType": "MODEL_FIVE",
                     "modelVersion": "MODEL_FIVE_FAST_3"
@@ -333,7 +361,7 @@ def process_video_task(task_id, params, api_key_id):
                         "prompt": params.get('prompt', ''),
                         "resolution": "720p",
                         "duration": 8,
-                        "size": params.get('size', 'SIXTEEN_BY_NINE'),
+                        "size": size,
                         "aiPromptEnhance": params.get('aiPromptEnhance', True),
                         "modelVersion": "MODEL_FIVE_FAST_3",
                         "userImageIds": ref_ids
@@ -347,7 +375,7 @@ def process_video_task(task_id, params, api_key_id):
                     "resolution": "720p",
                     "lengthOfSecond": 10,
                     "aiPromptEnhance": True,
-                    "size": params.get('size', 'SIXTEEN_BY_NINE'),
+                    "size": size,
                     "addEndFrame": False
                 }
 
@@ -756,9 +784,9 @@ def generate_image():
         }), 429
     
     task_id = str(uuid.uuid4())
-    model = data.get('model', 'MODEL_FOUR_NANO_BANANA_PRO')
-    size = data.get('imageSize', 'SIXTEEN_BY_NINE')
-    resolution = data.get('resolution', '2K') if model == 'MODEL_FOUR_NANO_BANANA_PRO' else None
+    model = data.get('model', 'NANO_BANANA_PRO')
+    size = data.get('imageSize', '16:9')
+    resolution = data.get('resolution', '2K') if model in ('NANO_BANANA_PRO', 'NANO_BANANA_2') else None
     db.create_task(api_key_id, task_id, 'image',
                    prompt=data.get('prompt'),
                    model=model,
@@ -785,10 +813,10 @@ def generate_video():
     if db.get_account_count(api_key_id) == 0:
         return jsonify({"error": "No accounts available"}), 503
 
-    if data.get('model') == 'VEO_3_1' and data.get('end_frame') and not data.get('image'):
+    if data.get('model') == 'VEO_3' and data.get('end_frame') and not data.get('image'):
         return jsonify({"error": "end_frame requires image (start frame) to be provided"}), 400
 
-    if data.get('model') == 'VEO_3_1':
+    if data.get('model') == 'VEO_3':
         reference_images = data.get('reference_images', [])
         if isinstance(reference_images, list) and len(reference_images) > 3:
             return jsonify({"error": "Maximum 3 reference images allowed"}), 400
@@ -803,10 +831,10 @@ def generate_video():
         }), 429
     
     task_id = str(uuid.uuid4())
-    model = data.get('model', 'SORA2')
-    size = data.get('size', 'SIXTEEN_BY_NINE')
+    model = data.get('model', 'SORA_2')
+    size = data.get('size', '16:9')
     resolution = '720p'
-    duration = 8 if model == 'VEO_3_1' else 10
+    duration = 8 if model == 'VEO_3' else 10
     db.create_task(api_key_id, task_id, 'video',
                    prompt=data.get('prompt'),
                    model=model,
