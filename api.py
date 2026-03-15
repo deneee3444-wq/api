@@ -48,6 +48,7 @@ IMAGE_MODEL_MAP = {
     'NANO_BANANA_2':   'MODEL_FOUR_NANO_BANANA_2',
 }
 
+
 # Frontend size value → Deevid size value mapping
 SIZE_MAP = {
     '16:9': 'SIXTEEN_BY_NINE',
@@ -406,12 +407,20 @@ def process_video_task(task_id, params, api_key_id):
             db.add_task_log(task_id, f"API Task ID: {api_task_id}")
 
             data_obj = resp_json['data']['data']
-            ref_urls = data_obj.get('originalImageNameUrls') or []
-            end_frame_url = data_obj.get('endFrameUserImageUrl')
-            if end_frame_url:
-                ref_urls = ref_urls + [end_frame_url]
-            if ref_urls:
-                db.update_task_reference_urls(task_id, ref_urls)
+            orig_urls = data_obj.get('originalImageNameUrls') or []
+            end_frame_resp_url = data_obj.get('endFrameUserImageUrl')
+
+            reference_images = params.get("reference_images", [])
+            if reference_images:
+                # Karakter/referans görseller → reference_image_urls
+                if orig_urls:
+                    db.update_task_reference_urls(task_id, orig_urls)
+            else:
+                # Start / end frame → ayrı kolonlara kaydet
+                start_url = orig_urls[0] if orig_urls else None
+                end_url = end_frame_resp_url if end_frame_resp_url else None
+                if start_url or end_url:
+                    db.update_task_frame_urls(task_id, start_frame_url=start_url, end_frame_url=end_url)
             
             for _ in range(600):
                 if _shutdown_event.wait(5):
@@ -730,7 +739,7 @@ def resume_incomplete_tasks():
 
 TASK_FIELDS_BY_MODE = {
     'image': ['task_id', 'mode', 'status', 'result_url', 'prompt', 'model', 'size', 'resolution', 'reference_image_urls', 'logs', 'created_at'],
-    'video': ['task_id', 'mode', 'status', 'result_url', 'prompt', 'model', 'size', 'resolution', 'duration', 'reference_image_urls', 'logs', 'created_at'],
+    'video': ['task_id', 'mode', 'status', 'result_url', 'prompt', 'model', 'size', 'resolution', 'duration', 'start_frame_url', 'end_frame_url', 'reference_image_urls', 'logs', 'created_at'],
     'tts':   ['task_id', 'mode', 'status', 'result_url', 'prompt', 'model', 'logs', 'created_at'],
 }
 
