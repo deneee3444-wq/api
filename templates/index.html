@@ -1748,7 +1748,7 @@
         function onI2iModelChange() {
             const model = document.getElementById('i2iModel').value;
             document.getElementById('i2iResolutionGroup').style.display =
-                model === 'NANO_BANANA_PRO' ? 'block' : 'none';
+                (model === 'NANO_BANANA_PRO' || model === 'NANO_BANANA_2') ? 'block' : 'none';
         }
 
         async function generateImageToImage() {
