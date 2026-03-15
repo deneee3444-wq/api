@@ -1,2257 +1,1018 @@
-<!DOCTYPE html>
-<html lang="tr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CreativeLabs API Interface</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
-    <style>
-        /* ═══════════════════════════════════════════
-           ROOT TOKENS — DEEP CINEMA PALETTE
-        ═══════════════════════════════════════════ */
-        :root {
-            --void:        #03020a;
-            --depth:       #07050f;
-            --surface:     #0e0b1a;
-            --elevated:    #161223;
-            --panel:       #1c1830;
-            --input-bg:    #120f1e;
-            --border:      rgba(139,92,246,0.15);
-            --border-bright: rgba(139,92,246,0.4);
-
-            --violet:      #8b5cf6;
-            --violet-glow: rgba(139,92,246,0.25);
-            --violet-dim:  rgba(139,92,246,0.1);
-            --amber:       #f59e0b;
-            --amber-glow:  rgba(245,158,11,0.2);
-            --amber-dim:   rgba(245,158,11,0.08);
-            --cyan:        #22d3ee;
-            --cyan-dim:    rgba(34,211,238,0.1);
-            --rose:        #f43f5e;
-            --rose-dim:    rgba(244,63,94,0.12);
-            --emerald:     #10b981;
-            --emerald-dim: rgba(16,185,129,0.12);
-
-            --text:        #ede9ff;
-            --text-dim:    #9b93b8;
-            --text-muted:  #5a5270;
-
-            --sidebar-w:   270px;
-            --topbar-h:    60px;
-            --radius:      14px;
-            --radius-sm:   8px;
-            --shadow:      0 20px 60px rgba(0,0,0,0.8);
-            --transition:  0.25s cubic-bezier(0.4,0,0.2,1);
-
-            --success: var(--emerald);
-            --error:   var(--rose);
-            --warning: var(--amber);
-            --info:    var(--cyan);
-            --primary: var(--violet);
-            --primary-dark: #6d28d9;
-            --secondary: #4f46e5;
-            --accent: var(--cyan);
-            --bg-main: var(--void);
-            --bg-card: var(--elevated);
-            --bg-input: var(--input-bg);
-        }
-
-        /* ═══════════════════════════════════════════
-           RESET & BASE
-        ═══════════════════════════════════════════ */
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-        html { scroll-behavior: smooth; }
-
-        body {
-            font-family: 'Outfit', sans-serif;
-            background: var(--void);
-            color: var(--text);
-            min-height: 100vh;
-            overflow-x: hidden;
-            display: flex;
-        }
-
-        /* Film grain overlay */
-        body::before {
-            content: '';
-            position: fixed;
-            inset: 0;
-            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
-            background-size: 200px;
-            pointer-events: none;
-            z-index: 9999;
-            opacity: 0.6;
-        }
-
-        /* Ambient background glow */
-        body::after {
-            content: '';
-            position: fixed;
-            inset: 0;
-            background:
-                radial-gradient(ellipse 80% 50% at 20% 10%, rgba(139,92,246,0.07) 0%, transparent 60%),
-                radial-gradient(ellipse 60% 40% at 80% 80%, rgba(245,158,11,0.05) 0%, transparent 60%),
-                radial-gradient(ellipse 50% 60% at 60% 30%, rgba(34,211,238,0.03) 0%, transparent 50%);
-            pointer-events: none;
-            z-index: 0;
-        }
-
-        /* ═══════════════════════════════════════════
-           SCROLLBAR
-        ═══════════════════════════════════════════ */
-        ::-webkit-scrollbar { width: 5px; height: 5px; }
-        ::-webkit-scrollbar-track { background: var(--void); }
-        ::-webkit-scrollbar-thumb { background: var(--violet-dim); border-radius: 99px; }
-        ::-webkit-scrollbar-thumb:hover { background: var(--violet); }
-
-        /* ═══════════════════════════════════════════
-           SIDEBAR
-        ═══════════════════════════════════════════ */
-        .sidebar {
-            position: fixed;
-            top: 0; left: 0; bottom: 0;
-            width: var(--sidebar-w);
-            background: var(--depth);
-            border-right: 1px solid var(--border);
-            display: flex;
-            flex-direction: column;
-            z-index: 200;
-            transition: transform var(--transition);
-            overflow: hidden;
-        }
-
-        /* Sidebar inner glow */
-        .sidebar::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0;
-            height: 300px;
-            background: radial-gradient(ellipse at top left, rgba(139,92,246,0.12), transparent 70%);
-            pointer-events: none;
-        }
-
-        .sidebar-brand {
-            padding: 22px 20px 18px;
-            border-bottom: 1px solid var(--border);
-            position: relative;
-        }
-
-        .brand-logo {
-            font-family: 'Orbitron', monospace;
-            font-weight: 900;
-            font-size: 1.05rem;
-            letter-spacing: 0.06em;
-            background: linear-gradient(135deg, var(--violet) 0%, var(--cyan) 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .brand-icon {
-            width: 34px; height: 34px;
-            background: linear-gradient(135deg, var(--violet), var(--cyan));
-            border-radius: 9px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1rem;
-            flex-shrink: 0;
-            box-shadow: 0 0 20px var(--violet-glow);
-            -webkit-text-fill-color: initial;
-            color: white;
-        }
-
-        .brand-subtitle {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.6rem;
-            color: var(--text-muted);
-            letter-spacing: 0.12em;
-            text-transform: uppercase;
-            margin-top: 4px;
-        }
-
-        .sidebar-nav {
-            flex: 1;
-            padding: 16px 12px;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
-
-        .nav-section-label {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.6rem;
-            text-transform: uppercase;
-            letter-spacing: 0.14em;
-            color: var(--text-muted);
-            padding: 10px 10px 6px;
-        }
-
-        .nav-item {
-            display: flex;
-            align-items: center;
-            gap: 11px;
-            padding: 11px 14px;
-            border-radius: var(--radius-sm);
-            cursor: pointer;
-            transition: all var(--transition);
-            font-size: 0.875rem;
-            font-weight: 500;
-            color: var(--text-dim);
-            border: 1px solid transparent;
-            position: relative;
-            text-decoration: none;
-        }
-
-        .nav-item .nav-icon {
-            font-size: 1.05rem;
-            width: 22px;
-            text-align: center;
-            flex-shrink: 0;
-        }
-
-        .nav-item .nav-label { flex: 1; }
-
-        .nav-item .nav-badge {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.6rem;
-            background: var(--violet-dim);
-            color: var(--violet);
-            border: 1px solid var(--border-bright);
-            border-radius: 99px;
-            padding: 1px 7px;
-        }
-
-        .nav-item:hover {
-            background: var(--violet-dim);
-            color: var(--text);
-            border-color: var(--border);
-        }
-
-        .nav-item.active {
-            background: linear-gradient(135deg, rgba(139,92,246,0.18), rgba(34,211,238,0.06));
-            color: var(--violet);
-            border-color: var(--border-bright);
-            box-shadow: 0 0 20px rgba(139,92,246,0.1);
-        }
-
-        .nav-item.active::before {
-            content: '';
-            position: absolute;
-            left: -1px; top: 20%; bottom: 20%;
-            width: 3px;
-            background: var(--violet);
-            border-radius: 0 3px 3px 0;
-            box-shadow: 0 0 10px var(--violet);
-        }
-
-        .sidebar-footer {
-            padding: 14px 16px;
-            border-top: 1px solid var(--border);
-        }
-
-        .sidebar-footer-info {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.6rem;
-            color: var(--text-muted);
-            text-align: center;
-            letter-spacing: 0.08em;
-        }
-
-        .status-dot {
-            display: inline-block;
-            width: 6px; height: 6px;
-            border-radius: 50%;
-            background: var(--emerald);
-            box-shadow: 0 0 6px var(--emerald);
-            animation: statusPulse 2s ease-in-out infinite;
-            margin-right: 5px;
-        }
-
-        @keyframes statusPulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.4; }
-        }
-
-        /* ═══════════════════════════════════════════
-           MAIN LAYOUT
-        ═══════════════════════════════════════════ */
-        .main-wrapper {
-            margin-left: var(--sidebar-w);
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-            position: relative;
-            z-index: 1;
-        }
-
-        /* ═══════════════════════════════════════════
-           TOPBAR
-        ═══════════════════════════════════════════ */
-        .topbar {
-            height: var(--topbar-h);
-            background: rgba(7,5,15,0.85);
-            backdrop-filter: blur(20px);
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            padding: 0 24px;
-            gap: 14px;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-
-        .hamburger {
-            display: none;
-            background: none;
-            border: 1px solid var(--border);
-            color: var(--text-dim);
-            width: 36px; height: 36px;
-            border-radius: var(--radius-sm);
-            cursor: pointer;
-            font-size: 1.1rem;
-            align-items: center;
-            justify-content: center;
-            transition: all var(--transition);
-            padding: 0;
-            box-shadow: none;
-            transform: none;
-        }
-        .hamburger::after { display: none; }
-        .hamburger:hover { background: var(--violet-dim); color: var(--violet); transform: none; box-shadow: none; }
-
-        .topbar-page-title {
-            font-family: 'Orbitron', monospace;
-            font-size: 0.8rem;
-            font-weight: 700;
-            letter-spacing: 0.1em;
-            color: var(--text);
-            text-transform: uppercase;
-        }
-
-        .topbar-spacer { flex: 1; }
-
-        .topbar-pill {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.65rem;
-            color: var(--cyan);
-            background: var(--cyan-dim);
-            border: 1px solid rgba(34,211,238,0.2);
-            border-radius: 99px;
-            padding: 4px 12px;
-            letter-spacing: 0.06em;
-        }
-
-        /* ═══════════════════════════════════════════
-           PAGE CONTENT
-        ═══════════════════════════════════════════ */
-        .content {
-            flex: 1;
-            padding: clamp(1rem, 3vw, 2rem);
-        }
-
-        .page { display: none; }
-        .page.active { display: block; }
-
-        .page-header {
-            margin-bottom: 2rem;
-        }
-
-        .page-eyebrow {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.65rem;
-            letter-spacing: 0.16em;
-            text-transform: uppercase;
-            color: var(--violet);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 8px;
-        }
-
-        .page-eyebrow::before {
-            content: '';
-            width: 20px; height: 1px;
-            background: var(--violet);
-        }
-
-        .page-title {
-            font-family: 'Orbitron', monospace;
-            font-size: clamp(1.4rem, 3vw, 2rem);
-            font-weight: 900;
-            letter-spacing: -0.01em;
-            color: var(--text);
-        }
-
-        .page-title span { color: var(--violet); }
-
-        .page-desc {
-            color: var(--text-dim);
-            font-size: 0.875rem;
-            margin-top: 6px;
-        }
-
-        /* ═══════════════════════════════════════════
-           CARDS / PANELS
-        ═══════════════════════════════════════════ */
-        .card {
-            background: var(--elevated);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: clamp(1.25rem, 3vw, 1.75rem);
-            margin-bottom: 1.25rem;
-            position: relative;
-            overflow: hidden;
-            transition: border-color var(--transition), box-shadow var(--transition);
-        }
-
-        .card::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0;
-            height: 1px;
-            background: linear-gradient(90deg, transparent, rgba(139,92,246,0.4), transparent);
-        }
-
-        .card:hover {
-            border-color: rgba(139,92,246,0.3);
-            box-shadow: 0 8px 40px rgba(139,92,246,0.08);
-        }
-
-        .card-title {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.7rem;
-            text-transform: uppercase;
-            letter-spacing: 0.12em;
-            color: var(--violet);
-            margin-bottom: 1.25rem;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .card-title::after {
-            content: '';
-            flex: 1;
-            height: 1px;
-            background: var(--border);
-        }
-
-        /* ═══════════════════════════════════════════
-           QUOTA STATS
-        ═══════════════════════════════════════════ */
-        .quota-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-            gap: 1rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .quota-stat {
-            background: var(--panel);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-sm);
-            padding: 1rem;
-            text-align: center;
-        }
-
-        .quota-stat-num {
-            font-family: 'Orbitron', monospace;
-            font-size: 1.8rem;
-            font-weight: 700;
-            color: var(--violet);
-        }
-
-        .quota-stat-label {
-            font-size: 0.72rem;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            margin-top: 4px;
-        }
-
-        /* ═══════════════════════════════════════════
-           FORM ELEMENTS
-        ═══════════════════════════════════════════ */
-        .form-group { margin-bottom: 1.25rem; }
-
-        label {
-            display: block;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.68rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-            color: var(--text-dim);
-            margin-bottom: 0.5rem;
-        }
-
-        input[type="text"],
-        textarea,
-        select {
-            width: 100%;
-            padding: 0.875rem 1rem;
-            background: var(--input-bg);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-sm);
-            color: var(--text);
-            font-size: 0.9rem;
-            font-family: 'Outfit', sans-serif;
-            transition: all var(--transition);
-            outline: none;
-        }
-
-        input[type="text"]:focus,
-        textarea:focus,
-        select:focus {
-            border-color: var(--violet);
-            box-shadow: 0 0 0 3px var(--violet-glow), 0 0 20px rgba(139,92,246,0.1);
-        }
-
-        input[type="text"]:hover:not(:focus),
-        textarea:hover:not(:focus),
-        select:hover:not(:focus) {
-            border-color: rgba(139,92,246,0.3);
-        }
-
-        select {
-            cursor: pointer;
-            appearance: none;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238b5cf6' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
-            background-repeat: no-repeat;
-            background-position: right 12px center;
-            padding-right: 2.5rem;
-        }
-
-        select option {
-            background: var(--surface);
-            color: var(--text);
-        }
-
-        textarea {
-            resize: vertical;
-            min-height: 110px;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.82rem;
-            line-height: 1.7;
-        }
-
-        input[type="file"] { display: none; }
-
-        input[type="checkbox"] {
-            width: 18px; height: 18px;
-            cursor: pointer;
-            accent-color: var(--violet);
-        }
-
-        .checkbox-group {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-        }
-
-        .file-input-wrapper {
-            position: relative;
-            display: inline-block;
-            width: 100%;
-        }
-
-        .file-input-label {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.75rem;
-            width: 100%;
-            padding: 0.875rem 1rem;
-            background: var(--input-bg);
-            border: 2px dashed rgba(139,92,246,0.25);
-            border-radius: var(--radius-sm);
-            color: var(--text-muted);
-            font-size: 0.875rem;
-            font-family: 'Outfit', sans-serif;
-            cursor: pointer;
-            transition: all var(--transition);
-            text-align: center;
-        }
-
-        .file-input-label::before {
-            content: '📁';
-            font-size: 1.3rem;
-        }
-
-        .file-input-label:hover {
-            border-color: var(--violet);
-            background: var(--violet-dim);
-            color: var(--violet);
-        }
-
-        .file-selected {
-            border-color: var(--violet);
-            border-style: solid;
-            background: rgba(139,92,246,0.08);
-            color: var(--violet);
-        }
-
-        .file-selected::before { content: '✓'; }
-
-        /* ═══════════════════════════════════════════
-           BUTTONS
-        ═══════════════════════════════════════════ */
-        button {
-            background: linear-gradient(135deg, var(--violet) 0%, #6d28d9 100%);
-            border: none;
-            padding: 0.75rem 1.5rem;
-            border-radius: var(--radius-sm);
-            color: #fff;
-            font-family: 'Orbitron', monospace;
-            font-size: 0.72rem;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all var(--transition);
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-            position: relative;
-            overflow: hidden;
-            box-shadow: 0 4px 20px rgba(139,92,246,0.25);
-        }
-
-        button::after {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(135deg, rgba(255,255,255,0.15), transparent);
-            opacity: 0;
-            transition: opacity var(--transition);
-        }
-
-        button:hover::after { opacity: 1; }
-        button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 30px rgba(139,92,246,0.4);
-        }
-        button:active { transform: translateY(0); }
-
-        button:disabled {
-            background: var(--panel);
-            color: var(--text-muted);
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
-            border: 1px solid var(--border);
-        }
-        button:disabled::after { display: none; }
-
-        .btn-secondary {
-            background: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%);
-            box-shadow: 0 4px 20px rgba(79,70,229,0.25);
-        }
-        .btn-secondary:hover { box-shadow: 0 8px 30px rgba(79,70,229,0.4); }
-
-        .btn-danger {
-            background: linear-gradient(135deg, var(--rose) 0%, #be123c 100%);
-            box-shadow: 0 4px 20px rgba(244,63,94,0.2);
-        }
-        .btn-danger:hover { box-shadow: 0 8px 30px rgba(244,63,94,0.4); }
-
-        .btn-amber {
-            background: linear-gradient(135deg, var(--amber) 0%, #d97706 100%);
-            box-shadow: 0 4px 20px rgba(245,158,11,0.2);
-            color: #000;
-        }
-        .btn-amber:hover { box-shadow: 0 8px 30px rgba(245,158,11,0.4); }
-
-        .btn-group {
-            display: flex;
-            gap: 0.75rem;
-            flex-wrap: wrap;
-        }
-
-        /* ═══════════════════════════════════════════
-           FORM ROWS / GRIDS
-        ═══════════════════════════════════════════ */
-        .form-row { display: grid; grid-template-columns: 1fr; gap: 1.25rem; }
-        .form-row.cols-2 { grid-template-columns: repeat(2, 1fr); }
-        .form-row.cols-3 { grid-template-columns: repeat(3, 1fr); }
-        .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.25rem; }
-        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; }
-        .grid-auto { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.25rem; }
-
-        /* ═══════════════════════════════════════════
-           RESPONSE BOX
-        ═══════════════════════════════════════════ */
-        .response-box {
-            background: var(--void);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-sm);
-            padding: 1.25rem;
-            margin-top: 1.25rem;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.78rem;
-            max-height: 380px;
-            overflow-y: auto;
-            overflow-x: hidden;
-            white-space: pre-wrap;
-            word-wrap: break-word;
-            word-break: break-all;
-            line-height: 1.7;
-            border-left: 3px solid var(--violet);
-        }
-
-        .response-box::-webkit-scrollbar { width: 4px; }
-        .response-box::-webkit-scrollbar-thumb { background: var(--violet-dim); border-radius: 2px; }
-
-        /* ═══════════════════════════════════════════
-           STATUS COLORS
-        ═══════════════════════════════════════════ */
-        .success { color: var(--emerald); font-weight: 600; }
-        .error    { color: var(--rose);    font-weight: 600; }
-        .warning  { color: var(--amber);   font-weight: 600; }
-        .info     { color: var(--cyan);    font-weight: 600; }
-
-        /* ═══════════════════════════════════════════
-           ALERTS
-        ═══════════════════════════════════════════ */
-        .alert {
-            padding: 0.875rem 1.25rem;
-            border-radius: var(--radius-sm);
-            margin-bottom: 1.25rem;
-            font-size: 0.875rem;
-            border: 1px solid;
-        }
-        .alert-info    { background: var(--cyan-dim);    color: var(--cyan);    border-color: rgba(34,211,238,0.3); }
-        .alert-warning { background: var(--amber-dim);   color: var(--amber);   border-color: rgba(245,158,11,0.3); }
-
-        /* ═══════════════════════════════════════════
-           TABS (Main)
-        ═══════════════════════════════════════════ */
-        .tab-nav {
-            display: flex;
-            gap: 0;
-            margin-bottom: 1.75rem;
-            background: var(--void);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-sm);
-            padding: 4px;
-            flex-wrap: wrap;
-        }
-
-        .tab-btn {
-            background: transparent;
-            border: none;
-            border-radius: 6px;
-            color: var(--text-muted);
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.7rem;
-            font-weight: 700;
-            padding: 8px 14px;
-            cursor: pointer;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            transition: all var(--transition);
-            box-shadow: none;
-            transform: none;
-            flex: 1;
-            white-space: nowrap;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-        }
-        .tab-btn::after  { display: none; }
-        .tab-btn:hover   { color: var(--text); background: var(--violet-dim); transform: none; box-shadow: none; }
-        .tab-btn.active  { background: var(--violet); color: #fff; box-shadow: 0 2px 12px rgba(139,92,246,0.4); }
-
-        .tab-panel { display: block; }
-
-        /* ═══════════════════════════════════════════
-           SUB-TABS (VEO inner tabs)
-        ═══════════════════════════════════════════ */
-        .sub-tab-nav {
-            display: flex;
-            gap: 0;
-            margin-bottom: 1.25rem;
-            background: var(--input-bg);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-sm);
-            padding: 3px;
-            flex-wrap: wrap;
-        }
-
-        .sub-tab-btn {
-            background: transparent;
-            border: none;
-            border-radius: 5px;
-            color: var(--text-muted);
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.65rem;
-            font-weight: 700;
-            padding: 7px 12px;
-            cursor: pointer;
-            text-transform: uppercase;
-            letter-spacing: 0.07em;
-            transition: all var(--transition);
-            box-shadow: none;
-            transform: none;
-            flex: 1;
-        }
-        .sub-tab-btn::after { display: none; }
-        .sub-tab-btn:hover  { color: var(--cyan); background: var(--cyan-dim); transform: none; box-shadow: none; }
-        .sub-tab-btn.active { background: linear-gradient(135deg, rgba(34,211,238,0.2), rgba(139,92,246,0.15)); color: var(--cyan); }
-
-        .sub-tab-panel { display: block; }
-
-        /* ═══════════════════════════════════════════
-           TASK CARDS
-        ═══════════════════════════════════════════ */
-        #tasksContainer {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(min(100%, 400px), 1fr));
-            gap: 1.25rem;
-            margin-top: 1.5rem;
-            margin-bottom: 2rem;
-            width: 100%;
-            min-width: 0;
-        }
-
-        .single-task-view #tasksContainer { display: block; }
-        .single-task-view .task-card { max-width: 100%; }
-
-        .task-card {
-            background: var(--elevated);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 1.5rem;
-            transition: all var(--transition);
-            break-inside: avoid;
-            position: relative;
-            overflow: hidden;
-            min-width: 0;
-            max-width: 100%;
-            overflow-wrap: break-word;
-            word-break: break-word;
-        }
-
-        .task-card::after {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0;
-            height: 2px;
-            background: linear-gradient(90deg, transparent, var(--violet), transparent);
-            opacity: 0;
-            transition: opacity var(--transition);
-        }
-
-        .task-card:hover {
-            border-color: var(--border-bright);
-            box-shadow: 0 8px 30px rgba(139,92,246,0.1);
-        }
-        .task-card:hover::after { opacity: 1; }
-
-        .task-card h3 {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.78rem;
-            color: var(--text-dim);
-            margin-bottom: 1rem;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            max-width: 100%;
-        }
-
-        @media (max-width: 640px) {
-            .task-card h3 {
-                white-space: normal;
-                word-break: break-all;
-            }
-        }
-
-        .task-info {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-            gap: 0.625rem;
-            margin-top: 1rem;
-        }
-
-        .task-info-item {
-            background: var(--panel);
-            padding: 0.625rem 0.875rem;
-            border-radius: var(--radius-sm);
-            font-size: 0.82rem;
-            color: var(--text-dim);
-            border: 1px solid transparent;
-        }
-
-        .task-info-item strong {
-            color: var(--violet);
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.68rem;
-            text-transform: uppercase;
-            display: block;
-            margin-bottom: 2px;
-        }
-
-        .task-info-item a {
-            color: var(--cyan);
-            text-decoration: none;
-            transition: color var(--transition);
-        }
-        .task-info-item a:hover { color: var(--violet); text-decoration: underline; }
-
-        /* Status badges */
-        .status-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            padding: 4px 10px;
-            border-radius: 99px;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.65rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.07em;
-        }
-
-        .status-badge::before {
-            content: '';
-            width: 5px; height: 5px;
-            border-radius: 50%;
-            background: currentColor;
-        }
-
-        .status-pending  { background: var(--amber-dim);   color: var(--amber);   border: 1px solid rgba(245,158,11,0.3); }
-        .status-running  { background: var(--cyan-dim);    color: var(--cyan);    border: 1px solid rgba(34,211,238,0.3); animation: pulseStatus 1.5s ease-in-out infinite; }
-        .status-completed{ background: var(--emerald-dim); color: var(--emerald); border: 1px solid rgba(16,185,129,0.3); }
-        .status-failed, .status-error, .status-timeout { background: var(--rose-dim); color: var(--rose); border: 1px solid rgba(244,63,94,0.3); }
-
-        @keyframes pulseStatus {
-            0%, 100% { box-shadow: 0 0 0 0 rgba(34,211,238,0.3); }
-            50%       { box-shadow: 0 0 0 4px rgba(34,211,238,0); }
-        }
-
-        /* Media results */
-        .result-image {
-            max-width: 100%;
-            max-height: 500px;
-            width: auto;
-            height: auto;
-            border-radius: var(--radius-sm);
-            margin: 1rem auto;
-            box-shadow: var(--shadow);
-            display: block;
-            border: 1px solid var(--border);
-        }
-
-        .result-video {
-            max-width: 100%;
-            max-height: 500px;
-            border-radius: var(--radius-sm);
-            margin: 1rem auto;
-            display: block;
-            border: 1px solid var(--border);
-        }
-
-        /* Logs */
-        .logs {
-            background: var(--void);
-            padding: 0.875rem 1rem;
-            border-radius: var(--radius-sm);
-            margin-top: 1rem;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.72rem;
-            max-height: 130px;
-            overflow-y: auto;
-            color: var(--text-muted);
-            border: 1px solid var(--border);
-            border-left: 2px solid var(--amber);
-            line-height: 1.7;
-        }
-        .logs::-webkit-scrollbar { width: 3px; }
-        .logs::-webkit-scrollbar-thumb { background: var(--amber); border-radius: 2px; }
-
-        /* Loading spinner */
-        .loading {
-            display: inline-block;
-            width: 18px; height: 18px;
-            border: 2px solid rgba(139,92,246,0.2);
-            border-top: 2px solid var(--violet);
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-            margin-left: 8px;
-            vertical-align: middle;
-        }
-
-        @keyframes spin { to { transform: rotate(360deg); } }
-
-        /* ═══════════════════════════════════════════
-           PAGINATION
-        ═══════════════════════════════════════════ */
-        #paginationContainer {
-            width: 100%;
-            display: block;
-            min-height: 50px;
-            margin-top: 1rem;
-        }
-
-        .pagination {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 0.375rem;
-            padding: 1.25rem 0;
-            flex-wrap: wrap;
-        }
-
-        .pagination button {
-            padding: 7px 12px;
-            font-size: 0.65rem;
-            min-width: 36px;
-            background: var(--panel);
-            border: 1px solid var(--border);
-            color: var(--text-dim);
-            box-shadow: none;
-            transform: none;
-        }
-
-        .pagination button:hover:not(:disabled) {
-            background: var(--violet-dim);
-            color: var(--violet);
-            border-color: var(--border-bright);
-            transform: none;
-            box-shadow: none;
-        }
-
-        .pagination button::after { display: none; }
-
-        .pagination .page-btn { }
-        .pagination .page-btn.active {
-            background: var(--violet);
-            color: #fff;
-            border-color: var(--violet);
-            box-shadow: 0 0 12px var(--violet-glow);
-        }
-
-        .pagination-info {
-            color: var(--text-muted);
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.7rem;
-            text-align: center;
-            margin-top: 0.5rem;
-            flex-basis: 100%;
-        }
-
-        .pagination-goto {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 0.625rem;
-            padding: 0.5rem 0 1rem;
-            flex-wrap: wrap;
-        }
-
-        .pagination-goto label {
-            color: var(--text-muted);
-            font-size: 0.68rem;
-            margin: 0;
-        }
-
-        .pagination-goto input[type="number"] {
-            width: 64px;
-            padding: 6px 10px;
-            background: var(--input-bg);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-sm);
-            color: var(--text);
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.8rem;
-            text-align: center;
-            -moz-appearance: textfield;
-        }
-        .pagination-goto input[type="number"]::-webkit-inner-spin-button,
-        .pagination-goto input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; }
-        .pagination-goto input[type="number"]:focus { outline: none; border-color: var(--violet); box-shadow: 0 0 0 2px var(--violet-dim); }
-        .pagination-goto button { padding: 6px 14px; font-size: 0.65rem; }
-
-        /* ═══════════════════════════════════════════
-           SIDEBAR OVERLAY (mobile)
-        ═══════════════════════════════════════════ */
-        .sidebar-overlay {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.7);
-            backdrop-filter: blur(4px);
-            z-index: 199;
-        }
-
-        /* ═══════════════════════════════════════════
-           PROMPT COUNTER
-        ═══════════════════════════════════════════ */
-        .prompt-wrap { position: relative; }
-        .prompt-counter {
-            position: absolute;
-            bottom: 8px;
-            right: 12px;
-            font-size: 0.68rem;
-            color: var(--text-muted);
-            font-family: 'JetBrains Mono', monospace;
-            pointer-events: none;
-        }
-
-        /* ═══════════════════════════════════════════
-           SETTINGS SAVE BUTTON ROW
-        ═══════════════════════════════════════════ */
-        .btn-row {
-            display: flex;
-            gap: 0.75rem;
-            margin-top: 1.25rem;
-            flex-wrap: wrap;
-        }
-
-        /* ═══════════════════════════════════════════
-           SECTION compat shim (kept for JS)
-        ═══════════════════════════════════════════ */
-        .section { display: none; }
-        .section.collapsed { display: none; }
-
-        /* ═══════════════════════════════════════════
-           RESPONSIVE
-        ═══════════════════════════════════════════ */
-        @media (max-width: 900px) {
-            .sidebar {
-                transform: translateX(-100%);
-            }
-            .sidebar.open {
-                transform: translateX(0);
-                box-shadow: 30px 0 80px rgba(0,0,0,0.6);
-            }
-            .sidebar-overlay.open {
-                display: block;
-            }
-            .main-wrapper {
-                margin-left: 0;
-            }
-            .hamburger {
-                display: flex;
-            }
-        }
-
-        @media (max-width: 640px) {
-            .form-row.cols-2,
-            .form-row.cols-3,
-            .grid-2, .grid-3 {
-                grid-template-columns: 1fr;
-            }
-            .btn-group {
-                flex-direction: column;
-            }
-            .btn-group button {
-                width: 100%;
-            }
-            .task-info {
-                grid-template-columns: 1fr;
-            }
-            #tasksContainer {
-                grid-template-columns: 1fr;
-            }
-            /* 2×2 grid for mode tabs, icons stacked above text */
-            .tab-nav {
-                display: grid;
-                grid-template-columns: 1fr 1fr;
-                gap: 3px;
-                padding: 3px;
-            }
-            .tab-btn {
-                flex-direction: column;
-                gap: 4px;
-                font-size: 0.58rem;
-                padding: 9px 4px;
-                white-space: normal;
-                text-align: center;
-                letter-spacing: 0.04em;
-            }
-            .tab-icon {
-                font-size: 1.1rem;
-                line-height: 1;
-            }
-            .content {
-                padding: 1rem;
-            }
-        }
-
-        @media (min-width: 1200px) {
-            #tasksContainer {
-                grid-template-columns: repeat(auto-fill, minmax(450px, 1fr));
-            }
-        }
-    </style>
-</head>
-<body>
-
-    <!-- ══════════════ SIDEBAR ══════════════ -->
-    <aside class="sidebar" id="sidebar">
-        <div class="sidebar-brand">
-            <div class="brand-logo">
-                <div class="brand-icon">🎬</div>
-                <div>
-                    <div>CreativeLabs</div>
-                    <div class="brand-subtitle">AI Studio Interface</div>
-                </div>
-            </div>
-        </div>
-
-        <nav class="sidebar-nav">
-            <div class="nav-section-label">Studio</div>
-
-            <a class="nav-item active" id="nav-settings" onclick="showPage('page-settings', this)">
-                <span class="nav-icon">🔑</span>
-                <span class="nav-label">API Ayarları</span>
-            </a>
-
-            <a class="nav-item" id="nav-quota" onclick="showPage('page-quota', this)">
-                <span class="nav-icon">📊</span>
-                <span class="nav-label">Quota Kontrolü</span>
-            </a>
-
-            <div class="nav-section-label">Üretim</div>
-
-            <a class="nav-item" id="nav-generate" onclick="showPage('page-generate', this)">
-                <span class="nav-icon">🎨</span>
-                <span class="nav-label">Oluşturma</span>
-                <span class="nav-badge">4 mod</span>
-            </a>
-
-            <a class="nav-item" id="nav-tasks" onclick="showPage('page-tasks', this)">
-                <span class="nav-icon">📋</span>
-                <span class="nav-label">Task Durumu</span>
-            </a>
-        </nav>
-
-        <div class="sidebar-footer">
-            <div class="sidebar-footer-info">
-                <span class="status-dot"></span>API CONNECTED
-            </div>
-        </div>
-    </aside>
-
-    <!-- Mobile overlay -->
-    <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
-
-    <!-- ══════════════ MAIN ══════════════ -->
-    <div class="main-wrapper">
-
-        <!-- Top bar -->
-        <header class="topbar">
-            <button class="hamburger" onclick="toggleSidebar()" aria-label="Menü">☰</button>
-            <div class="topbar-page-title" id="topbarPageTitle">API Ayarları</div>
-            <div class="topbar-spacer"></div>
-
-        </header>
-
-        <!-- ══ CONTENT ══ -->
-        <main class="content">
-
-            <!-- ─── PAGE: API SETTINGS ─── -->
-            <div class="page active" id="page-settings">
-                <div class="page-header">
-                    <div class="page-eyebrow">Yapılandırma</div>
-                    <div class="page-title">API <span>Ayarları</span></div>
-                    <div class="page-desc">API anahtarınızı ve bağlantı adresinizi kaydedin</div>
-                </div>
-
-                <div class="card">
-                    <div class="card-title">🔑 Kimlik Bilgileri</div>
-                    <div class="form-row cols-2">
-                        <div class="form-group">
-                            <label for="apiKey">API Key</label>
-                            <input type="text" id="apiKey" value="" placeholder="API anahtarınızı girin">
-                        </div>
-                        <div class="form-group">
-                            <label for="apiUrl">API Base URL</label>
-                            <input type="text" id="apiUrl" value="" placeholder="https://api.example.com">
-                        </div>
-                    </div>
-                    <div class="btn-row">
-                        <button type="button" onclick="saveApiSettings()">💾 Kaydet</button>
-                        <button type="button" class="btn-danger" onclick="clearApiSettings()">🗑️ Temizle</button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- ─── PAGE: QUOTA ─── -->
-            <div class="page" id="page-quota">
-                <div class="page-header">
-                    <div class="page-eyebrow">Sistem</div>
-                    <div class="page-title">Quota <span>Kontrolü</span></div>
-                    <div class="page-desc">Mevcut kapasitenizi ve çalışan task sayısını görün</div>
-                </div>
-
-                <div class="card">
-                    <div class="card-title">📊 Kullanım Durumu</div>
-                    <button onclick="checkQuota()">Quota'yı Kontrol Et</button>
-                    <div id="quotaResponse" class="response-box" style="display:none;"></div>
-                </div>
-            </div>
-
-            <!-- ─── PAGE: GENERATE ─── -->
-            <div class="page" id="page-generate">
-                <div class="page-header">
-                    <div class="page-eyebrow">Üretim Merkezi</div>
-                    <div class="page-title">İçerik <span>Oluşturma</span></div>
-                    <div class="page-desc">Görsel, video ve ses üretimi için tüm araçlar</div>
-                </div>
-
-                <div class="card">
-                    <!-- Main Tabs -->
-                    <div class="tab-nav">
-                        <button class="tab-btn active" onclick="switchTab('tab-t2i')"><span class="tab-icon">🖼️</span> Text to Image</button>
-                        <button class="tab-btn" onclick="switchTab('tab-i2i')"><span class="tab-icon">🔄</span> Image to Image</button>
-                        <button class="tab-btn" onclick="switchTab('tab-t2v')"><span class="tab-icon">🎬</span> Text to Video</button>
-                        <button class="tab-btn" onclick="switchTab('tab-i2v')"><span class="tab-icon">🎞️</span> Image to Video</button>
-                    </div>
-
-                    <!-- Text to Image -->
-                    <div class="tab-panel" id="tab-t2i">
-                        <div class="form-group">
-                            <label for="imagePrompt">Prompt *</label>
-                            <div class="prompt-wrap">
-                                <textarea id="imagePrompt" maxlength="4000" oninput="updateCounter('imagePrompt','imagePromptCounter',4000)" placeholder="Oluşturmak istediğiniz görselin detaylı açıklaması...">A futuristic cyberpunk city at night with neon lights</textarea>
-                                <span id="imagePromptCounter" class="prompt-counter">52/4000</span>
-                            </div>
-                        </div>
-                        <div class="form-row cols-2">
-                            <div class="form-group">
-                                <label for="imageModel">Model</label>
-                                <select id="imageModel" onchange="onImageModelChange()">
-                                    <option value="MODEL_FOUR_NANO_BANANA_PRO" selected>MODEL_FOUR_NANO_BANANA_PRO</option>
-                                    <option value="MODEL_FOUR_NANO_BANANA">MODEL_FOUR_NANO_BANANA</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label for="imageSize">Boyut (imageSize)</label>
-                                <select id="imageSize">
-                                    <option value="SIXTEEN_BY_NINE" selected>SIXTEEN_BY_NINE (16:9)</option>
-                                    <option value="NINE_BY_SIXTEEN">NINE_BY_SIXTEEN (9:16)</option>
-                                    <option value="ONE_BY_ONE">ONE_BY_ONE (1:1)</option>
-                                    <option value="THREE_BY_FOUR">THREE_BY_FOUR (3:4)</option>
-                                    <option value="FOUR_BY_THREE">FOUR_BY_THREE (4:3)</option>
-                                    <option value="THREE_BY_TWO">THREE_BY_TWO (3:2)</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="form-group" id="imageResolutionGroup">
-                            <label for="imageResolution">Resolution (Sadece NANO_PRO için)</label>
-                            <select id="imageResolution">
-                                <option value="2K" selected>2K (Varsayılan)</option>
-                                <option value="1K">1K</option>
-                                <option value="4K">4K</option>
-                            </select>
-                        </div>
-                        <button onclick="generateImage()">✨ Görsel Oluştur</button>
-                        <div id="imageResponse" class="response-box" style="display:none;"></div>
-                    </div>
-
-                    <!-- Image to Image -->
-                    <div class="tab-panel" id="tab-i2i" style="display:none;">
-                        <div class="form-group">
-                            <label for="i2iPrompt">Prompt *</label>
-                            <div class="prompt-wrap">
-                                <textarea id="i2iPrompt" maxlength="4000" oninput="updateCounter('i2iPrompt','i2iPromptCounter',4000)" placeholder="Görseli nasıl dönüştürmek istediğinizi açıklayın..."></textarea>
-                                <span id="i2iPromptCounter" class="prompt-counter">0/4000</span>
-                            </div>
-                        </div>
-                        <div class="form-row cols-2">
-                            <div class="form-group">
-                                <label for="i2iModel">Model</label>
-                                <select id="i2iModel" onchange="onI2iModelChange()">
-                                    <option value="MODEL_FOUR_NANO_BANANA_PRO" selected>MODEL_FOUR_NANO_BANANA_PRO</option>
-                                    <option value="MODEL_FOUR_NANO_BANANA">MODEL_FOUR_NANO_BANANA</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label for="i2iSize">Boyut (imageSize)</label>
-                                <select id="i2iSize">
-                                    <option value="SIXTEEN_BY_NINE" selected>SIXTEEN_BY_NINE (16:9)</option>
-                                    <option value="NINE_BY_SIXTEEN">NINE_BY_SIXTEEN (9:16)</option>
-                                    <option value="ONE_BY_ONE">ONE_BY_ONE (1:1)</option>
-                                    <option value="THREE_BY_FOUR">THREE_BY_FOUR (3:4)</option>
-                                    <option value="FOUR_BY_THREE">FOUR_BY_THREE (4:3)</option>
-                                    <option value="THREE_BY_TWO">THREE_BY_TWO (3:2)</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="form-group" id="i2iResolutionGroup">
-                            <label for="i2iResolution">Resolution (Sadece NANO_PRO için)</label>
-                            <select id="i2iResolution">
-                                <option value="2K" selected>2K (Varsayılan)</option>
-                                <option value="1K">1K</option>
-                                <option value="4K">4K</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="i2iRefImages">Reference Images (İsteğe bağlı — Maks. 5)</label>
-                            <div class="file-input-wrapper">
-                                <input type="file" id="i2iRefImages" accept="image/*" multiple onchange="onI2iRefChange(this)">
-                                <label for="i2iRefImages" class="file-input-label" id="i2iRefImagesLabel">Resim Seç (Maks. 5)</label>
-                            </div>
-                            <small style="color: var(--text-muted); display: block; margin-top: 5px; font-size: 0.75rem;">Birden fazla resim seçebilirsiniz (character references için)</small>
-                        </div>
-                        <button onclick="generateImageToImage()">🔄 Görsel Dönüştür</button>
-                        <div id="i2iResponse" class="response-box" style="display:none;"></div>
-                    </div>
-
-                    <!-- Text to Video -->
-                    <div class="tab-panel" id="tab-t2v" style="display:none;">
-                        <div class="form-group">
-                            <label for="t2vPrompt">Prompt *</label>
-                            <div class="prompt-wrap">
-                                <textarea id="t2vPrompt" maxlength="2000" oninput="updateCounter('t2vPrompt','t2vPromptCounter',2000)" placeholder="Oluşturmak istediğiniz videonun detaylı açıklaması...">A serene ocean sunset with waves gently crashing on the shore, cinematic camera movement</textarea>
-                                <span id="t2vPromptCounter" class="prompt-counter">87/2000</span>
-                            </div>
-                        </div>
-                        <div class="form-row cols-2">
-                            <div class="form-group">
-                                <label for="t2vModel">Model</label>
-                                <select id="t2vModel">
-                                    <option value="SORA2" selected>SORA2 (10 saniye)</option>
-                                    <option value="VEO_3_1">VEO_3_1 (8 saniye)</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label for="t2vSize">Boyut (size)</label>
-                                <select id="t2vSize">
-                                    <option value="SIXTEEN_BY_NINE" selected>SIXTEEN_BY_NINE (16:9)</option>
-                                    <option value="NINE_BY_SIXTEEN">NINE_BY_SIXTEEN (9:16)</option>
-                                </select>
-                            </div>
-                        </div>
-                        <button onclick="generateTextToVideo()">🎬 Video Oluştur</button>
-                        <div id="t2vResponse" class="response-box" style="display:none;"></div>
-                    </div>
-
-                    <!-- Image to Video -->
-                    <div class="tab-panel" id="tab-i2v" style="display:none;">
-                        <div class="form-group">
-                            <label for="i2vPrompt">Prompt *</label>
-                            <div class="prompt-wrap">
-                                <textarea id="i2vPrompt" maxlength="2000" oninput="updateCounter('i2vPrompt','i2vPromptCounter',2000)" placeholder="Oluşturmak istediğiniz videonun detaylı açıklaması..."></textarea>
-                                <span id="i2vPromptCounter" class="prompt-counter">0/2000</span>
-                            </div>
-                        </div>
-                        <div class="form-row cols-2">
-                            <div class="form-group">
-                                <label for="i2vModel">Model</label>
-                                <select id="i2vModel" onchange="onI2vModelChange()">
-                                    <option value="SORA2" selected>SORA2 (10 saniye)</option>
-                                    <option value="VEO_3_1">VEO_3_1 (8 saniye)</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label for="i2vSize">Boyut (size)</label>
-                                <select id="i2vSize">
-                                    <option value="SIXTEEN_BY_NINE" selected>SIXTEEN_BY_NINE (16:9)</option>
-                                    <option value="NINE_BY_SIXTEEN">NINE_BY_SIXTEEN (9:16)</option>
-                                </select>
-                            </div>
-                        </div>
-                        <!-- Sub Tabs -->
-                        <div class="sub-tab-nav" id="i2vSubTabNav" style="display:none;">
-                            <button class="sub-tab-btn active" onclick="switchSubTab('subtab-startend')">🎬 Start / End Frame</button>
-                            <button class="sub-tab-btn" onclick="switchSubTab('subtab-refimages')">🖼️ Reference Images</button>
-                        </div>
-                        <!-- Start / End Frame -->
-                        <div class="sub-tab-panel" id="subtab-startend">
-                            <div class="form-group">
-                                <label for="i2vStartFrame">Start Frame *</label>
-                                <div class="file-input-wrapper">
-                                    <input type="file" id="i2vStartFrame" accept="image/*" onchange="updateFileLabel(this, 'i2vStartFrameLabel')">
-                                    <label for="i2vStartFrame" class="file-input-label" id="i2vStartFrameLabel">Resim Seç</label>
-                                </div>
-                            </div>
-                            <div class="form-group" id="i2vEndFrameGroup" style="display:none;">
-                                <label for="i2vEndFrame" id="i2vEndFrameLabel">End Frame *</label>
-                                <div class="file-input-wrapper">
-                                    <input type="file" id="i2vEndFrame" accept="image/*" onchange="updateFileLabel(this, 'i2vEndFrameLabel2')">
-                                    <label for="i2vEndFrame" class="file-input-label" id="i2vEndFrameLabel2">Resim Seç</label>
-                                </div>
-                            </div>
-                        </div>
-                        <!-- Reference Images -->
-                        <div class="sub-tab-panel" id="subtab-refimages" style="display:none;">
-                            <div class="form-group">
-                                <label for="i2vRefImages">Reference Images (Maks. 3 — Sadece VEO_3_1)</label>
-                                <div class="file-input-wrapper">
-                                    <input type="file" id="i2vRefImages" accept="image/*" multiple onchange="onI2vRefChange(this)">
-                                    <label for="i2vRefImages" class="file-input-label" id="i2vRefImagesLabel">Resim Seç (Maks. 3)</label>
-                                </div>
-                                <small style="color: var(--text-muted); display: block; margin-top: 5px; font-size: 0.75rem;">En fazla 3 referans görsel seçilebilir</small>
-                            </div>
-                        </div>
-                        <button onclick="generateImageToVideo()" style="margin-top:1.25rem;">🎞️ Video Oluştur</button>
-                        <div id="i2vResponse" class="response-box" style="display:none;"></div>
-                    </div>
-
-                </div>
-            </div>
-
-            <!-- ─── PAGE: TASK STATUS ─── -->
-            <div class="page" id="page-tasks">
-                <div class="page-header">
-                    <div class="page-eyebrow">İzleme</div>
-                    <div class="page-title">Task <span>Durumu</span></div>
-                    <div class="page-desc">Görev takibi ve otomatik yenileme</div>
-                </div>
-
-                <div class="card">
-                    <div class="card-title">🔍 Sorgulama</div>
-                    <div class="form-group">
-                        <label for="taskId">Task ID (İsteğe bağlı - boş bırakırsanız tüm tasklar gösterilir)</label>
-                        <input type="text" id="taskId" placeholder="Örn: abc123-def456">
-                    </div>
-                    <div class="btn-group">
-                        <button onclick="checkTaskStatus()">🔎 Durumu Kontrol Et</button>
-                        <button class="btn-secondary" onclick="checkAllTasks()">📋 Tüm Taskleri Göster</button>
-                        <button class="btn-amber" onclick="startAutoRefresh()">⏱️ Otomatik Yenileme Başlat (5sn)</button>
-                        <button class="btn-danger" onclick="stopAutoRefresh()">⏹️ Otomatik Yenileme Durdur</button>
-                    </div>
-                    <div id="statusResponse" class="response-box" style="display:none;"></div>
-                    <div id="tasksContainer"></div>
-                    <div id="paginationContainer"></div>
-                </div>
-            </div>
-
-        </main>
-    </div>
-
-    <script>
-        /* ══════════════════════════════════════
-           PAGE NAVIGATION (sidebar)
-        ══════════════════════════════════════ */
-        const PAGE_TITLES = {
-            'page-settings': 'API Ayarları',
-            'page-quota':    'Quota Kontrolü',
-            'page-generate': 'İçerik Oluşturma',
-            'page-tasks':    'Task Durumu',
-        };
-
-        function showPage(pageId, navEl) {
-            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            document.getElementById(pageId).classList.add('active');
-            if (navEl) navEl.classList.add('active');
-            document.getElementById('topbarPageTitle').textContent = PAGE_TITLES[pageId] || '';
-            closeSidebar();
-        }
-
-        function toggleSidebar() {
-            document.getElementById('sidebar').classList.toggle('open');
-            document.getElementById('sidebarOverlay').classList.toggle('open');
-        }
-
-        function closeSidebar() {
-            document.getElementById('sidebar').classList.remove('open');
-            document.getElementById('sidebarOverlay').classList.remove('open');
-        }
-
-        /* ══════════════════════════════════════
-           ACCORDION COMPAT SHIM (JS kept intact)
-        ══════════════════════════════════════ */
-        function toggleSection(headerElement) {
-            const section = headerElement.parentElement;
-            section.classList.toggle('collapsed');
-        }
-
-        /* ══════════════════════════════════════
-           LOCALSTORAGE — API SETTINGS
-        ══════════════════════════════════════ */
-        function saveApiSettings() {
-            const apiKey = document.getElementById('apiKey').value.trim();
-            const apiUrl = document.getElementById('apiUrl').value.trim();
-            
-            if (apiKey) localStorage.setItem('creativelabs_api_key', apiKey);
-            if (apiUrl) localStorage.setItem('creativelabs_api_url', apiUrl);
-            
-            alert('✅ Ayarlar kaydedildi!');
-        }
-
-        function clearApiSettings() {
-            if (confirm('API ayarlarını silmek istediğinizden emin misiniz?')) {
-                localStorage.removeItem('creativelabs_api_key');
-                localStorage.removeItem('creativelabs_api_url');
-                document.getElementById('apiKey').value = '';
-                document.getElementById('apiUrl').value = '';
-                alert('✅ Ayarlar temizlendi!');
-            }
-        }
-
-        function loadApiSettings() {
-            const savedKey = localStorage.getItem('creativelabs_api_key');
-            const savedUrl = localStorage.getItem('creativelabs_api_url');
-            
-            if (savedKey) document.getElementById('apiKey').value = savedKey;
-            if (savedUrl) document.getElementById('apiUrl').value = savedUrl;
-        }
-
-        window.addEventListener('DOMContentLoaded', () => {
-            loadApiSettings();
-            updateCounter('imagePrompt', 'imagePromptCounter', 4000);
-            updateCounter('t2vPrompt', 't2vPromptCounter', 2000);
-            updateCounter('i2vPrompt', 'i2vPromptCounter', 2000);
-            updateCounter('i2iPrompt', 'i2iPromptCounter', 4000);
-            onI2vModelChange();
-        });
-
-        const API_BASE = () => document.getElementById('apiUrl').value || 'https://api-pe7w.onrender.com';
-        const API_KEY = () => document.getElementById('apiKey').value;
-        let autoRefreshInterval = null;
+import os
+import json
+import time
+import uuid
+import threading
+import atexit
+import requests
+import base64
+from io import BytesIO
+from PIL import Image
+from flask import Flask, request, jsonify, render_template
+from flask_cors import CORS
+import database as db
+
+app = Flask(__name__)
+CORS(app)
+
+# Graceful shutdown: polling thread'leri temiz kapansın
+_shutdown_event = threading.Event()
+atexit.register(lambda: _shutdown_event.set())
+
+# --- Configuration & Constants ---
+API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.ewogICJyb2xlIjogImFub24iLAogICJpc3MiOiAic3VwYWJhc2UiLAogICJpYXQiOiAxNzM0OTY5NjAwLAogICJleHAiOiAxODkyNzM2MDAwCn0.4NnK23LGYvKPGuKI5rwQn2KbLMzzdE4jXpHwbGCqPqY"
+
+# Maximum concurrent tasks
+MAX_CONCURRENT_TASKS = 10
+
+# Deevid URLs
+URL_AUTH = "https://sp.deevid.ai/auth/v1/token?grant_type=password"
+URL_UPLOAD = "https://api.deevid.ai/file-upload/image"
+URL_SUBMIT_IMG = "https://api.deevid.ai/text-to-image/task/submit"
+URL_SUBMIT_VIDEO = "https://api.deevid.ai/image-to-video/task/submit"
+URL_SUBMIT_TXT_VIDEO = "https://api.deevid.ai/text-to-video/task/submit"
+URL_SUBMIT_CHARACTER_VIDEO = "https://api.deevid.ai/character-to-video/task/submit"
+URL_ASSETS = "https://api.deevid.ai/my-assets?limit=50&assetType=All&filter=CREATION"
+URL_VIDEO_TASKS = "https://api.deevid.ai/video/tasks?page=1&size=20"
+URL_QUOTA = "https://api.deevid.ai/subscription/plan"
+
+# ElevenLabs Configuration
+ELEVENLABS_API_KEY = "sk_d7cd9c0991b928ab3a7b9f04b0dedfcd7d56d790f2cca302"
+ELEVENLABS_TTS_URL = "https://api.elevenlabs.io/v1/text-to-speech"
+ELEVENLABS_VOICES_URL = "https://api.elevenlabs.io/v1/voices"
+
+# Frontend model name → Deevid model version mapping
+IMAGE_MODEL_MAP = {
+    'NANO_BANANA_PRO': 'MODEL_FOUR_NANO_BANANA_PRO',
+    'NANO_BANANA':     'MODEL_FOUR_NANO_BANANA',
+    'NANO_BANANA_2':   'MODEL_FOUR_NANO_BANANA_2',
+}
+
+VIDEO_MODEL_MAP = {
+    'SORA_2': 'SORA2',
+    'VEO_3':  'VEO_3_1',
+}
+
+# Frontend size value → Deevid size value mapping
+SIZE_MAP = {
+    '16:9': 'SIXTEEN_BY_NINE',
+    '9:16': 'NINE_BY_SIXTEEN',
+    '1:1':  'ONE_BY_ONE',
+    '3:4':  'THREE_BY_FOUR',
+    '4:3':  'FOUR_BY_THREE',
+    '3:2':  'THREE_BY_TWO',
+}
+
+DEVICE_HEADERS = {
+    "x-device": "TABLET",
+    "x-device-id": "3401879229",
+    "x-os": "WINDOWS",
+    "x-platform": "WEB",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+}
+
+# --- Helper Functions ---
+
+def verify_api_key():
+    """Verifies the API key from request headers and returns api_key_id."""
+    auth_header = request.headers.get('Authorization')
+    if not auth_header:
+        return None
+    
+    # Support both "Bearer <key>" and direct key
+    if auth_header.startswith('Bearer '):
+        provided_key = auth_header[7:]
+    else:
+        provided_key = auth_header
+    
+    # Get API key in database - only existing keys are allowed
+    api_key_id = db.get_api_key_id(provided_key)
+    return api_key_id
+
+def can_start_new_task(api_key_id):
+    """Checks if a new task can be started (max concurrent limit per user)."""
+    return db.get_running_task_count(api_key_id) < MAX_CONCURRENT_TASKS
+
+def refresh_quota(token):
+    """Optional but might be required to activate session."""
+    headers = {"authorization": f"Bearer {token}", **DEVICE_HEADERS}
+    try:
+        requests.get(URL_QUOTA, headers=headers)
+    except:
+        pass
+
+def login_with_retry(api_key_id, task_id=None):
+    """Tries logging in with available accounts until one succeeds.
+    
+    task_id parametresi verildiğinde, hesap alındığı milisaniyede veritabanında
+    task ile atomik olarak eşleştirilir (çökme koruması için).
+    """
+    tried_count = 0
+    max_tries = db.get_account_count(api_key_id)
+    
+    if max_tries == 0:
+        print("No accounts loaded!")
+        return None, None
+    
+    while tried_count < max_tries:
+        # DEĞİŞİKLİK: task_id'yi de gönderiyoruz.
+        # Böylece hesap alındığı milisaniyede veritabanında task ile eşleşiyor.
+        account = db.get_next_account(api_key_id, task_id)
+        if not account:
+            break
         
-        // Pagination variables
-        let allTasks = [];
-        let currentPage = 1;
-        const tasksPerPage = 6;
-
-        // Helper function for API calls
-        async function apiCall(endpoint, method = 'GET', body = null) {
-            const apiKey = API_KEY();
-            if (!apiKey) {
-                alert('Lütfen API Key girin!');
-                throw new Error('API Key gerekli');
-            }
-
-            const options = {
-                method: method,
-                headers: {
-                    'Authorization': `Bearer ${apiKey}`,
-                    'Content-Type': 'application/json'
-                }
-            };
-
-            if (body) {
-                options.body = JSON.stringify(body);
-            }
-
-            const response = await fetch(`${API_BASE()}${endpoint}`, options);
-            const data = await response.json();
+        tried_count += 1
+        headers = {
+            "apikey": API_KEY,
+        }
+        payload = {
+            "email": account['email'].strip(),
+            "password": account['password'].strip(),
+            "gotrue_meta_security": {}
+        }
+        try:
+            resp = requests.post(URL_AUTH, json=payload, headers=headers, timeout=10)
+            if resp.status_code == 200:
+                token = resp.json().get('access_token')
+                if token:
+                    refresh_quota(token)
+                    return token, account
+            print(f"Login failed for {account['email']}: {resp.status_code} - {resp.text}")
+            # Login başarısızsa hesabı hemen bırak
+            db.release_account(api_key_id, account['email'])
+        except Exception as e:
+            print(f"Login error for {account['email']}: {e}")
+            # Hata durumunda da bırak
+            db.release_account(api_key_id, account['email'])
             
-            return { response, data };
-        }
+    return None, None
 
-        // Display response helper
-        function displayResponse(elementId, data, isError = false) {
-            const element = document.getElementById(elementId);
-            element.style.display = 'block';
-            element.innerHTML = `<span class="${isError ? 'error' : 'success'}">${isError ? '❌ Hata' : '✅ Başarılı'}</span>\n\n${JSON.stringify(data, null, 2)}`;
-        }
+def resize_image(image_bytes):
+    """Resizes image if it exceeds 3000px on any side."""
+    try:
+        img = Image.open(BytesIO(image_bytes))
+        width, height = img.size
+        max_dim = max(width, height)
+        if max_dim > 3000:
+            scale = 3000 / max_dim
+            img = img.resize((round(width * scale), round(height * scale)), Image.LANCZOS)
+        
+        out = BytesIO()
+        img.save(out, format="PNG")
+        out.seek(0)
+        return out
+    except Exception as e:
+        print(f"Resize error: {e}")
+        return None
 
-        // Check Quota
-        async function checkQuota() {
-            try {
-                const { response, data } = await apiCall('/api/quota');
-                displayResponse('quotaResponse', data, !response.ok);
-            } catch (error) {
-                displayResponse('quotaResponse', { error: error.message }, true);
+def upload_image(token, image_bytes):
+    """Uploads image to API and returns image ID."""
+    headers = {"authorization": f"Bearer {token}", **DEVICE_HEADERS}
+    resized = resize_image(image_bytes)
+    if not resized: return None
+    
+    files = {"file": ("image.png", resized, "image/png")}
+    data = {"width": "1024", "height": "1536"} 
+    try:
+        resp = requests.post(URL_UPLOAD, headers=headers, files=files, data=data)
+        if resp.status_code in [200, 201]:
+            return resp.json()['data']['data']['id']
+    except Exception as e:
+        print(f"Upload error: {e}")
+    return None
+
+def process_image_task(task_id, params, api_key_id):
+    """Worker for image generation."""
+    try:
+        db.update_task_status(task_id, 'running')
+        try:
+            # task_id gönderiyoruz: hesap alındığı anda atomik olarak task'e yazılır (çökme koruması)
+            token, account = login_with_retry(api_key_id, task_id=task_id)
+            if not token:
+                db.update_task_status(task_id, 'failed')
+                db.add_task_log(task_id, "All accounts failed to login.")
+                return
+
+            # NOT: db.update_task_account() artık burada çağrılmıyor.
+            # get_next_account() zaten task_id ile atomik olarak account_email'i yazdı.
+
+            headers = {"authorization": f"Bearer {token}", **DEVICE_HEADERS}
+            
+            user_image_ids = []
+            images = params.get('images', [])
+            if not images and params.get('image'):  # Geriye dönük uyumluluk
+                images = [params.get('image')]
+
+            for img_base64 in images:
+                img_data = base64.b64decode(img_base64)
+                img_id = upload_image(token, img_data)
+                if img_id:
+                    user_image_ids.append(img_id)
+                else:
+                    db.update_task_status(task_id, 'failed')
+                    db.add_task_log(task_id, "Image upload failed.")
+                    db.release_account(api_key_id, account['email'])
+                    return
+
+            model_version_raw = params.get('model', 'NANO_BANANA_PRO')
+            model_version = IMAGE_MODEL_MAP.get(model_version_raw, model_version_raw)
+            image_size_raw = params.get('imageSize', '16:9')
+            image_size = SIZE_MAP.get(image_size_raw, image_size_raw)
+            payload = {
+                "prompt": params.get('prompt', ''),
+                "imageSize": image_size,
+                "count": 1,
+                "modelType": "MODEL_FOUR",
+                "modelVersion": model_version
             }
-        }
-
-        // Generate Image
-        async function generateImage() {
-            const prompt = document.getElementById('imagePrompt').value;
-            if (!prompt) {
-                alert('Lütfen prompt girin!');
-                return;
-            }
-
-            const body = {
-                prompt: prompt,
-                model: document.getElementById('imageModel').value,
-                imageSize: document.getElementById('imageSize').value
-            };
-
-            // NANO_PRO için resolution ekle
-            if (body.model === 'MODEL_FOUR_NANO_BANANA_PRO') {
-                body.resolution = document.getElementById('imageResolution').value;
-            }
-
-            // Image-to-Image için base64 dönüşümü
-            const fileInput = document.getElementById('imageFile');
-            if (fileInput && fileInput.files && fileInput.files.length > 0) {
-                const images = [];
-                for (let i = 0; i < fileInput.files.length; i++) {
-                    const base64 = await fileToBase64(fileInput.files[i]);
-                    images.push(base64);
-                }
-                body.images = images;
-            }
-
-            try {
-                const { response, data } = await apiCall('/api/generate/image', 'POST', body);
-                displayResponse('imageResponse', data, !response.ok);
+            
+            if model_version in ('MODEL_FOUR_NANO_BANANA_PRO', 'MODEL_FOUR_NANO_BANANA_2'):
+                payload["resolution"] = params.get('resolution', '2K')
                 
-                if (response.ok && data.task_id) {
-                    document.getElementById('taskId').value = data.task_id;
+            if user_image_ids:
+                payload["userImageIds"] = user_image_ids
+
+            # Save token BEFORE submit so crash during submit can still recover
+            db.update_task_token(task_id, token)
+
+            resp = requests.post(URL_SUBMIT_IMG, headers=headers, json=payload)
+            resp_json = resp.json()
+            
+            error = resp_json.get('error')
+            if error and error.get('code') != 0:
+                db.update_task_status(task_id, 'failed')
+                db.add_task_log(task_id, f"Submit error: {resp_json}")
+                # Release account on submission failure
+                db.release_account(api_key_id, account['email'])
+                return
+
+            api_task_id = str(resp_json['data']['data']['taskId'])
+            db.update_task_external_data(task_id, api_task_id, token)
+            db.add_task_log(task_id, f"API Task ID: {api_task_id}")
+
+            ref_urls = resp_json['data']['data'].get('inputUserImageUrls') or []
+            if ref_urls:
+                db.update_task_reference_urls(task_id, ref_urls)
+
+            for _ in range(300):
+                if _shutdown_event.wait(2):
+                    return  # Shutdown — task 'running' kalır, recovery halleder
+                try:
+                    poll = requests.get(URL_ASSETS, headers=headers).json()
+                    groups = poll.get('data', {}).get('data', {}).get('groups', [])
+                    for group in groups:
+                        for item in group.get('items', []):
+                            creation = item.get('detail', {}).get('creation', {})
+                            if str(creation.get('taskId')) == api_task_id:
+                                if creation.get('taskState') == 'SUCCESS':
+                                    urls = creation.get('noWaterMarkImageUrl', [])
+                                    if urls:
+                                        db.update_task_status(task_id, 'completed', urls[0])
+                                        return
+                                elif creation.get('taskState') == 'FAIL':
+                                    db.update_task_status(task_id, 'failed')
+                                    # Release account on task FAIL
+                                    db.release_account(api_key_id, account['email'])
+                                    return
+                except:
+                    pass
+            db.update_task_status(task_id, 'timeout')
+            db.release_account(api_key_id, account['email'])
+        except Exception as e:
+            db.update_task_status(task_id, 'error')
+            db.add_task_log(task_id, str(e))
+            if 'account' in locals() and account:
+                db.release_account(api_key_id, account['email'])
+    except Exception:
+        db.update_task_status(task_id, 'error')
+
+def process_video_task(task_id, params, api_key_id):
+    """Worker for video generation."""
+    try:
+        db.update_task_status(task_id, 'running')
+        try:
+            # task_id gönderiyoruz: hesap alındığı anda atomik olarak task'e yazılır (çökme koruması)
+            token, account = login_with_retry(api_key_id, task_id=task_id)
+            if not token:
+                db.update_task_status(task_id, 'failed')
+                return
+
+            # NOT: db.update_task_account() artık burada çağrılmıyor.
+            # get_next_account() zaten task_id ile atomik olarak account_email'i yazdı.
+
+            headers = {"authorization": f"Bearer {token}", **DEVICE_HEADERS}
+            
+            # Model parametresini al ve Deevid formatına çevir
+            model_raw = params.get('model', 'SORA_2')
+            model = VIDEO_MODEL_MAP.get(model_raw, model_raw)
+            size_raw = params.get('size', '16:9')
+            size = SIZE_MAP.get(size_raw, size_raw)
+            is_i2v = params.get('image') is not None
+            
+            # VEO_3_1 modeli için
+            if model == 'VEO_3_1':
+                end_frame = params.get('end_frame')
+                payload = {
+                    "prompt": params.get('prompt', ''),
+                    "resolution": "720p",
+                    "lengthOfSecond": 8,
+                    "aiPromptEnhance": params.get('aiPromptEnhance', True),
+                    "size": size,
+                    "addEndFrame": bool(end_frame),
+                    "modelType": "MODEL_FIVE",
+                    "modelVersion": "MODEL_FIVE_FAST_3"
                 }
-            } catch (error) {
-                displayResponse('imageResponse', { error: error.message }, true);
-            }
-        }
-
-        function onI2vModelChange() {
-            const model = document.getElementById('i2vModel').value;
-            const isVeo = model === 'VEO_3_1';
-
-            // Sub-tab nav: sadece VEO_3_1'de göster
-            document.getElementById('i2vSubTabNav').style.display = isVeo ? 'flex' : 'none';
-
-            // End Frame: sadece VEO_3_1'de göster
-            document.getElementById('i2vEndFrameGroup').style.display = isVeo ? 'block' : 'none';
-
-            // End Frame label: VEO_3_1'de isteğe bağlı olduğunu belirt
-            const endFrameLabel = document.getElementById('i2vEndFrameLabel');
-            if (endFrameLabel) {
-                endFrameLabel.textContent = isVeo ? 'End Frame (isteğe bağlı)' : 'End Frame *';
-            }
-
-            // Reference Images paneli: sadece VEO_3_1'de erişilebilir
-            document.getElementById('subtab-refimages').style.display = 'none';
-
-            // Start Frame panelini her zaman aktif yap
-            document.getElementById('subtab-startend').style.display = 'block';
-
-            // Sub-tab butonlarını sıfırla
-            document.querySelectorAll('.sub-tab-btn').forEach(b => b.classList.remove('active'));
-            const firstSubBtn = document.querySelector('.sub-tab-btn');
-            if (firstSubBtn) firstSubBtn.classList.add('active');
-        }
-
-        function onI2iRefChange(input) {
-            if (input.files && input.files.length > 5) {
-                alert('En fazla 5 görsel seçebilirsiniz!');
-                input.value = '';
-                document.getElementById('i2iRefImagesLabel').textContent = 'Resim Seç (Maks. 5)';
-                document.getElementById('i2iRefImagesLabel').classList.remove('file-selected');
-                return;
-            }
-            updateFileLabel(input, 'i2iRefImagesLabel');
-        }
-
-        function onI2iModelChange() {
-            const model = document.getElementById('i2iModel').value;
-            document.getElementById('i2iResolutionGroup').style.display =
-                model === 'MODEL_FOUR_NANO_BANANA_PRO' ? 'block' : 'none';
-        }
-
-        async function generateImageToImage() {
-            const prompt = document.getElementById('i2iPrompt').value;
-            if (!prompt) { alert('Lütfen prompt girin!'); return; }
-
-            const body = {
-                prompt,
-                model: document.getElementById('i2iModel').value,
-                imageSize: document.getElementById('i2iSize').value
-            };
-
-            if (body.model === 'MODEL_FOUR_NANO_BANANA_PRO') {
-                body.resolution = document.getElementById('i2iResolution').value;
-            }
-
-            const refInput = document.getElementById('i2iRefImages');
-            if (refInput.files && refInput.files.length > 0) {
-                const images = [];
-                for (let i = 0; i < refInput.files.length; i++) {
-                    images.push(await fileToBase64(refInput.files[i]));
-                }
-                body.images = images;
-            }
-
-            try {
-                const { response, data } = await apiCall('/api/generate/image', 'POST', body);
-                displayResponse('i2iResponse', data, !response.ok);
-                if (response.ok && data.task_id) document.getElementById('taskId').value = data.task_id;
-            } catch (error) {
-                displayResponse('i2iResponse', { error: error.message }, true);
-            }
-        }
-
-        function onImageModelChange() {
-            const model = document.getElementById('imageModel').value;
-            document.getElementById('imageResolutionGroup').style.display = 
-                model === 'MODEL_FOUR_NANO_BANANA_PRO' ? 'block' : 'none';
-        }
-
-        function updateCounter(textareaId, counterId, max) {
-            const len = document.getElementById(textareaId).value.length;
-            const counter = document.getElementById(counterId);
-            counter.textContent = `${len}/${max}`;
-            counter.style.color = len >= max * 0.9 ? 'var(--warning)' : len >= max ? 'var(--error)' : 'var(--text-muted)';
-        }
-
-        // Tab switching
-        function switchTab(id) {
-            document.querySelectorAll('.tab-panel').forEach(p => p.style.display = 'none');
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById(id).style.display = 'block';
-            event.currentTarget.classList.add('active');
-        }
-
-        function switchSubTab(id) {
-            document.querySelectorAll('.sub-tab-panel').forEach(p => p.style.display = 'none');
-            document.querySelectorAll('.sub-tab-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById(id).style.display = 'block';
-            event.currentTarget.classList.add('active');
-        }
-
-        // Generate Text to Video
-        async function generateTextToVideo() {
-            const prompt = document.getElementById('t2vPrompt').value;
-            if (!prompt) { alert('Lütfen prompt girin!'); return; }
-
-            const body = {
-                prompt,
-                model: document.getElementById('t2vModel').value,
-                size: document.getElementById('t2vSize').value
-            };
-
-            try {
-                const { response, data } = await apiCall('/api/generate/video', 'POST', body);
-                displayResponse('t2vResponse', data, !response.ok);
-                if (response.ok && data.task_id) document.getElementById('taskId').value = data.task_id;
-            } catch (error) {
-                displayResponse('t2vResponse', { error: error.message }, true);
-            }
-        }
-
-        // Generate Image to Video
-        async function generateImageToVideo() {
-            const prompt = document.getElementById('i2vPrompt').value;
-            if (!prompt) { alert('Lütfen prompt girin!'); return; }
-
-            const body = {
-                prompt,
-                model: document.getElementById('i2vModel').value,
-                size: document.getElementById('i2vSize').value
-            };
-
-            // Determine active sub-tab
-            const startEndActive = document.getElementById('subtab-startend').style.display !== 'none';
-
-            if (startEndActive) {
-                const startInput = document.getElementById('i2vStartFrame');
-                if (!startInput.files || startInput.files.length === 0) {
-                    alert('Lütfen Start Frame resmi seçin!'); return;
-                }
-                body.image = await fileToBase64(startInput.files[0]);
-
-                const endInput = document.getElementById('i2vEndFrame');
-                if (endInput.files && endInput.files.length > 0) {
-                    if (body.model !== 'VEO_3_1') { alert('End Frame yalnızca VEO_3_1 modeliyle kullanılabilir!'); return; }
-                    body.end_frame = await fileToBase64(endInput.files[0]);
-                }
-            } else {
-                if (body.model !== 'VEO_3_1') { alert('Reference Images yalnızca VEO_3_1 modeliyle kullanılabilir!'); return; }
-                const refInput = document.getElementById('i2vRefImages');
-                if (!refInput.files || refInput.files.length === 0) {
-                    alert('Lütfen en az 1 referans görsel seçin!'); return;
-                }
-                const refs = [];
-                for (let i = 0; i < refInput.files.length; i++) refs.push(await fileToBase64(refInput.files[i]));
-                body.reference_images = refs;
-            }
-
-            try {
-                const { response, data } = await apiCall('/api/generate/video', 'POST', body);
-                displayResponse('i2vResponse', data, !response.ok);
-                if (response.ok && data.task_id) document.getElementById('taskId').value = data.task_id;
-            } catch (error) {
-                displayResponse('i2vResponse', { error: error.message }, true);
-            }
-        }
-
-        // Reference images max-3 check
-        function onI2vRefChange(input) {
-            if (input.files && input.files.length > 3) {
-                alert('En fazla 3 referans görsel seçebilirsiniz!');
-                input.value = '';
-                document.getElementById('i2vRefImagesLabel').textContent = 'Resim Seç (Maks. 3)';
-                document.getElementById('i2vRefImagesLabel').classList.remove('file-selected');
-                return;
-            }
-            updateFileLabel(input, 'i2vRefImagesLabel');
-        }
-
-        // Helper function: File to Base64 (with compression)
-        function fileToBase64(file) {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onload = () => {
-                    const img = new Image();
-                    img.onload = () => {
-                        const MAX_SIDE = 3000;
-                        let { width, height } = img;
-
-                        if (width > MAX_SIDE || height > MAX_SIDE) {
-                            if (width > height) {
-                                height = Math.round((height / width) * MAX_SIDE);
-                                width = MAX_SIDE;
-                            } else {
-                                width = Math.round((width / height) * MAX_SIDE);
-                                height = MAX_SIDE;
-                            }
-                        }
-
-                        const canvas = document.createElement('canvas');
-                        canvas.width = width;
-                        canvas.height = height;
-
-                        const ctx = canvas.getContext('2d');
-
-                        // JPEG doesn't support transparency — fill background white
-                        ctx.fillStyle = '#ffffff';
-                        ctx.fillRect(0, 0, width, height);
-                        ctx.drawImage(img, 0, 0, width, height);
-
-                        canvas.toBlob(
-                            (blob) => {
-                                const blobReader = new FileReader();
-                                blobReader.onload = () => {
-                                    const base64 = blobReader.result.split(',')[1];
-                                    resolve(base64);
-                                };
-                                blobReader.onerror = reject;
-                                blobReader.readAsDataURL(blob);
-                            },
-                            'image/jpeg',
-                            0.92
-                        );
-                    };
-                    img.onerror = reject;
-                    img.src = reader.result;
-                };
-                reader.onerror = reject;
-                reader.readAsDataURL(file);
-            });
-        }
-
-        // Check Task Status
-        async function checkTaskStatus() {
-            const taskId = document.getElementById('taskId').value;
-            if (!taskId) {
-                alert('Lütfen Task ID girin!');
-                return;
-            }
-
-            try {
-                const { response, data } = await apiCall(`/api/status/${taskId}`);
-                displayResponse('statusResponse', data, !response.ok);
                 
-                if (response.ok) {
-                    displayTaskCard(taskId, data);
-                }
-            } catch (error) {
-                displayResponse('statusResponse', { error: error.message }, true);
-            }
-        }
+                if is_i2v:
+                    img_data = base64.b64decode(params['image'])
+                    img_id = upload_image(token, img_data)
+                    if not img_id:
+                        db.update_task_status(task_id, 'failed')
+                        db.release_account(api_key_id, account['email'])
+                        return
+                    payload["userImageId"] = int(str(img_id).strip())
+                    url_submit = URL_SUBMIT_VIDEO
+                else:
+                    url_submit = URL_SUBMIT_TXT_VIDEO
 
-        // Check All Tasks
-        async function checkAllTasks() {
-            try {
-                const { response, data } = await apiCall(`/api/status?page=${currentPage}&per_page=${tasksPerPage}`);
-                displayResponse('statusResponse', data, !response.ok);
-                
-                if (response.ok && data.tasks) {
-                    displayAllTasks(data);
-                }
-            } catch (error) {
-                displayResponse('statusResponse', { error: error.message }, true);
-            }
-        }
+                if end_frame:
+                    end_frame_data = base64.b64decode(end_frame)
+                    end_frame_id = upload_image(token, end_frame_data)
+                    if not end_frame_id:
+                        db.update_task_status(task_id, 'failed')
+                        db.add_task_log(task_id, "End frame upload failed.")
+                        db.release_account(api_key_id, account['email'])
+                        return
+                    payload["endFrameUserImageId"] = int(str(end_frame_id).strip())
 
-        // Display single task card
-        function displayTaskCard(taskId, taskData) {
-            const container = document.getElementById('tasksContainer');
-            const paginationContainer = document.getElementById('paginationContainer');
-            const section = document.querySelector('.card:has(#tasksContainer)');
-            const statusClass = `status-${taskData.status}`;
-            
-            // Add single task view class
-            if (section) {
-                section.classList.add('single-task-view');
-            }
-            
-            // Clear pagination for single task view
-            paginationContainer.innerHTML = '';
-            
-            let resultHTML = '';
-            if (taskData.result_url) {
-                if (taskData.mode === 'image') {
-                    resultHTML = `<img src="${taskData.result_url}" class="result-image" alt="Result">`;
-                } else if (taskData.mode === 'video') {
-                    resultHTML = `<video src="${taskData.result_url}" class="result-video" controls></video>`;
-                }
-            }
-
-            const logsHTML = taskData.logs && taskData.logs.length > 0 
-                ? `<div class="logs"><strong>Loglar:</strong><br>${taskData.logs.map(log => 
-                    typeof log === 'object' ? `[${log.time}] ${log.message}` : log
-                ).join('<br>')}</div>` 
-                : '';
-
-            const refImagesHTML = taskData.reference_image_urls && taskData.reference_image_urls.length > 0
-                ? `<div class="task-info-item" style="grid-column:1/-1"><strong>Referans Görseller:</strong><br>${taskData.reference_image_urls.map(url =>
-                    `<a href="${url}" target="_blank"><img src="${url}" style="height:60px;border-radius:6px;margin:4px;object-fit:cover;"></a>`
-                ).join('')}</div>`
-                : '';
-
-            container.innerHTML = `
-                <div class="task-card">
-                    <h3>Task: ${taskId}</h3>
-                    <span class="status-badge ${statusClass}">${taskData.status.toUpperCase()}</span>
-                    <div class="task-info">
-                        <div class="task-info-item">
-                            <strong>Mod:</strong> ${taskData.mode}
-                        </div>
-                        ${taskData.result_url ? `
-                        <div class="task-info-item">
-                            <strong>Sonuç URL:</strong> <a href="${taskData.result_url}" target="_blank">Aç</a>
-                        </div>` : ''}
-                        ${refImagesHTML}
-                    </div>
-                    ${logsHTML}
-                    ${resultHTML}
-                </div>
-            `;
-        }
-
-        // Display all tasks with pagination
-        function displayAllTasks(data) {
-            const container = document.getElementById('tasksContainer');
-            const paginationContainer = document.getElementById('paginationContainer');
-            const section = document.querySelector('.card:has(#tasksContainer)');
-            
-            // Remove single task view class
-            if (section) {
-                section.classList.remove('single-task-view');
-            }
-            
-            if (!data.tasks || data.tasks.length === 0) {
-                container.innerHTML = '<div class="alert alert-info">Henüz task bulunamadı.</div>';
-                paginationContainer.innerHTML = '';
-                return;
-            }
-
-            // Server already returns only current page's tasks
-            const total = data.total || data.tasks.length;
-            const totalPages = data.total_pages || Math.ceil(total / tasksPerPage);
-            allTasks = data.tasks.map(t => [t.task_id, t]);
-
-            // Ensure current page is valid
-            if (currentPage > totalPages) currentPage = totalPages;
-            if (currentPage < 1) currentPage = 1;
-            
-            // Display tasks (server already sliced them)
-            container.innerHTML = '';
-            allTasks.forEach(([taskId, taskData]) => {
-                const statusClass = `status-${taskData.status}`;
-                
-                let resultHTML = '';
-                if (taskData.result_url) {
-                    if (taskData.mode === 'image') {
-                        resultHTML = `<img src="${taskData.result_url}" class="result-image" alt="Result">`;
-                    } else if (taskData.mode === 'video') {
-                        resultHTML = `<video src="${taskData.result_url}" class="result-video" controls></video>`;
+                reference_images = params.get("reference_images", [])
+                if reference_images:
+                    ref_ids = []
+                    for ref_b64 in reference_images:
+                        ref_data = base64.b64decode(ref_b64)
+                        ref_id = upload_image(token, ref_data)
+                        if not ref_id:
+                            db.update_task_status(task_id, "failed")
+                            db.add_task_log(task_id, "Reference image upload failed.")
+                            db.release_account(api_key_id, account["email"])
+                            return
+                        ref_ids.append(int(str(ref_id).strip()))
+                    payload = {
+                        "prompt": params.get('prompt', ''),
+                        "resolution": "720p",
+                        "duration": 8,
+                        "size": size,
+                        "aiPromptEnhance": params.get('aiPromptEnhance', True),
+                        "modelVersion": "MODEL_FIVE_FAST_3",
+                        "userImageIds": ref_ids
                     }
+                    url_submit = URL_SUBMIT_CHARACTER_VIDEO
+            
+            # SORA2 modeli için (varsayılan)
+            else:
+                payload = {
+                    "prompt": params.get('prompt', ''),
+                    "resolution": "720p",
+                    "lengthOfSecond": 10,
+                    "aiPromptEnhance": True,
+                    "size": size,
+                    "addEndFrame": False
                 }
 
-                const logsHTML = taskData.logs && taskData.logs.length > 0 
-                    ? `<div class="logs"><strong>Loglar:</strong><br>${taskData.logs.map(log => 
-                        typeof log === 'object' ? `[${log.time}] ${log.message}` : log
-                    ).join('<br>')}</div>` 
-                    : '';
+                if is_i2v:
+                    img_data = base64.b64decode(params['image'])
+                    img_id = upload_image(token, img_data)
+                    if not img_id:
+                        db.update_task_status(task_id, 'failed')
+                        db.release_account(api_key_id, account['email'])
+                        return
+                    payload["userImageId"] = int(str(img_id).strip())
+                    payload["modelVersion"] = "MODEL_ELEVEN_IMAGE_TO_VIDEO_V2"
+                    url_submit = URL_SUBMIT_VIDEO
+                else:
+                    payload["modelType"] = "MODEL_ELEVEN"
+                    payload["modelVersion"] = "MODEL_ELEVEN_TEXT_TO_VIDEO_V2"
+                    url_submit = URL_SUBMIT_TXT_VIDEO
 
-                const refImagesHTML = taskData.reference_image_urls && taskData.reference_image_urls.length > 0
-                    ? `<div class="task-info-item" style="grid-column:1/-1"><strong>Referans Görseller:</strong><br>${taskData.reference_image_urls.map(url =>
-                        `<a href="${url}" target="_blank"><img src="${url}" style="height:60px;border-radius:6px;margin:4px;object-fit:cover;"></a>`
-                    ).join('')}</div>`
-                    : '';
+            # Save token BEFORE submit so crash during submit can still recover
+            db.update_task_token(task_id, token)
 
-                const card = document.createElement('div');
-                card.className = 'task-card';
-                card.innerHTML = `
-                    <h3>Task: ${taskId}</h3>
-                    <span class="status-badge ${statusClass}">${taskData.status.toUpperCase()}</span>
-                    <div class="task-info">
-                        <div class="task-info-item">
-                            <strong>Mod:</strong> ${taskData.mode}
-                        </div>
-                        ${taskData.result_url ? `
-                        <div class="task-info-item">
-                            <strong>Sonuç URL:</strong> <a href="${taskData.result_url}" target="_blank">Aç</a>
-                        </div>` : ''}
-                        ${refImagesHTML}
-                    </div>
-                    ${logsHTML}
-                    ${resultHTML}
-                `;
-                container.appendChild(card);
-            });
+            resp = requests.post(url_submit, headers=headers, json=payload)
+            resp_json = resp.json()
             
-            // Display pagination
-            displayPagination(totalPages, total);
-        }
+            error = resp_json.get('error')
+            if error and error.get('code') != 0:
+                db.update_task_status(task_id, 'failed')
+                db.add_task_log(task_id, f"Submit error: {resp_json}")
+                db.release_account(api_key_id, account['email'])
+                return
+
+            api_task_id = str(resp_json['data']['data']['taskId'])
+            db.update_task_external_data(task_id, api_task_id, token)
+            db.add_task_log(task_id, f"API Task ID: {api_task_id}")
+
+            data_obj = resp_json['data']['data']
+            ref_urls = data_obj.get('originalImageNameUrls') or []
+            end_frame_url = data_obj.get('endFrameUserImageUrl')
+            if end_frame_url:
+                ref_urls = ref_urls + [end_frame_url]
+            if ref_urls:
+                db.update_task_reference_urls(task_id, ref_urls)
+            
+            for _ in range(600):
+                if _shutdown_event.wait(5):
+                    return  # Shutdown — task 'running' kalır, recovery halleder
+                try:
+                    poll = requests.get(URL_VIDEO_TASKS, headers=headers).json()
+                    video_list = poll.get('data', {}).get('data', {}).get('data', [])
+                    if not video_list and isinstance(poll.get('data', {}).get('data'), list):
+                        video_list = poll['data']['data']
+                        
+                    for v in video_list:
+                        if str(v.get('taskId')) == api_task_id:
+                            if v.get('taskState') == 'SUCCESS':
+                                url = v.get('noWaterMarkVideoUrl') or v.get('noWatermarkVideoUrl')
+                                if isinstance(url, list) and url: url = url[0]
+                                if url:
+                                    db.update_task_status(task_id, 'completed', url)
+                                    return
+                            elif v.get('taskState') == 'FAIL':
+                                db.update_task_status(task_id, 'failed')
+                                db.release_account(api_key_id, account['email'])
+                                return
+                except:
+                    pass
+            db.update_task_status(task_id, 'timeout')
+            db.release_account(api_key_id, account['email'])
+        except Exception as e:
+            db.update_task_status(task_id, 'error')
+            db.add_task_log(task_id, str(e))
+            if 'account' in locals() and account:
+                db.release_account(api_key_id, account['email'])
+    except Exception:
+        db.update_task_status(task_id, 'error')
+
+def process_tts_task(task_id, params):
+    """Worker for ElevenLabs TTS generation."""
+    try:
+        db.update_task_status(task_id, 'running')
+        try:
+            if not ELEVENLABS_API_KEY:
+                db.update_task_status(task_id, 'failed')
+                db.add_task_log(task_id, "ElevenLabs API key not configured.")
+                return
+
+            voice_id = params.get('voice_id', 'EXAVITQu4vr4xnSDxMaL')  # Default: Bella
+            text = params.get('text', '')
+            
+            if not text:
+                db.update_task_status(task_id, 'failed')
+                db.add_task_log(task_id, "Text is required.")
+                return
+
+            # Voice settings
+            stability = params.get('stability', 0.5)
+            similarity_boost = params.get('similarity_boost', 0.75)
+            style = params.get('style', 0.0)
+            speed = params.get('speed', 1.0)
+            
+            url = f"{ELEVENLABS_TTS_URL}/{voice_id}"
+            
+            headers = {
+                "Accept": "audio/mpeg",
+                "Content-Type": "application/json",
+                "xi-api-key": ELEVENLABS_API_KEY
+            }
+            
+            payload = {
+                "text": text,
+                "model_id": params.get('model_id', 'eleven_multilingual_v2'),
+                "voice_settings": {
+                    "stability": stability,
+                    "similarity_boost": similarity_boost,
+                    "style": style,
+                    "use_speaker_boost": params.get('use_speaker_boost', True)
+                }
+            }
+            
+            if speed != 1.0:
+                payload["voice_settings"]["speed"] = speed
+
+            db.add_task_log(task_id, f"Generating TTS with voice: {voice_id}")
+            
+            response = requests.post(url, json=payload, headers=headers, timeout=60)
+            
+            if response.status_code == 200:
+                audio_base64 = base64.b64encode(response.content).decode('utf-8')
+                
+                db.update_task_status(task_id, 'completed', f"data:audio/mpeg;base64,{audio_base64}")
+                db.add_task_log(task_id, "TTS generation successful.")
+            else:
+                db.update_task_status(task_id, 'failed')
+                db.add_task_log(task_id, f"ElevenLabs API error: {response.status_code} - {response.text}")
+                
+        except Exception as e:
+            db.update_task_status(task_id, 'error')
+            db.add_task_log(task_id, str(e))
+    except Exception:
+        db.update_task_status(task_id, 'error')
+
+# --- Recovery Logic ---
+
+def check_deevid_for_task(task_id, mode, token, account_email=None, api_key_id=None):
+    """Checks Deevid API for a task that may have been submitted before crash.
+    Uses the saved token to check recent assets/tasks.
+    If found: saves external_task_id and starts polling.
+    If not found: marks task as failed and releases account.
+    """
+    try:
+        headers = {"authorization": f"Bearer {token}", **DEVICE_HEADERS}
         
-        // Display pagination controls
-        function displayPagination(totalPages, serverTotal) {
-            const paginationContainer = document.getElementById('paginationContainer');
-            
-            if (totalPages <= 1) {
-                paginationContainer.innerHTML = '';
-                return;
-            }
-            
-            let paginationHTML = '<div class="pagination">';
-            
-            // Previous button
-            paginationHTML += `
-                <button onclick="changePage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>
-                    ← Önceki
-                </button>
-            `;
-            
-            // Page numbers
-            for (let i = 1; i <= totalPages; i++) {
-                // Show first page, last page, current page, and pages around current
-                if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
-                    paginationHTML += `
-                        <button class="page-btn ${i === currentPage ? 'active' : ''}" onclick="changePage(${i})">
-                            ${i}
-                        </button>
-                    `;
-                } else if (i === currentPage - 2 || i === currentPage + 2) {
-                    paginationHTML += '<span style="color: var(--text-muted);">...</span>';
-                }
-            }
-            
-            // Next button
-            paginationHTML += `
-                <button onclick="changePage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>
-                    Sonraki →
-                </button>
-            `;
-            
-            // Pagination info
-            const startIndex = (currentPage - 1) * tasksPerPage + 1;
-            const endIndex = Math.min(currentPage * tasksPerPage, serverTotal);
-            paginationHTML += `
-                <div class="pagination-info">
-                    ${startIndex}-${endIndex} arası gösteriliyor (Toplam: ${serverTotal} task)
-                </div>
-            `;
-            
-            paginationHTML += '</div>';
-
-            // Go to page row
-            paginationHTML += `
-                <div class="pagination-goto">
-                    <label for="gotoPageInput">Sayfaya Git:</label>
-                    <input
-                        type="number"
-                        id="gotoPageInput"
-                        min="1"
-                        max="${totalPages}"
-                        placeholder="No"
-                        onkeydown="if(event.key==='Enter') goToPage(${totalPages})"
-                    >
-                    <button onclick="goToPage(${totalPages})">Git →</button>
-                </div>
-            `;
-            
-            paginationContainer.innerHTML = paginationHTML;
-        }
-
-        // Go to specific page
-        function goToPage(totalPages) {
-            const input = document.getElementById('gotoPageInput');
-            if (!input) return;
-            let page = parseInt(input.value);
-            if (isNaN(page)) return;
-            if (page < 1) page = 1;
-            if (page > totalPages) page = totalPages;
-            changePage(page);
-        }
+        if mode == 'image':
+            # Check recent image assets
+            try:
+                poll = requests.get(URL_ASSETS, headers=headers, timeout=15).json()
+                groups = poll.get('data', {}).get('data', {}).get('groups', [])
+                for group in groups:
+                    for item in group.get('items', []):
+                        creation = item.get('detail', {}).get('creation', {})
+                        task_state = creation.get('taskState')
+                        api_task_id = creation.get('taskId')
+                        
+                        if api_task_id and task_state in ('PENDING', 'RUNNING', 'SUBMITTED'):
+                            # Found an active task — save and poll
+                            api_task_id = str(api_task_id)
+                            db.update_task_external_data(task_id, api_task_id, token)
+                            db.add_task_log(task_id, f"[RECOVERY] Found active task on Deevid: {api_task_id}")
+                            print(f"  [RECOVERY] Task {task_id}: found active Deevid task {api_task_id}, resuming polling")
+                            threading.Thread(
+                                target=poll_image_recovery,
+                                args=(task_id, api_task_id, token, account_email, api_key_id)
+                            ).start()
+                            return
+                        elif api_task_id and task_state == 'SUCCESS':
+                            urls = creation.get('noWaterMarkImageUrl', [])
+                            if urls:
+                                db.update_task_status(task_id, 'completed', urls[0])
+                                print(f"  [RECOVERY] Task {task_id}: found completed result on Deevid")
+                                return
+            except Exception as e:
+                print(f"  [RECOVERY] Task {task_id}: Deevid check failed: {e}")
         
-        // Change page
-        function changePage(page) {
-            const totalPages = Math.ceil((allTasks.length > 0 ? allTasks.length : 1) / tasksPerPage);
-            if (page < 1) return;
+        elif mode == 'video':
+            # Check recent video tasks
+            try:
+                poll = requests.get(URL_VIDEO_TASKS, headers=headers, timeout=15).json()
+                video_list = poll.get('data', {}).get('data', {}).get('data', [])
+                if not video_list and isinstance(poll.get('data', {}).get('data'), list):
+                    video_list = poll['data']['data']
+                
+                for v in video_list:
+                    task_state = v.get('taskState')
+                    api_task_id = v.get('taskId')
+                    
+                    if api_task_id and task_state in ('PENDING', 'RUNNING', 'SUBMITTED'):
+                        api_task_id = str(api_task_id)
+                        db.update_task_external_data(task_id, api_task_id, token)
+                        db.add_task_log(task_id, f"[RECOVERY] Found active video task on Deevid: {api_task_id}")
+                        print(f"  [RECOVERY] Task {task_id}: found active Deevid video task {api_task_id}, resuming polling")
+                        threading.Thread(
+                            target=poll_video_recovery,
+                            args=(task_id, api_task_id, token, account_email, api_key_id)
+                        ).start()
+                        return
+                    elif api_task_id and task_state == 'SUCCESS':
+                        url = v.get('noWaterMarkVideoUrl') or v.get('noWatermarkVideoUrl')
+                        if isinstance(url, list) and url: url = url[0]
+                        if url:
+                            db.update_task_status(task_id, 'completed', url)
+                            print(f"  [RECOVERY] Task {task_id}: found completed video on Deevid")
+                            return
+            except Exception as e:
+                print(f"  [RECOVERY] Task {task_id}: Deevid video check failed: {e}")
+        
+        # Nothing found on Deevid — submit never went through
+        db.update_task_status(task_id, 'failed')
+        db.add_task_log(task_id, "[RECOVERY] No active task found on Deevid after crash — submit likely never completed.")
+        if account_email and api_key_id:
+            db.release_account(api_key_id, account_email)
+            print(f"  [RECOVERY] Task {task_id}: no Deevid task found, account {account_email} released")
+        else:
+            print(f"  [RECOVERY] Task {task_id}: no Deevid task found, marked failed")
+    except Exception as e:
+        print(f"  [RECOVERY] Task {task_id}: check_deevid error: {e}")
+        db.update_task_status(task_id, 'failed')
+        if account_email and api_key_id:
+            db.release_account(api_key_id, account_email)
+
+def poll_image_recovery(task_id, api_task_id, token, account_email=None, api_key_id=None):
+    """Polling worker for recovered image tasks."""
+    try:
+        headers = {"authorization": f"Bearer {token}", **DEVICE_HEADERS}
+        for _ in range(300):
+            if _shutdown_event.wait(5):
+                return  # Shutdown — task 'running' kalır, recovery halleder
+            try:
+                poll = requests.get(URL_ASSETS, headers=headers).json()
+                groups = poll.get('data', {}).get('data', {}).get('groups', [])
+                for group in groups:
+                    for item in group.get('items', []):
+                        creation = item.get('detail', {}).get('creation', {})
+                        if str(creation.get('taskId')) == api_task_id:
+                            if creation.get('taskState') == 'SUCCESS':
+                                urls = creation.get('noWaterMarkImageUrl', [])
+                                if urls:
+                                    db.update_task_status(task_id, 'completed', urls[0])
+                                    return
+                            elif creation.get('taskState') == 'FAIL':
+                                db.update_task_status(task_id, 'failed')
+                                if account_email and api_key_id:
+                                    db.release_account(api_key_id, account_email)
+                                return
+            except:
+                pass
+        db.update_task_status(task_id, 'timeout')
+        if account_email and api_key_id:
+            db.release_account(api_key_id, account_email)
+    except Exception as e:
+        db.add_task_log(task_id, f"Recovery error: {str(e)}")
+        db.update_task_status(task_id, 'failed')
+        if account_email and api_key_id:
+            db.release_account(api_key_id, account_email)
+
+def poll_video_recovery(task_id, api_task_id, token, account_email=None, api_key_id=None):
+    """Polling worker for recovered video tasks."""
+    try:
+        headers = {"authorization": f"Bearer {token}", **DEVICE_HEADERS}
+        for _ in range(600):
+            if _shutdown_event.wait(10):
+                return  # Shutdown — task 'running' kalır, recovery halleder
+            try:
+                poll = requests.get(URL_VIDEO_TASKS, headers=headers).json()
+                video_list = poll.get('data', {}).get('data', {}).get('data', [])
+                if not video_list and isinstance(poll.get('data', {}).get('data'), list):
+                    video_list = poll['data']['data']
+                    
+                for v in video_list:
+                    if str(v.get('taskId')) == api_task_id:
+                        if v.get('taskState') == 'SUCCESS':
+                            url = v.get('noWaterMarkVideoUrl') or v.get('noWatermarkVideoUrl')
+                            if isinstance(url, list) and url: url = url[0]
+                            if url:
+                                db.update_task_status(task_id, 'completed', url)
+                                return
+                        elif v.get('taskState') == 'FAIL':
+                            db.update_task_status(task_id, 'failed')
+                            if account_email and api_key_id:
+                                db.release_account(api_key_id, account_email)
+                            return
+            except:
+                pass
+        db.update_task_status(task_id, 'timeout')
+        if account_email and api_key_id:
+            db.release_account(api_key_id, account_email)
+    except Exception as e:
+        db.add_task_log(task_id, f"Recovery error: {str(e)}")
+        db.update_task_status(task_id, 'failed')
+        if account_email and api_key_id:
+            db.release_account(api_key_id, account_email)
+
+def resume_incomplete_tasks():
+    """Recovers stale tasks and resumes polling for submitted ones."""
+    print("=" * 50)
+    print("[STARTUP] Starting crash recovery...")
+    
+    # Phase 1: Clean up truly stale tasks + get tasks that need Deevid check
+    try:
+        recovery_result = db.recover_stale_tasks()
+        if recovery_result['failed_count'] > 0:
+            print(f"[STARTUP] Marked {recovery_result['failed_count']} tasks as failed (never logged in)")
+    except Exception as e:
+        print(f"[STARTUP] Error during stale task recovery: {e}")
+        recovery_result = {'needs_check': []}
+    
+    # Phase 2: Check Deevid API for tasks that had token but no external_task_id
+    needs_check = recovery_result.get('needs_check', [])
+    if needs_check:
+        print(f"[STARTUP] Checking Deevid API for {len(needs_check)} tasks that may have been submitted...")
+        for t in needs_check:
+            threading.Thread(
+                target=check_deevid_for_task,
+                args=(t['task_id'], t['mode'], t['token'], t.get('account_email'), t.get('api_key_id'))
+            ).start()
+    
+    # Phase 3: Resume polling for tasks that WERE confirmed submitted (have external_task_id)
+    try:
+        tasks = db.get_incomplete_tasks()
+        if tasks:
+            print(f"[STARTUP] Resuming polling for {len(tasks)} confirmed submitted tasks...")
+        else:
+            print(f"[STARTUP] No confirmed tasks to resume.")
             
-            currentPage = page;
-            checkAllTasks();
-        }
-
-        // Auto refresh
-        function startAutoRefresh() {
-            if (autoRefreshInterval) {
-                alert('Otomatik yenileme zaten çalışıyor!');
-                return;
-            }
+        for t in tasks:
+            task_id = t['task_id']
+            mode = t['mode']
+            external_id = t['external_task_id']
+            token = t['token']
+            account_email = t.get('account_email')
+            api_key_id = t.get('api_key_id')
             
-            autoRefreshInterval = setInterval(() => {
-                checkAllTasks();
-            }, 5000);
-            
-            alert('Otomatik yenileme başlatıldı! (5 saniyede bir)');
-            checkAllTasks(); // İlk kontrolü hemen yap
-        }
+            print(f"  [RESUME] Task {task_id} ({mode}) - External ID: {external_id}")
+            if mode == 'image':
+                threading.Thread(
+                    target=poll_image_recovery,
+                    args=(task_id, external_id, token, account_email, api_key_id)
+                ).start()
+            elif mode == 'video':
+                threading.Thread(
+                    target=poll_video_recovery,
+                    args=(task_id, external_id, token, account_email, api_key_id)
+                ).start()
+    except Exception as e:
+        print(f"[STARTUP] Error during task resume: {e}")
+    
+    print("[STARTUP] Crash recovery complete.")
+    print("=" * 50)
 
-        function stopAutoRefresh() {
-            if (autoRefreshInterval) {
-                clearInterval(autoRefreshInterval);
-                autoRefreshInterval = null;
-                alert('Otomatik yenileme durduruldu.');
-            } else {
-                alert('Otomatik yenileme zaten çalışmıyor.');
-            }
-        }
+TASK_FIELDS_BY_MODE = {
+    'image': ['task_id', 'mode', 'status', 'result_url', 'prompt', 'model', 'size', 'resolution', 'reference_image_urls', 'logs', 'created_at'],
+    'video': ['task_id', 'mode', 'status', 'result_url', 'prompt', 'model', 'size', 'resolution', 'duration', 'reference_image_urls', 'logs', 'created_at'],
+    'tts':   ['task_id', 'mode', 'status', 'result_url', 'prompt', 'model', 'logs', 'created_at'],
+}
 
-        function onImageFileChange(input) {
-            if (input.files && input.files.length > 5) {
-                alert('En fazla 5 görsel seçebilirsiniz!');
-                input.value = '';
-                document.getElementById('imageFileLabel').textContent = 'Resim Seç (Maks. 5)';
-                document.getElementById('imageFileLabel').classList.remove('file-selected');
-                return;
-            }
-            updateFileLabel(input, 'imageFileLabel');
-        }
+def filter_task_fields(task):
+    """Filters task dict fields based on mode."""
+    if not task:
+        return task
+    fields = TASK_FIELDS_BY_MODE.get(task.get('mode'), list(task.keys()))
+    return {k: task[k] for k in fields if k in task}
 
-        // Update file input label
-        function updateFileLabel(input, labelId) {
-            const label = document.getElementById(labelId);
-            if (input.files && input.files.length > 0) {
-                const fileCount = input.files.length;
-                const fileName = input.files[0].name;
-                if (fileCount === 1) {
-                    label.textContent = fileName;
-                } else {
-                    label.textContent = `${fileCount} dosya seçildi`;
+@app.errorhandler(Exception)
+def handle_exception(e):
+    print(f"[ERROR] {request.method} {request.path} → {type(e).__name__}: {e}")
+    return jsonify({"error": "Internal server error"}), 500
+
+@app.route('/', methods=['GET'])
+def index():
+    return render_template('index.html')
+
+@app.route('/api/generate/image', methods=['POST'])
+def generate_image():
+    api_key_id = verify_api_key()
+    if not api_key_id:
+        return jsonify({"error": "Unauthorized"}), 401
+    
+    data = request.json
+    if not data or 'prompt' not in data:
+        return jsonify({"error": "Prompt required"}), 400
+    
+    images = data.get('images', [])
+    if isinstance(images, list) and len(images) > 5:
+        return jsonify({"error": "Maximum 5 images allowed"}), 400
+
+    if len(data.get('prompt', '')) > 4000:
+        return jsonify({"error": "Prompt must be 4000 characters or less"}), 400
+
+    if db.get_account_count(api_key_id) == 0:
+        return jsonify({"error": "No accounts available"}), 503
+    
+    running_count = db.get_running_task_count(api_key_id)
+    if running_count >= MAX_CONCURRENT_TASKS:
+        return jsonify({
+            "error": "Maximum concurrent tasks reached",
+            "message": f"Currently {running_count}/{MAX_CONCURRENT_TASKS} tasks running. Please wait."
+        }), 429
+    
+    task_id = str(uuid.uuid4())
+    model = data.get('model', 'NANO_BANANA_PRO')
+    size = data.get('imageSize', '16:9')
+    resolution = data.get('resolution', '2K') if model in ('NANO_BANANA_PRO', 'NANO_BANANA_2') else None
+    db.create_task(api_key_id, task_id, 'image',
+                   prompt=data.get('prompt'),
+                   model=model,
+                   size=size,
+                   resolution=resolution,
+                   duration=None)
+    
+    threading.Thread(target=process_image_task, args=(task_id, data, api_key_id)).start()
+    return jsonify({"task_id": task_id})
+
+@app.route('/api/generate/video', methods=['POST'])
+def generate_video():
+    api_key_id = verify_api_key()
+    if not api_key_id:
+        return jsonify({"error": "Unauthorized"}), 401
+    
+    data = request.json
+    if not data or 'prompt' not in data:
+        return jsonify({"error": "Prompt required"}), 400
+
+    if len(data.get('prompt', '')) > 2000:
+        return jsonify({"error": "Prompt must be 2000 characters or less"}), 400
+
+    if db.get_account_count(api_key_id) == 0:
+        return jsonify({"error": "No accounts available"}), 503
+
+    if data.get('model') == 'VEO_3' and data.get('end_frame') and not data.get('image'):
+        return jsonify({"error": "end_frame requires image (start frame) to be provided"}), 400
+
+    if data.get('model') == 'VEO_3':
+        reference_images = data.get('reference_images', [])
+        if isinstance(reference_images, list) and len(reference_images) > 3:
+            return jsonify({"error": "Maximum 3 reference images allowed"}), 400
+        if reference_images and (data.get('image') or data.get('end_frame')):
+            return jsonify({"error": "reference_images cannot be used together with image or end_frame"}), 400
+    
+    running_count = db.get_running_task_count(api_key_id)
+    if running_count >= MAX_CONCURRENT_TASKS:
+        return jsonify({
+            "error": "Maximum concurrent tasks reached",
+            "message": f"Currently {running_count}/{MAX_CONCURRENT_TASKS} tasks running. Please wait."
+        }), 429
+    
+    task_id = str(uuid.uuid4())
+    model = data.get('model', 'SORA_2')
+    size = data.get('size', '16:9')
+    resolution = '720p'
+    duration = 8 if model == 'VEO_3' else 10
+    db.create_task(api_key_id, task_id, 'video',
+                   prompt=data.get('prompt'),
+                   model=model,
+                   size=size,
+                   resolution=resolution,
+                   duration=duration)
+    
+    threading.Thread(target=process_video_task, args=(task_id, data, api_key_id)).start()
+    return jsonify({"task_id": task_id})
+
+@app.route('/api/generate/tts', methods=['POST'])
+def generate_tts():
+    api_key_id = verify_api_key()
+    if not api_key_id:
+        return jsonify({"error": "Unauthorized"}), 401
+    
+    data = request.json
+    if not data or 'text' not in data:
+        return jsonify({"error": "Text required"}), 400
+    
+    if not ELEVENLABS_API_KEY:
+        return jsonify({"error": "ElevenLabs API key not configured"}), 500
+    
+    running_count = db.get_running_task_count(api_key_id)
+    if running_count >= MAX_CONCURRENT_TASKS:
+        return jsonify({
+            "error": "Maximum concurrent tasks reached",
+            "message": f"Currently {running_count}/{MAX_CONCURRENT_TASKS} tasks running. Please wait."
+        }), 429
+    
+    task_id = str(uuid.uuid4())
+    db.create_task(api_key_id, task_id, 'tts')
+    
+    threading.Thread(target=process_tts_task, args=(task_id, data)).start()
+    return jsonify({"task_id": task_id})
+
+@app.route('/api/elevenlabs/voices', methods=['GET'])
+def get_elevenlabs_voices():
+    api_key_id = verify_api_key()
+    if not api_key_id:
+        return jsonify({"error": "Unauthorized"}), 401
+    
+    if not ELEVENLABS_API_KEY:
+        return jsonify({"error": "ElevenLabs API key not configured"}), 500
+    
+    try:
+        headers = {"xi-api-key": ELEVENLABS_API_KEY}
+        response = requests.get(ELEVENLABS_VOICES_URL, headers=headers)
+        
+        if response.status_code == 200:
+            voices_data = response.json()
+            simplified_voices = [
+                {
+                    "name": voice.get("name"),
+                    "voice_id": voice.get("voice_id")
                 }
-                label.classList.add('file-selected');
-            } else {
-                label.textContent = labelId === 'imageFileLabel' ? 'Resim Seç (Maks. 5)' : 'Resim Seç';
-                label.classList.remove('file-selected');
-            }
-        }
+                for voice in voices_data.get("voices", [])
+            ]
+            return jsonify({"voices": simplified_voices})
+        else:
+            return jsonify({"error": f"Failed to fetch voices: {response.text}"}), response.status_code
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
-        // Clean up on page unload
-        window.addEventListener('beforeunload', () => {
-            stopAutoRefresh();
-        });
-    </script>
-</body>
-</html>
+@app.route('/api/status/<task_id>', methods=['GET'])
+def get_task_status(task_id):
+    api_key_id = verify_api_key()
+    if not api_key_id:
+        return jsonify({"error": "Unauthorized"}), 401
+    
+    task = db.get_task(api_key_id, task_id)
+    if not task:
+        return jsonify({"error": "Task not found"}), 404
+    return jsonify(filter_task_fields(task))
+    
+@app.route('/api/status', methods=['GET'])
+def get_all_tasks_status():
+    api_key_id = verify_api_key()
+    if not api_key_id:
+        return jsonify({"error": "Unauthorized"}), 401
+    
+    running_count = db.get_running_task_count(api_key_id)
+
+    page_param = request.args.get('page')
+    if page_param is not None:
+        try:
+            page = max(1, int(page_param))
+        except ValueError:
+            return jsonify({"error": "Invalid page parameter"}), 400
+
+        per_page_param = request.args.get('per_page', 6)
+        try:
+            per_page = max(1, int(per_page_param))
+        except ValueError:
+            return jsonify({"error": "Invalid per_page parameter"}), 400
+
+        tasks, total = db.get_tasks_paginated(api_key_id, page, per_page)
+        import math
+        total_pages = math.ceil(total / per_page) if total > 0 else 1
+
+        return jsonify({
+            "tasks": tasks,
+            "running_tasks": running_count,
+            "max_concurrent": MAX_CONCURRENT_TASKS,
+            "page": page,
+            "per_page": per_page,
+            "total": total,
+            "total_pages": total_pages
+        })
+
+    return jsonify({
+        "tasks": db.get_all_tasks(api_key_id),
+        "running_tasks": running_count,
+        "max_concurrent": MAX_CONCURRENT_TASKS
+    })
+
+@app.route('/api/quota', methods=['GET'])
+def get_quota():
+    api_key_id = verify_api_key()
+    if not api_key_id:
+        return jsonify({"error": "Unauthorized"}), 401
+    
+    running_count = db.get_running_task_count(api_key_id)
+    return jsonify({
+        "quota": db.get_account_count(api_key_id),
+        "running_tasks": running_count,
+        "max_concurrent": MAX_CONCURRENT_TASKS,
+        "available_slots": MAX_CONCURRENT_TASKS - running_count
+    })
+
+@app.route('/api/accounts/add', methods=['POST'])
+def add_accounts():
+    api_key_id = verify_api_key()
+    if not api_key_id:
+        return jsonify({"error": "Unauthorized"}), 401
+    
+    data = request.json
+    if not data or 'accounts' not in data:
+        return jsonify({"error": "accounts field required"}), 400
+    
+    added = 0
+    failed = 0
+    for acc_str in data['accounts']:
+        if ':' in acc_str:
+            parts = acc_str.split(':')
+            if len(parts) >= 2:
+                email = parts[0].strip()
+                password = parts[1].strip()
+                if db.add_account(api_key_id, email, password):
+                    added += 1
+                else:
+                    failed += 1
+    
+    return jsonify({
+        "message": f"Added {added} accounts, {failed} failed (duplicates)",
+        "total_accounts": db.get_account_count(api_key_id)
+    })
+
+@app.route('/api/accounts', methods=['GET'])
+def get_accounts():
+    api_key_id = verify_api_key()
+    if not api_key_id:
+        return jsonify({"error": "Unauthorized"}), 401
+    
+    accounts = db.get_all_accounts(api_key_id)
+    return jsonify({
+        "accounts": accounts,
+        "total": len(accounts),
+        "available": sum(1 for a in accounts if not a['used'])
+    })
+
+@app.route('/api/accounts/<email>', methods=['DELETE'])
+def delete_account(email):
+    api_key_id = verify_api_key()
+    if not api_key_id:
+        return jsonify({"error": "Unauthorized"}), 401
+    
+    if db.delete_account(api_key_id, email):
+        return jsonify({"message": f"Account {email} deleted"})
+    else:
+        return jsonify({"error": "Account not found"}), 404
