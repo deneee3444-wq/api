@@ -48,11 +48,6 @@ IMAGE_MODEL_MAP = {
     'NANO_BANANA_2':   'MODEL_FOUR_NANO_BANANA_2',
 }
 
-VIDEO_MODEL_MAP = {
-    'SORA_2': 'SORA2',
-    'VEO_3':  'VEO_3_1',
-}
-
 # Frontend size value → Deevid size value mapping
 SIZE_MAP = {
     '16:9': 'SIXTEEN_BY_NINE',
@@ -302,15 +297,14 @@ def process_video_task(task_id, params, api_key_id):
 
             headers = {"authorization": f"Bearer {token}", **DEVICE_HEADERS}
             
-            # Model parametresini al ve Deevid formatına çevir
-            model_raw = params.get('model', 'SORA_2')
-            model = VIDEO_MODEL_MAP.get(model_raw, model_raw)
+            # Model parametresini al (frontend'den VEO_3 veya SORA_2 gelir)
+            model = params.get('model', 'SORA_2')
             size_raw = params.get('size', '16:9')
             size = SIZE_MAP.get(size_raw, size_raw)
             is_i2v = params.get('image') is not None
             
-            # VEO_3_1 modeli için
-            if model == 'VEO_3_1':
+            # VEO_3 modeli için
+            if model == 'VEO_3':
                 end_frame = params.get('end_frame')
                 payload = {
                     "prompt": params.get('prompt', ''),
@@ -368,7 +362,7 @@ def process_video_task(task_id, params, api_key_id):
                     }
                     url_submit = URL_SUBMIT_CHARACTER_VIDEO
             
-            # SORA2 modeli için (varsayılan)
+            # SORA_2 modeli için (varsayılan)
             else:
                 payload = {
                     "prompt": params.get('prompt', ''),
