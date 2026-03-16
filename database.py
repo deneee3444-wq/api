@@ -138,6 +138,12 @@ def init_db():
                     external_task_id TEXT,
                     token TEXT,
                     account_email TEXT,
+                    prompt TEXT,
+                    model TEXT,
+                    size TEXT,
+                    resolution TEXT,
+                    duration INTEGER,
+                    reference_image_urls TEXT DEFAULT '[]',
                     start_frame_url TEXT,
                     end_frame_url TEXT,
                     created_at TEXT DEFAULT CURRENT_TIMESTAMP
