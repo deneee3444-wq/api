@@ -195,9 +195,7 @@ def process_image_task(task_id, params, api_key_id):
             headers = {"authorization": f"Bearer {token}", **DEVICE_HEADERS}
             
             user_image_ids = []
-            images = params.get('images', [])
-            if not images and params.get('image'):  # Geriye dönük uyumluluk
-                images = [params.get('image')]
+            images = params.get('reference_images', [])
 
             for img_base64 in images:
                 img_data = base64.b64decode(img_base64)
@@ -212,7 +210,7 @@ def process_image_task(task_id, params, api_key_id):
 
             model_version_raw = params.get('model', 'NANO_BANANA_PRO')
             model_version = IMAGE_MODEL_MAP.get(model_version_raw, model_version_raw)
-            image_size_raw = params.get('imageSize', '16:9')
+            image_size_raw = params.get('size', '16:9')
             image_size = SIZE_MAP.get(image_size_raw, image_size_raw)
             payload = {
                 "prompt": params.get('prompt', ''),
@@ -302,7 +300,7 @@ def process_video_task(task_id, params, api_key_id):
             model = params.get('model', 'SORA_2')
             size_raw = params.get('size', '16:9')
             size = SIZE_MAP.get(size_raw, size_raw)
-            is_i2v = params.get('image') is not None
+            is_i2v = params.get('start_frame') is not None
             
             # VEO_3 modeli için
             if model == 'VEO_3':
@@ -319,7 +317,7 @@ def process_video_task(task_id, params, api_key_id):
                 }
                 
                 if is_i2v:
-                    img_data = base64.b64decode(params['image'])
+                    img_data = base64.b64decode(params['start_frame'])
                     img_id = upload_image(token, img_data)
                     if not img_id:
                         db.update_task_status(task_id, 'failed')
@@ -375,7 +373,7 @@ def process_video_task(task_id, params, api_key_id):
                 }
 
                 if is_i2v:
-                    img_data = base64.b64decode(params['image'])
+                    img_data = base64.b64decode(params['start_frame'])
                     img_id = upload_image(token, img_data)
                     if not img_id:
                         db.update_task_status(task_id, 'failed')
@@ -769,7 +767,7 @@ def generate_image():
     if not data or 'prompt' not in data:
         return jsonify({"error": "Prompt required"}), 400
     
-    images = data.get('images', [])
+    images = data.get('reference_images', [])
     if isinstance(images, list) and len(images) > 5:
         return jsonify({"error": "Maximum 5 images allowed"}), 400
 
@@ -788,7 +786,7 @@ def generate_image():
     
     task_id = str(uuid.uuid4())
     model = data.get('model', 'NANO_BANANA_PRO')
-    size = data.get('imageSize', '16:9')
+    size = data.get('size', '16:9')
     resolution = data.get('resolution', '2K') if model in ('NANO_BANANA_PRO', 'NANO_BANANA_2') else None
     db.create_task(api_key_id, task_id, 'image',
                    prompt=data.get('prompt'),
@@ -816,14 +814,14 @@ def generate_video():
     if db.get_account_count(api_key_id) == 0:
         return jsonify({"error": "No accounts available"}), 503
 
-    if data.get('model') == 'VEO_3' and data.get('end_frame') and not data.get('image'):
+    if data.get('model') == 'VEO_3' and data.get('end_frame') and not data.get('start_frame'):
         return jsonify({"error": "end_frame requires image (start frame) to be provided"}), 400
 
     if data.get('model') == 'VEO_3':
         reference_images = data.get('reference_images', [])
         if isinstance(reference_images, list) and len(reference_images) > 3:
             return jsonify({"error": "Maximum 3 reference images allowed"}), 400
-        if reference_images and (data.get('image') or data.get('end_frame')):
+        if reference_images and (data.get('start_frame') or data.get('end_frame')):
             return jsonify({"error": "reference_images cannot be used together with image or end_frame"}), 400
     
     running_count = db.get_running_task_count(api_key_id)
