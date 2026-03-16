@@ -1338,7 +1338,7 @@
                                 </select>
                             </div>
                             <div class="form-group">
-                                <label for="imageSize">Boyut (imageSize)</label>
+                                <label for="imageSize">Boyut (size)</label>
                                 <select id="imageSize">
                                     <option value="16:9" selected>16:9</option>
                                     <option value="9:16">9:16</option>
@@ -1350,7 +1350,7 @@
                             </div>
                         </div>
                         <div class="form-group" id="imageResolutionGroup">
-                            <label for="imageResolution">Resolution (Sadece NANO_PRO için)</label>
+                            <label for="imageResolution">Resolution (NANO_BANANA_PRO ve NANO_BANANA_2 için)</label>
                             <select id="imageResolution">
                                 <option value="2K" selected>2K (Varsayılan)</option>
                                 <option value="1K">1K</option>
@@ -1380,7 +1380,7 @@
                                 </select>
                             </div>
                             <div class="form-group">
-                                <label for="i2iSize">Boyut (imageSize)</label>
+                                <label for="i2iSize">Boyut (size)</label>
                                 <select id="i2iSize">
                                     <option value="16:9" selected>16:9</option>
                                     <option value="9:16">9:16</option>
@@ -1392,7 +1392,7 @@
                             </div>
                         </div>
                         <div class="form-group" id="i2iResolutionGroup">
-                            <label for="i2iResolution">Resolution (Sadece NANO_PRO için)</label>
+                            <label for="i2iResolution">Resolution (NANO_BANANA_PRO ve NANO_BANANA_2 için)</label>
                             <select id="i2iResolution">
                                 <option value="2K" selected>2K (Varsayılan)</option>
                                 <option value="1K">1K</option>
@@ -1675,7 +1675,7 @@
             const body = {
                 prompt: prompt,
                 model: document.getElementById('imageModel').value,
-                imageSize: document.getElementById('imageSize').value
+                size: document.getElementById('imageSize').value
             };
 
             // NANO_PRO / NANO_2 için resolution ekle
@@ -1691,7 +1691,7 @@
                     const base64 = await fileToBase64(fileInput.files[i]);
                     images.push(base64);
                 }
-                body.images = images;
+                body.reference_images = images;
             }
 
             try {
@@ -1710,19 +1710,19 @@
             const model = document.getElementById('i2vModel').value;
             const isVeo = model === 'VEO_3';
 
-            // Sub-tab nav: sadece VEO_3_1'de göster
+            // Sub-tab nav: sadece VEO_3'te göster
             document.getElementById('i2vSubTabNav').style.display = isVeo ? 'flex' : 'none';
 
-            // End Frame: sadece VEO_3_1'de göster
+            // End Frame: sadece VEO_3'te göster
             document.getElementById('i2vEndFrameGroup').style.display = isVeo ? 'block' : 'none';
 
-            // End Frame label: VEO_3_1'de isteğe bağlı olduğunu belirt
+            // End Frame label: VEO_3'te isteğe bağlı olduğunu belirt
             const endFrameLabel = document.getElementById('i2vEndFrameLabel');
             if (endFrameLabel) {
                 endFrameLabel.textContent = isVeo ? 'End Frame (isteğe bağlı)' : 'End Frame *';
             }
 
-            // Reference Images paneli: sadece VEO_3_1'de erişilebilir
+            // Reference Images paneli: sadece VEO_3'te erişilebilir
             document.getElementById('subtab-refimages').style.display = 'none';
 
             // Start Frame panelini her zaman aktif yap
@@ -1758,7 +1758,7 @@
             const body = {
                 prompt,
                 model: document.getElementById('i2iModel').value,
-                imageSize: document.getElementById('i2iSize').value
+                size: document.getElementById('i2iSize').value
             };
 
             if (body.model === 'NANO_BANANA_PRO' || body.model === 'NANO_BANANA_2') {
@@ -1771,7 +1771,7 @@
                 for (let i = 0; i < refInput.files.length; i++) {
                     images.push(await fileToBase64(refInput.files[i]));
                 }
-                body.images = images;
+                body.reference_images = images;
             }
 
             try {
@@ -1850,7 +1850,7 @@
                 if (!startInput.files || startInput.files.length === 0) {
                     alert('Lütfen Start Frame resmi seçin!'); return;
                 }
-                body.image = await fileToBase64(startInput.files[0]);
+                body.start_frame = await fileToBase64(startInput.files[0]);
 
                 const endInput = document.getElementById('i2vEndFrame');
                 if (endInput.files && endInput.files.length > 0) {
