@@ -339,6 +339,60 @@
 
         .topbar-spacer { flex: 1; }
 
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 42px;
+            height: 24px;
+            flex-shrink: 0;
+        }
+        .toggle-switch input { display: none; }
+        .toggle-slider {
+            position: absolute;
+            inset: 0;
+            background: var(--panel);
+            border: 1px solid var(--border-bright);
+            border-radius: 99px;
+            cursor: pointer;
+            transition: all var(--transition);
+        }
+        .toggle-slider::before {
+            content: '';
+            position: absolute;
+            width: 16px; height: 16px;
+            left: 3px; top: 50%;
+            transform: translateY(-50%);
+            background: var(--text-muted);
+            border-radius: 50%;
+            transition: all var(--transition);
+        }
+        .toggle-switch input:checked + .toggle-slider {
+            background: var(--violet-dim);
+            border-color: var(--violet);
+        }
+        .toggle-switch input:checked + .toggle-slider::before {
+            left: calc(100% - 19px);
+            background: var(--violet);
+            box-shadow: 0 0 8px var(--violet-glow);
+        }
+
+        .topbar-settings-btn {
+            background: var(--violet-dim);
+            border: 1px solid var(--border-bright);
+            color: var(--text-dim);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            padding: 6px 12px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            box-shadow: none;
+            transform: none;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+        }
+        .topbar-settings-btn::after { display: none; }
+        .topbar-settings-btn:hover { background: var(--violet); color: #fff; transform: none; box-shadow: none; }
+
         .topbar-pill {
             font-family: 'JetBrains Mono', monospace;
             font-size: 0.65rem;
@@ -452,7 +506,7 @@
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
             gap: 1rem;
-            margin-bottom: 1.5rem;
+            margin-bottom: 0;
         }
 
         .quota-stat {
@@ -676,6 +730,39 @@
             flex-wrap: wrap;
         }
 
+        .task-btn-group {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.5rem;
+        }
+        .task-btn-group button {
+            font-size: 0.62rem;
+            letter-spacing: 0.05em;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        #quotaReadable:not([style*="display:none"]):not([style*="display: none"]) {
+            margin-top: 1.25rem;
+        }
+        #tasksContainer:empty,
+        #paginationContainer:empty,
+        #statusResponse[style*="display:none"],
+        #statusResponse[style*="display: none"],
+        #quotaResponse[style*="display:none"],
+        #quotaResponse[style*="display: none"],
+        #quotaReadable[style*="display:none"],
+        #quotaReadable[style*="display: none"] {
+            display: none !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+        @media (max-width: 640px) {
+            .task-btn-group {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
         /* ═══════════════════════════════════════════
            FORM ROWS / GRIDS
         ═══════════════════════════════════════════ */
@@ -817,13 +904,16 @@
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(min(100%, 400px), 1fr));
             gap: 1.25rem;
-            margin-top: 1.5rem;
+            margin-top: 0;
             margin-bottom: 2rem;
             width: 100%;
             min-width: 0;
         }
+        #tasksContainer:not(:empty) {
+            margin-top: 1.5rem;
+        }
 
-        .single-task-view #tasksContainer { display: block; }
+        .single-task-view #tasksContainer { display: block; margin-top: 1rem; margin-bottom: 0; }
         .single-task-view .task-card { max-width: 100%; }
 
         .task-card {
@@ -998,8 +1088,7 @@
         #paginationContainer {
             width: 100%;
             display: block;
-            min-height: 50px;
-            margin-top: 1rem;
+            margin-top: 0;
         }
 
         .pagination {
@@ -1254,8 +1343,20 @@
             <button class="hamburger" onclick="toggleSidebar()" aria-label="Menü">☰</button>
             <div class="topbar-page-title" id="topbarPageTitle">API Ayarları</div>
             <div class="topbar-spacer"></div>
-
+            <button class="topbar-settings-btn" onclick="toggleDisplaySettings()" title="Görüntü Ayarları">⚙️ Ayarlar</button>
         </header>
+
+        <!-- Settings Dropdown -->
+        <div id="displaySettingsPanel" style="display:none; position:fixed; top:60px; right:16px; z-index:300; background:var(--panel); border:1px solid var(--border-bright); border-radius:var(--radius); padding:1rem 1.25rem; min-width:220px; box-shadow:0 8px 40px rgba(0,0,0,0.7);">
+            <div style="font-family:'JetBrains Mono',monospace; font-size:0.65rem; text-transform:uppercase; letter-spacing:0.12em; color:var(--violet); margin-bottom:0.875rem;">🎛️ Görüntü Ayarları</div>
+            <div style="display:flex; align-items:center; justify-content:space-between; gap:1rem;">
+                <span style="font-size:0.82rem; color:var(--text-dim);">JSON Yanıtları Göster</span>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="settingShowJson" onchange="applyDisplaySettings()">
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+        </div>
 
         <!-- ══ CONTENT ══ -->
         <main class="content">
@@ -1299,6 +1400,9 @@
                     <div class="card-title">📊 Kullanım Durumu</div>
                     <button onclick="checkQuota()">Quota'yı Kontrol Et</button>
                     <div id="quotaResponse" class="response-box" style="display:none;"></div>
+                    <div id="quotaReadable" style="display:none;">
+                        <div class="quota-grid" id="quotaGrid"></div>
+                    </div>
                 </div>
             </div>
 
@@ -1359,6 +1463,7 @@
                         </div>
                         <button onclick="generateImage()">✨ Görsel Oluştur</button>
                         <div id="imageResponse" class="response-box" style="display:none;"></div>
+                        <div id="imageReadable" style="display:none; margin-top:1.25rem;"></div>
                     </div>
 
                     <!-- Image to Image -->
@@ -1400,15 +1505,16 @@
                             </select>
                         </div>
                         <div class="form-group">
-                            <label for="i2iRefImages">Reference Images (İsteğe bağlı — Maks. 5)</label>
+                            <label for="i2iRefImages">Reference Image * (Zorunlu — Maks. 5)</label>
                             <div class="file-input-wrapper">
                                 <input type="file" id="i2iRefImages" accept="image/*" multiple onchange="onI2iRefChange(this)">
                                 <label for="i2iRefImages" class="file-input-label" id="i2iRefImagesLabel">Resim Seç (Maks. 5)</label>
                             </div>
-                            <small style="color: var(--text-muted); display: block; margin-top: 5px; font-size: 0.75rem;">Birden fazla resim seçebilirsiniz (character references için)</small>
+                            <small style="color: var(--text-muted); display: block; margin-top: 5px; font-size: 0.75rem;">En az 1 referans görsel zorunludur</small>
                         </div>
                         <button onclick="generateImageToImage()">🔄 Görsel Dönüştür</button>
                         <div id="i2iResponse" class="response-box" style="display:none;"></div>
+                        <div id="i2iReadable" style="display:none; margin-top:1.25rem;"></div>
                     </div>
 
                     <!-- Text to Video -->
@@ -1438,6 +1544,7 @@
                         </div>
                         <button onclick="generateTextToVideo()">🎬 Video Oluştur</button>
                         <div id="t2vResponse" class="response-box" style="display:none;"></div>
+                        <div id="t2vReadable" style="display:none; margin-top:1.25rem;"></div>
                     </div>
 
                     <!-- Image to Video -->
@@ -1500,6 +1607,7 @@
                         </div>
                         <button onclick="generateImageToVideo()" style="margin-top:1.25rem;">🎞️ Video Oluştur</button>
                         <div id="i2vResponse" class="response-box" style="display:none;"></div>
+                        <div id="i2vReadable" style="display:none; margin-top:1.25rem;"></div>
                     </div>
 
                 </div>
@@ -1519,11 +1627,11 @@
                         <label for="taskId">Task ID (İsteğe bağlı - boş bırakırsanız tüm tasklar gösterilir)</label>
                         <input type="text" id="taskId" placeholder="Örn: abc123-def456">
                     </div>
-                    <div class="btn-group">
+                    <div class="btn-group task-btn-group">
                         <button onclick="checkTaskStatus()">🔎 Durumu Kontrol Et</button>
-                        <button class="btn-secondary" onclick="checkAllTasks()">📋 Tüm Taskleri Göster</button>
-                        <button class="btn-amber" onclick="startAutoRefresh()">⏱️ Otomatik Yenileme Başlat (5sn)</button>
-                        <button class="btn-danger" onclick="stopAutoRefresh()">⏹️ Otomatik Yenileme Durdur</button>
+                        <button class="btn-secondary" onclick="checkAllTasks()">📋 Tüm Taskler</button>
+                        <button class="btn-amber" onclick="startAutoRefresh()">⏱️ Oto. Yenile (5sn)</button>
+                        <button class="btn-danger" onclick="stopAutoRefresh()">⏹️ Yenilemeyi Durdur</button>
                     </div>
                     <div id="statusResponse" class="response-box" style="display:none;"></div>
                     <div id="tasksContainer"></div>
@@ -1647,9 +1755,122 @@
             return { response, data };
         }
 
-        // Display response helper
+        /* ══════════════════════════════════════
+           DISPLAY SETTINGS (JSON toggle)
+        ══════════════════════════════════════ */
+        function toggleDisplaySettings() {
+            const panel = document.getElementById('displaySettingsPanel');
+            panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+        }
+
+        // Close settings panel when clicking outside
+        document.addEventListener('click', function(e) {
+            const panel = document.getElementById('displaySettingsPanel');
+            const btn = document.querySelector('.topbar-settings-btn');
+            if (panel && btn && !panel.contains(e.target) && !btn.contains(e.target)) {
+                panel.style.display = 'none';
+            }
+        });
+
+        // Store last responses for re-render when settings change
+        const lastResponses = {};
+
+        function applyDisplaySettings() {
+            const showJson = document.getElementById('settingShowJson')?.checked ?? true;
+            // Re-render stored responses with new settings
+            for (const [key, stored] of Object.entries(lastResponses)) {
+                displayResponseWithReadable(stored.jsonId, stored.readableId, stored.data, stored.isError, stored.type);
+            }
+            // Also toggle statusResponse box visibility
+            const statusBox = document.getElementById('statusResponse');
+            if (statusBox && statusBox.innerHTML) {
+                statusBox.style.display = showJson ? 'block' : 'none';
+            }
+        }
+
+        // Unified display function that respects JSON toggle setting
+        function displayResponseWithReadable(jsonId, readableId, data, isError, type) {
+            // Store for re-render
+            lastResponses[jsonId] = { jsonId, readableId, data, isError, type };
+
+            const jsonEl = document.getElementById(jsonId);
+            const readableEl = document.getElementById(readableId);
+
+            const showJson = document.getElementById('settingShowJson') ? document.getElementById('settingShowJson').checked : true;
+
+            // Always write content — toggle only controls visibility
+            if (jsonEl) {
+                jsonEl.innerHTML = `<span class="${isError ? 'error' : 'success'}">${isError ? '❌ Hata' : '✅ Başarılı'}</span>\n\n${JSON.stringify(data, null, 2)}`;
+                jsonEl.style.display = showJson ? 'block' : 'none';
+            }
+
+            if (readableEl) {
+                if (!isError) {
+                    if (type === 'quota') {
+                        readableEl.innerHTML = renderQuotaReadable(data);
+                    } else if (type === 'task') {
+                        readableEl.innerHTML = renderTaskIdReadable(data);
+                    }
+                    readableEl.style.display = showJson ? 'none' : 'block';
+                } else {
+                    readableEl.style.display = 'none';
+                }
+            }
+        }
+
+        // Render quota as nice cards
+        function renderQuotaReadable(data) {
+            const labelMap = {
+                available_slots: 'Müsait Slot',
+                max_concurrent: 'Maks. Eş Zamanlı',
+                quota: 'Toplam Kota',
+                running_tasks: 'Çalışan Task'
+            };
+            const colorMap = {
+                available_slots: 'var(--emerald)',
+                max_concurrent: 'var(--cyan)',
+                quota: 'var(--violet)',
+                running_tasks: 'var(--amber)'
+            };
+            let html = '<div class="quota-grid">';
+            for (const [key, val] of Object.entries(data)) {
+                const label = labelMap[key] || key;
+                const color = colorMap[key] || 'var(--violet)';
+                html += `
+                    <div class="quota-stat">
+                        <div class="quota-stat-num" style="color:${color};">${val}</div>
+                        <div class="quota-stat-label">${label}</div>
+                    </div>`;
+            }
+            html += '</div>';
+            return html;
+        }
+
+        // Render task_id response as readable card
+        function renderTaskIdReadable(data) {
+            if (!data.task_id) return '';
+            return `
+                <div style="background:var(--panel); border:1px solid var(--border-bright); border-radius:var(--radius-sm); padding:1rem 1.25rem; display:flex; align-items:center; gap:1rem; flex-wrap:wrap;">
+                    <span style="font-size:1.5rem;">🎯</span>
+                    <div style="flex:1;">
+                        <div style="font-family:'JetBrains Mono',monospace; font-size:0.62rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--violet); margin-bottom:4px;">Task Oluşturuldu</div>
+                        <div style="font-family:'JetBrains Mono',monospace; font-size:0.85rem; color:var(--text); word-break:break-all;">${data.task_id}</div>
+                    </div>
+                    <button onclick="quickQueryTask('${data.task_id}')" style="padding:6px 14px; font-size:0.62rem; background:var(--cyan-dim); border:1px solid rgba(34,211,238,0.3); color:var(--cyan); box-shadow:none; transform:none; border-radius:6px;">🔍 Sorgula</button>
+                </div>`;
+        }
+
+        // Quick query a specific task from the list
+        function quickQueryTask(taskId) {
+            document.getElementById('taskId').value = taskId;
+            showPage('page-tasks', document.getElementById('nav-tasks'));
+            checkTaskStatus();
+        }
+
+        // Display response helper (legacy — kept for compatibility)
         function displayResponse(elementId, data, isError = false) {
             const element = document.getElementById(elementId);
+            if (!element) return;
             element.style.display = 'block';
             element.innerHTML = `<span class="${isError ? 'error' : 'success'}">${isError ? '❌ Hata' : '✅ Başarılı'}</span>\n\n${JSON.stringify(data, null, 2)}`;
         }
@@ -1658,9 +1879,9 @@
         async function checkQuota() {
             try {
                 const { response, data } = await apiCall('/api/quota');
-                displayResponse('quotaResponse', data, !response.ok);
+                displayResponseWithReadable('quotaResponse', 'quotaReadable', data, !response.ok, 'quota');
             } catch (error) {
-                displayResponse('quotaResponse', { error: error.message }, true);
+                displayResponseWithReadable('quotaResponse', 'quotaReadable', { error: error.message }, true, 'quota');
             }
         }
 
@@ -1696,13 +1917,13 @@
 
             try {
                 const { response, data } = await apiCall('/api/generate/image', 'POST', body);
-                displayResponse('imageResponse', data, !response.ok);
+                displayResponseWithReadable('imageResponse', 'imageReadable', data, !response.ok, 'task');
                 
                 if (response.ok && data.task_id) {
                     document.getElementById('taskId').value = data.task_id;
                 }
             } catch (error) {
-                displayResponse('imageResponse', { error: error.message }, true);
+                displayResponseWithReadable('imageResponse', 'imageReadable', { error: error.message }, true, 'task');
             }
         }
 
@@ -1755,6 +1976,12 @@
             const prompt = document.getElementById('i2iPrompt').value;
             if (!prompt) { alert('Lütfen prompt girin!'); return; }
 
+            const refInput = document.getElementById('i2iRefImages');
+            if (!refInput.files || refInput.files.length === 0) {
+                alert('Lütfen en az 1 referans görsel seçin!');
+                return;
+            }
+
             const body = {
                 prompt,
                 model: document.getElementById('i2iModel').value,
@@ -1765,7 +1992,6 @@
                 body.resolution = document.getElementById('i2iResolution').value;
             }
 
-            const refInput = document.getElementById('i2iRefImages');
             if (refInput.files && refInput.files.length > 0) {
                 const images = [];
                 for (let i = 0; i < refInput.files.length; i++) {
@@ -1776,10 +2002,10 @@
 
             try {
                 const { response, data } = await apiCall('/api/generate/image', 'POST', body);
-                displayResponse('i2iResponse', data, !response.ok);
+                displayResponseWithReadable('i2iResponse', 'i2iReadable', data, !response.ok, 'task');
                 if (response.ok && data.task_id) document.getElementById('taskId').value = data.task_id;
             } catch (error) {
-                displayResponse('i2iResponse', { error: error.message }, true);
+                displayResponseWithReadable('i2iResponse', 'i2iReadable', { error: error.message }, true, 'task');
             }
         }
 
@@ -1824,10 +2050,10 @@
 
             try {
                 const { response, data } = await apiCall('/api/generate/video', 'POST', body);
-                displayResponse('t2vResponse', data, !response.ok);
+                displayResponseWithReadable('t2vResponse', 't2vReadable', data, !response.ok, 'task');
                 if (response.ok && data.task_id) document.getElementById('taskId').value = data.task_id;
             } catch (error) {
-                displayResponse('t2vResponse', { error: error.message }, true);
+                displayResponseWithReadable('t2vResponse', 't2vReadable', { error: error.message }, true, 'task');
             }
         }
 
@@ -1870,10 +2096,10 @@
 
             try {
                 const { response, data } = await apiCall('/api/generate/video', 'POST', body);
-                displayResponse('i2vResponse', data, !response.ok);
+                displayResponseWithReadable('i2vResponse', 'i2vReadable', data, !response.ok, 'task');
                 if (response.ok && data.task_id) document.getElementById('taskId').value = data.task_id;
             } catch (error) {
-                displayResponse('i2vResponse', { error: error.message }, true);
+                displayResponseWithReadable('i2vResponse', 'i2vReadable', { error: error.message }, true, 'task');
             }
         }
 
@@ -1952,13 +2178,15 @@
 
             try {
                 const { response, data } = await apiCall(`/api/status/${taskId}`);
-                displayResponse('statusResponse', data, !response.ok);
-                
+                const showJson = document.getElementById('settingShowJson')?.checked ?? true;
+                const statusBox = document.getElementById('statusResponse');
+                statusBox.innerHTML = `<span class="${response.ok ? 'success' : 'error'}">${response.ok ? '✅ Başarılı' : '❌ Hata'}</span>\n\n${JSON.stringify(data, null, 2)}`;
+                statusBox.style.display = showJson ? 'block' : 'none';
                 if (response.ok) {
                     displayTaskCard(taskId, data);
                 }
             } catch (error) {
-                displayResponse('statusResponse', { error: error.message }, true);
+                alert('Hata: ' + error.message);
             }
         }
 
@@ -1966,13 +2194,15 @@
         async function checkAllTasks() {
             try {
                 const { response, data } = await apiCall(`/api/status?page=${currentPage}&per_page=${tasksPerPage}`);
-                displayResponse('statusResponse', data, !response.ok);
-                
+                const showJson = document.getElementById('settingShowJson')?.checked ?? true;
+                const statusBox = document.getElementById('statusResponse');
+                statusBox.innerHTML = `<span class="${response.ok ? 'success' : 'error'}">${response.ok ? '✅ Başarılı' : '❌ Hata'}</span>\n\n${JSON.stringify(data, null, 2)}`;
+                statusBox.style.display = showJson ? 'block' : 'none';
                 if (response.ok && data.tasks) {
                     displayAllTasks(data);
                 }
             } catch (error) {
-                displayResponse('statusResponse', { error: error.message }, true);
+                alert('Hata: ' + error.message);
             }
         }
 
@@ -1999,12 +2229,6 @@
                     resultHTML = `<video src="${taskData.result_url}" class="result-video" controls></video>`;
                 }
             }
-
-            const logsHTML = taskData.logs && taskData.logs.length > 0 
-                ? `<div class="logs"><strong>Loglar:</strong><br>${taskData.logs.map(log => 
-                    typeof log === 'object' ? `[${log.time}] ${log.message}` : log
-                ).join('<br>')}</div>` 
-                : '';
 
             const refImagesHTML = taskData.reference_image_urls && taskData.reference_image_urls.length > 0
                 ? `<div class="task-info-item" style="grid-column:1/-1"><strong>Referans Görseller:</strong><br>${taskData.reference_image_urls.map(url =>
@@ -2035,7 +2259,6 @@
                         ${frameHTML}
                         ${refImagesHTML}
                     </div>
-                    ${logsHTML}
                     ${resultHTML}
                 </div>
             `;
@@ -2081,11 +2304,7 @@
                     }
                 }
 
-                const logsHTML = taskData.logs && taskData.logs.length > 0 
-                    ? `<div class="logs"><strong>Loglar:</strong><br>${taskData.logs.map(log => 
-                        typeof log === 'object' ? `[${log.time}] ${log.message}` : log
-                    ).join('<br>')}</div>` 
-                    : '';
+                const logsHTML = ''; // Loglar kaldırıldı (madde 3)
 
                 const refImagesHTML = taskData.reference_image_urls && taskData.reference_image_urls.length > 0
                     ? `<div class="task-info-item" style="grid-column:1/-1"><strong>Referans Görseller:</strong><br>${taskData.reference_image_urls.map(url =>
@@ -2104,7 +2323,10 @@
                 const card = document.createElement('div');
                 card.className = 'task-card';
                 card.innerHTML = `
-                    <h3>Task: ${taskId}</h3>
+                    <h3 style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
+                        <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">Task: ${taskId}</span>
+                        <button onclick="quickQueryTask('${taskId}')" style="flex-shrink:0; padding:4px 10px; font-size:0.58rem; background:var(--cyan-dim); border:1px solid rgba(34,211,238,0.3); color:var(--cyan); box-shadow:none; transform:none; border-radius:6px; white-space:nowrap;" title="Bu task'ı sorgula">🔍 Sorgula</button>
+                    </h3>
                     <span class="status-badge ${statusClass}">${taskData.status.toUpperCase()}</span>
                     <div class="task-info">
                         <div class="task-info-item">
