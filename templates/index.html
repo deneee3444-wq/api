@@ -613,6 +613,7 @@
             font-size: 0.82rem;
             line-height: 1.7;
             padding-bottom: 2rem;
+            padding-right: 1rem;
         }
 
         input[type="file"] { display: none; }
@@ -648,8 +649,10 @@
             border: 2px dashed rgba(139,92,246,0.25);
             border-radius: var(--radius-sm);
             color: var(--text-muted);
-            font-size: 0.875rem;
-            font-family: 'Outfit', sans-serif;
+            font-size: 0.82rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 700;
+            letter-spacing: 0.1em;
             cursor: pointer;
             transition: all var(--transition);
             text-align: center;
@@ -659,6 +662,7 @@
             box-sizing: border-box;
             max-width: 100%;
             min-width: 0;
+            margin-bottom: 0;
         }
 
         .file-input-label::before {
@@ -1349,7 +1353,7 @@
             <a class="nav-item" id="nav-generate" onclick="showPage('page-generate', this)">
                 <span class="nav-icon">🎨</span>
                 <span class="nav-label">Oluşturma</span>
-                <span class="nav-badge">4 mod</span>
+                
             </a>
 
             <a class="nav-item" id="nav-tasks" onclick="showPage('page-tasks', this)">
@@ -1406,11 +1410,11 @@
                     <div class="card-title">🔑 Kimlik Bilgileri</div>
                     <div class="form-row cols-2">
                         <div class="form-group">
-                            <label for="apiKey">API Key</label>
+                            <label for="apiKey">api key</label>
                             <input type="text" id="apiKey" value="" placeholder="API anahtarınızı girin">
                         </div>
                         <div class="form-group">
-                            <label for="apiUrl">API Base URL</label>
+                            <label for="apiUrl">api base url</label>
                             <input type="text" id="apiUrl" value="" placeholder="https://api.example.com">
                         </div>
                     </div>
@@ -1459,7 +1463,7 @@
                     <!-- Text to Image -->
                     <div class="tab-panel" id="tab-t2i">
                         <div class="form-group">
-                            <label for="imagePrompt">Prompt *</label>
+                            <label for="imagePrompt">prompt *</label>
                             <div class="prompt-wrap">
                                 <textarea id="imagePrompt" maxlength="4000" oninput="updateCounter('imagePrompt','imagePromptCounter',4000)" placeholder="Oluşturmak istediğiniz görselin detaylı açıklaması..."></textarea>
                                 <span id="imagePromptCounter" class="prompt-counter">0/4000</span>
@@ -1467,7 +1471,7 @@
                         </div>
                         <div class="form-row cols-2">
                             <div class="form-group">
-                                <label for="imageModel">Model</label>
+                                <label for="imageModel">model</label>
                                 <select id="imageModel" onchange="onImageModelChange()">
                                     <option value="NANO_BANANA_PRO" selected>NANO_BANANA_PRO</option>
                                     <option value="NANO_BANANA">NANO_BANANA</option>
@@ -1475,7 +1479,7 @@
                                 </select>
                             </div>
                             <div class="form-group">
-                                <label for="imageSize">Boyut (size)</label>
+                                <label for="imageSize">size</label>
                                 <select id="imageSize">
                                     <option value="16:9" selected>16:9</option>
                                     <option value="9:16">9:16</option>
@@ -1487,13 +1491,14 @@
                             </div>
                         </div>
                         <div class="form-group" id="imageResolutionGroup">
-                            <label for="imageResolution">Resolution (NANO_BANANA_PRO ve NANO_BANANA_2 için)</label>
+                            <label for="imageResolution">resolution</label>
                             <select id="imageResolution">
                                 <option value="2K" selected>2K</option>
                                 <option value="1K">1K</option>
                                 <option value="4K">4K</option>
                             </select>
                         </div>
+                        <small style="color: var(--text-muted); display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.75rem; font-size: 0.75rem;"><span style="font-size:0.75rem; flex-shrink:0;">ℹ️</span>NANO_BANANA_PRO ve NANO_BANANA_2 modelleri Resolution seçeneği sunar.</small>
                         <button onclick="generateImage()">✨ Görsel Oluştur</button>
                         <div id="imageResponse" class="response-box" style="display:none;"></div>
                         <div id="imageReadable" style="display:none; margin-top:1.25rem; width:100%; max-width:100%; overflow:hidden;"></div>
@@ -1502,7 +1507,7 @@
                     <!-- Image to Image -->
                     <div class="tab-panel" id="tab-i2i" style="display:none;">
                         <div class="form-group">
-                            <label for="i2iPrompt">Prompt *</label>
+                            <label for="i2iPrompt">prompt *</label>
                             <div class="prompt-wrap">
                                 <textarea id="i2iPrompt" maxlength="4000" oninput="updateCounter('i2iPrompt','i2iPromptCounter',4000)" placeholder="Görseli nasıl dönüştürmek istediğinizi açıklayın..."></textarea>
                                 <span id="i2iPromptCounter" class="prompt-counter">0/4000</span>
@@ -1510,7 +1515,7 @@
                         </div>
                         <div class="form-row cols-2">
                             <div class="form-group">
-                                <label for="i2iModel">Model</label>
+                                <label for="i2iModel">model</label>
                                 <select id="i2iModel" onchange="onI2iModelChange()">
                                     <option value="NANO_BANANA_PRO" selected>NANO_BANANA_PRO</option>
                                     <option value="NANO_BANANA">NANO_BANANA</option>
@@ -1518,7 +1523,7 @@
                                 </select>
                             </div>
                             <div class="form-group">
-                                <label for="i2iSize">Boyut (size)</label>
+                                <label for="i2iSize">size</label>
                                 <select id="i2iSize">
                                     <option value="16:9" selected>16:9</option>
                                     <option value="9:16">9:16</option>
@@ -1530,7 +1535,7 @@
                             </div>
                         </div>
                         <div class="form-group" id="i2iResolutionGroup">
-                            <label for="i2iResolution">Resolution (NANO_BANANA_PRO ve NANO_BANANA_2 için)</label>
+                            <label for="i2iResolution">resolution</label>
                             <select id="i2iResolution">
                                 <option value="2K" selected>2K</option>
                                 <option value="1K">1K</option>
@@ -1538,13 +1543,14 @@
                             </select>
                         </div>
                         <div class="form-group">
-                            <label for="i2iRefImages">Reference Image * (Zorunlu — Maks. 5)</label>
+                            <label for="i2iRefImages">reference image *</label>
                             <div class="file-input-wrapper">
                                 <input type="file" id="i2iRefImages" accept="image/*" multiple onchange="onI2iRefChange(this)">
-                                <label for="i2iRefImages" class="file-input-label" id="i2iRefImagesLabel">Resim Seç (Maks. 5)</label>
+                                <label for="i2iRefImages" class="file-input-label" id="i2iRefImagesLabel">RESİM SEÇ (MAKS. 5)</label>
                             </div>
-                            <small style="color: var(--text-muted); display: block; margin-top: 5px; font-size: 0.75rem;">En az 1 referans görsel zorunludur</small>
+                            
                         </div>
+                        <small style="color: var(--text-muted); display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.75rem; font-size: 0.75rem;"><span style="font-size:0.75rem; flex-shrink:0;">ℹ️</span>NANO_BANANA_PRO ve NANO_BANANA_2 modelleri Resolution seçeneği sunar.</small>
                         <button onclick="generateImageToImage()">🔄 Görsel Dönüştür</button>
                         <div id="i2iResponse" class="response-box" style="display:none;"></div>
                         <div id="i2iReadable" style="display:none; margin-top:1.25rem; width:100%; max-width:100%; overflow:hidden;"></div>
@@ -1553,7 +1559,7 @@
                     <!-- Text to Video -->
                     <div class="tab-panel" id="tab-t2v" style="display:none;">
                         <div class="form-group">
-                            <label for="t2vPrompt">Prompt *</label>
+                            <label for="t2vPrompt">prompt *</label>
                             <div class="prompt-wrap">
                                 <textarea id="t2vPrompt" maxlength="2000" oninput="updateCounter('t2vPrompt','t2vPromptCounter',2000)" placeholder="Oluşturmak istediğiniz videonun detaylı açıklaması..."></textarea>
                                 <span id="t2vPromptCounter" class="prompt-counter">0/2000</span>
@@ -1561,20 +1567,21 @@
                         </div>
                         <div class="form-row cols-2">
                             <div class="form-group">
-                                <label for="t2vModel">Model</label>
+                                <label for="t2vModel">model</label>
                                 <select id="t2vModel">
-                                    <option value="SORA_2" selected>SORA_2 (10 saniye)</option>
-                                    <option value="VEO_3">VEO_3 (8 saniye)</option>
+                                    <option value="SORA_2" selected>SORA_2</option>
+                                    <option value="VEO_3">VEO_3</option>
                                 </select>
                             </div>
                             <div class="form-group">
-                                <label for="t2vSize">Boyut (size)</label>
+                                <label for="t2vSize">size</label>
                                 <select id="t2vSize">
                                     <option value="16:9" selected>16:9</option>
                                     <option value="9:16">9:16</option>
                                 </select>
                             </div>
                         </div>
+                        <small style="color: var(--text-muted); display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.75rem; font-size: 0.75rem;"><span style="font-size:0.75rem; flex-shrink:0;">ℹ️</span>SORA_2: 10 saniye · VEO_3: 8 saniye · VEO_3'te End Frame ve Reference Images desteği mevcuttur.</small>
                         <button onclick="generateTextToVideo()">🎬 Video Oluştur</button>
                         <div id="t2vResponse" class="response-box" style="display:none;"></div>
                         <div id="t2vReadable" style="display:none; margin-top:1.25rem; width:100%; max-width:100%; overflow:hidden;"></div>
@@ -1583,7 +1590,7 @@
                     <!-- Image to Video -->
                     <div class="tab-panel" id="tab-i2v" style="display:none;">
                         <div class="form-group">
-                            <label for="i2vPrompt">Prompt *</label>
+                            <label for="i2vPrompt">prompt *</label>
                             <div class="prompt-wrap">
                                 <textarea id="i2vPrompt" maxlength="2000" oninput="updateCounter('i2vPrompt','i2vPromptCounter',2000)" placeholder="Oluşturmak istediğiniz videonun detaylı açıklaması..."></textarea>
                                 <span id="i2vPromptCounter" class="prompt-counter">0/2000</span>
@@ -1591,14 +1598,14 @@
                         </div>
                         <div class="form-row cols-2">
                             <div class="form-group">
-                                <label for="i2vModel">Model</label>
+                                <label for="i2vModel">model</label>
                                 <select id="i2vModel" onchange="onI2vModelChange()">
-                                    <option value="SORA_2" selected>SORA_2 (10 saniye)</option>
-                                    <option value="VEO_3">VEO_3 (8 saniye)</option>
+                                    <option value="SORA_2" selected>SORA_2</option>
+                                    <option value="VEO_3">VEO_3</option>
                                 </select>
                             </div>
                             <div class="form-group">
-                                <label for="i2vSize">Boyut (size)</label>
+                                <label for="i2vSize">size</label>
                                 <select id="i2vSize">
                                     <option value="16:9" selected>16:9</option>
                                     <option value="9:16">9:16</option>
@@ -1613,31 +1620,32 @@
                         <!-- Start / End Frame -->
                         <div class="sub-tab-panel" id="subtab-startend">
                             <div class="form-group">
-                                <label for="i2vStartFrame">Start Frame *</label>
+                                <label for="i2vStartFrame">start frame *</label>
                                 <div class="file-input-wrapper">
                                     <input type="file" id="i2vStartFrame" accept="image/*" onchange="updateFileLabel(this, 'i2vStartFrameLabel')">
-                                    <label for="i2vStartFrame" class="file-input-label" id="i2vStartFrameLabel">Resim Seç</label>
+                                    <label for="i2vStartFrame" class="file-input-label" id="i2vStartFrameLabel">RESİM SEÇ</label>
                                 </div>
                             </div>
                             <div class="form-group" id="i2vEndFrameGroup" style="display:none;">
-                                <label for="i2vEndFrame" id="i2vEndFrameLabel">End Frame *</label>
+                                <label for="i2vEndFrame" id="i2vEndFrameLabel">end frame *</label>
                                 <div class="file-input-wrapper">
                                     <input type="file" id="i2vEndFrame" accept="image/*" onchange="updateFileLabel(this, 'i2vEndFrameLabel2')">
-                                    <label for="i2vEndFrame" class="file-input-label" id="i2vEndFrameLabel2">Resim Seç</label>
+                                    <label for="i2vEndFrame" class="file-input-label" id="i2vEndFrameLabel2">RESİM SEÇ</label>
                                 </div>
                             </div>
                         </div>
                         <!-- Reference Images -->
                         <div class="sub-tab-panel" id="subtab-refimages" style="display:none;">
                             <div class="form-group">
-                                <label for="i2vRefImages">Reference Images (Maks. 3 — Sadece VEO_3)</label>
+                                <label for="i2vRefImages" id="i2vRefImagesFormLabel">REFERENCE IMAGES *</label>
                                 <div class="file-input-wrapper">
                                     <input type="file" id="i2vRefImages" accept="image/*" multiple onchange="onI2vRefChange(this)">
-                                    <label for="i2vRefImages" class="file-input-label" id="i2vRefImagesLabel">Resim Seç (Maks. 3)</label>
+                                    <label for="i2vRefImages" class="file-input-label" id="i2vRefImagesLabel">RESİM SEÇ (MAKS. 3)</label>
                                 </div>
-                                <small style="color: var(--text-muted); display: block; margin-top: 5px; font-size: 0.75rem;">En fazla 3 referans görsel seçilebilir</small>
+                                
                             </div>
                         </div>
+                        <small style="color: var(--text-muted); display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.75rem; font-size: 0.75rem;"><span style="font-size:0.75rem; flex-shrink:0;">ℹ️</span>SORA_2: 10 saniye · VEO_3: 8 saniye · VEO_3'te End Frame ve Reference Images desteği mevcuttur.</small>
                         <button onclick="generateImageToVideo()">🎞️ Video Oluştur</button>
                         <div id="i2vResponse" class="response-box" style="display:none;"></div>
                         <div id="i2vReadable" style="display:none; margin-top:1.25rem; width:100%; max-width:100%; overflow:hidden;"></div>
@@ -1657,7 +1665,7 @@
                 <div class="card">
                     <div class="card-title">🔍 Sorgulama</div>
                     <div class="form-group">
-                        <label for="taskId">Task ID (İsteğe bağlı)</label>
+                        <label for="taskId">TASK ID</label>
                         <input type="text" id="taskId" placeholder="Örn: abc123-def456">
                     </div>
                     <div class="btn-group task-btn-group">
@@ -1993,7 +2001,13 @@
             // End Frame label: VEO_3'te isteğe bağlı olduğunu belirt
             const endFrameLabel = document.getElementById('i2vEndFrameLabel');
             if (endFrameLabel) {
-                endFrameLabel.textContent = isVeo ? 'End Frame (isteğe bağlı)' : 'End Frame *';
+                endFrameLabel.textContent = isVeo ? 'End Frame' : 'End Frame *';
+            }
+
+            // Reference Images label: VEO_3'te zorunlu olduğunu belirt
+            const refImagesLabel = document.getElementById('i2vRefImagesFormLabel');
+            if (refImagesLabel) {
+                refImagesLabel.textContent = isVeo ? 'REFERENCE IMAGES *' : 'REFERENCE IMAGES';
             }
 
             // Reference Images paneli: sadece VEO_3'te erişilebilir
@@ -2012,7 +2026,7 @@
             if (input.files && input.files.length > 5) {
                 alert('En fazla 5 görsel seçebilirsiniz!');
                 input.value = '';
-                document.getElementById('i2iRefImagesLabel').textContent = 'Resim Seç (Maks. 5)';
+                document.getElementById('i2iRefImagesLabel').textContent = 'RESİM SEÇ (MAKS. 5)';
                 document.getElementById('i2iRefImagesLabel').classList.remove('file-selected');
                 return;
             }
@@ -2161,7 +2175,7 @@
             if (input.files && input.files.length > 3) {
                 alert('En fazla 3 referans görsel seçebilirsiniz!');
                 input.value = '';
-                document.getElementById('i2vRefImagesLabel').textContent = 'Resim Seç (Maks. 3)';
+                document.getElementById('i2vRefImagesLabel').textContent = 'RESİM SEÇ (MAKS. 3)';
                 document.getElementById('i2vRefImagesLabel').classList.remove('file-selected');
                 return;
             }
@@ -2463,7 +2477,7 @@
             // Go to page row
             paginationHTML += `
                 <div class="pagination-goto">
-                    <label for="gotoPageInput">Sayfaya Git:</label>
+                    <label for="gotoPageInput">sayfaya git:</label>
                     <input
                         type="number"
                         id="gotoPageInput"
@@ -2528,7 +2542,7 @@
             if (input.files && input.files.length > 5) {
                 alert('En fazla 5 görsel seçebilirsiniz!');
                 input.value = '';
-                document.getElementById('imageFileLabel').textContent = 'Resim Seç (Maks. 5)';
+                document.getElementById('imageFileLabel').textContent = 'RESİM SEÇ (MAKS. 5)';
                 document.getElementById('imageFileLabel').classList.remove('file-selected');
                 return;
             }
@@ -2548,7 +2562,7 @@
                 }
                 label.classList.add('file-selected');
             } else {
-                label.textContent = labelId === 'imageFileLabel' ? 'Resim Seç (Maks. 5)' : 'Resim Seç';
+                label.textContent = labelId === 'imageFileLabel' ? 'RESİM SEÇ (MAKS. 5)' : 'RESİM SEÇ';
                 label.classList.remove('file-selected');
             }
         }
