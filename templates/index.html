@@ -290,6 +290,7 @@
             min-height: 100vh;
             position: relative;
             z-index: 1;
+            min-width: 0;
         }
 
         /* ═══════════════════════════════════════════
@@ -307,6 +308,8 @@
             position: sticky;
             top: 0;
             z-index: 100;
+            flex-shrink: 0;
+            overflow: visible;
         }
 
         .hamburger {
@@ -335,6 +338,9 @@
             letter-spacing: 0.1em;
             color: var(--text);
             text-transform: uppercase;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .topbar-spacer { flex: 1; }
@@ -389,6 +395,8 @@
             transform: none;
             letter-spacing: 0.06em;
             text-transform: uppercase;
+            white-space: nowrap;
+            flex-shrink: 0;
         }
         .topbar-settings-btn::after { display: none; }
         .topbar-settings-btn:hover { background: var(--violet); color: #fff; transform: none; box-shadow: none; }
@@ -410,9 +418,10 @@
         .content {
             flex: 1;
             padding: clamp(1rem, 3vw, 2rem);
+            min-width: 0;
         }
 
-        .page { display: none; }
+        .page { display: none; max-width: 100%; }
         .page.active { display: block; }
 
         .page-header {
@@ -464,6 +473,7 @@
             margin-bottom: 1.25rem;
             position: relative;
             overflow: hidden;
+            max-width: 100%;
             transition: border-color var(--transition), box-shadow var(--transition);
         }
 
@@ -537,6 +547,10 @@
         ═══════════════════════════════════════════ */
         .form-group { margin-bottom: 1.25rem; }
 
+        /* form-row grid içindeki form-group'larda margin-bottom'ı sıfırla,
+           gap değeri zaten boşluğu sağlar */
+        .form-row .form-group { margin-bottom: 0; }
+
         label {
             display: block;
             font-family: 'JetBrains Mono', monospace;
@@ -598,6 +612,7 @@
             font-family: 'JetBrains Mono', monospace;
             font-size: 0.82rem;
             line-height: 1.7;
+            padding-bottom: 2rem;
         }
 
         input[type="file"] { display: none; }
@@ -616,8 +631,10 @@
 
         .file-input-wrapper {
             position: relative;
-            display: inline-block;
+            display: block;
             width: 100%;
+            max-width: 100%;
+            overflow: hidden;
         }
 
         .file-input-label {
@@ -636,6 +653,12 @@
             cursor: pointer;
             transition: all var(--transition);
             text-align: center;
+            overflow: hidden;
+            white-space: normal;
+            word-break: break-all;
+            box-sizing: border-box;
+            max-width: 100%;
+            min-width: 0;
         }
 
         .file-input-label::before {
@@ -734,6 +757,7 @@
             display: grid;
             grid-template-columns: repeat(4, 1fr);
             gap: 0.5rem;
+            margin-top: 0;
         }
         .task-btn-group button {
             font-size: 0.62rem;
@@ -744,6 +768,11 @@
         }
         #quotaReadable:not([style*="display:none"]):not([style*="display: none"]) {
             margin-top: 1.25rem;
+        }
+        /* Oluşturma tab'larındaki ana aksiyon butonu - tutarlı üst boşluk */
+        .tab-panel > button:not([class]) {
+            margin-top: 0;
+            display: block;
         }
         #tasksContainer:empty,
         #paginationContainer:empty,
@@ -757,6 +786,10 @@
             margin: 0 !important;
             padding: 0 !important;
         }
+        /* tasksContainer boşluğu: statusResponse hidden iken task-btn-group altında normalize */
+        .card:has(#tasksContainer) .task-btn-group {
+            margin-bottom: 0;
+        }
         @media (max-width: 640px) {
             .task-btn-group {
                 grid-template-columns: repeat(2, 1fr);
@@ -766,7 +799,7 @@
         /* ═══════════════════════════════════════════
            FORM ROWS / GRIDS
         ═══════════════════════════════════════════ */
-        .form-row { display: grid; grid-template-columns: 1fr; gap: 1.25rem; }
+        .form-row { display: grid; grid-template-columns: 1fr; gap: 1.25rem; margin-bottom: 1.25rem; }
         .form-row.cols-2 { grid-template-columns: repeat(2, 1fr); }
         .form-row.cols-3 { grid-template-columns: repeat(3, 1fr); }
         .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.25rem; }
@@ -858,7 +891,7 @@
         .tab-btn:hover   { color: var(--text); background: var(--violet-dim); transform: none; box-shadow: none; }
         .tab-btn.active  { background: var(--violet); color: #fff; box-shadow: 0 2px 12px rgba(139,92,246,0.4); }
 
-        .tab-panel { display: block; }
+        .tab-panel { display: block; overflow: hidden; min-width: 0; max-width: 100%; }
 
         /* ═══════════════════════════════════════════
            SUB-TABS (VEO inner tabs)
@@ -910,7 +943,7 @@
             min-width: 0;
         }
         #tasksContainer:not(:empty) {
-            margin-top: 1.5rem;
+            margin-top: 1.25rem;
         }
 
         .single-task-view #tasksContainer { display: block; margin-top: 1rem; margin-bottom: 0; }
@@ -1456,14 +1489,14 @@
                         <div class="form-group" id="imageResolutionGroup">
                             <label for="imageResolution">Resolution (NANO_BANANA_PRO ve NANO_BANANA_2 için)</label>
                             <select id="imageResolution">
-                                <option value="2K" selected>2K (Varsayılan)</option>
+                                <option value="2K" selected>2K</option>
                                 <option value="1K">1K</option>
                                 <option value="4K">4K</option>
                             </select>
                         </div>
                         <button onclick="generateImage()">✨ Görsel Oluştur</button>
                         <div id="imageResponse" class="response-box" style="display:none;"></div>
-                        <div id="imageReadable" style="display:none; margin-top:1.25rem;"></div>
+                        <div id="imageReadable" style="display:none; margin-top:1.25rem; width:100%; max-width:100%; overflow:hidden;"></div>
                     </div>
 
                     <!-- Image to Image -->
@@ -1499,7 +1532,7 @@
                         <div class="form-group" id="i2iResolutionGroup">
                             <label for="i2iResolution">Resolution (NANO_BANANA_PRO ve NANO_BANANA_2 için)</label>
                             <select id="i2iResolution">
-                                <option value="2K" selected>2K (Varsayılan)</option>
+                                <option value="2K" selected>2K</option>
                                 <option value="1K">1K</option>
                                 <option value="4K">4K</option>
                             </select>
@@ -1514,7 +1547,7 @@
                         </div>
                         <button onclick="generateImageToImage()">🔄 Görsel Dönüştür</button>
                         <div id="i2iResponse" class="response-box" style="display:none;"></div>
-                        <div id="i2iReadable" style="display:none; margin-top:1.25rem;"></div>
+                        <div id="i2iReadable" style="display:none; margin-top:1.25rem; width:100%; max-width:100%; overflow:hidden;"></div>
                     </div>
 
                     <!-- Text to Video -->
@@ -1544,7 +1577,7 @@
                         </div>
                         <button onclick="generateTextToVideo()">🎬 Video Oluştur</button>
                         <div id="t2vResponse" class="response-box" style="display:none;"></div>
-                        <div id="t2vReadable" style="display:none; margin-top:1.25rem;"></div>
+                        <div id="t2vReadable" style="display:none; margin-top:1.25rem; width:100%; max-width:100%; overflow:hidden;"></div>
                     </div>
 
                     <!-- Image to Video -->
@@ -1605,9 +1638,9 @@
                                 <small style="color: var(--text-muted); display: block; margin-top: 5px; font-size: 0.75rem;">En fazla 3 referans görsel seçilebilir</small>
                             </div>
                         </div>
-                        <button onclick="generateImageToVideo()" style="margin-top:1.25rem;">🎞️ Video Oluştur</button>
+                        <button onclick="generateImageToVideo()">🎞️ Video Oluştur</button>
                         <div id="i2vResponse" class="response-box" style="display:none;"></div>
-                        <div id="i2vReadable" style="display:none; margin-top:1.25rem;"></div>
+                        <div id="i2vReadable" style="display:none; margin-top:1.25rem; width:100%; max-width:100%; overflow:hidden;"></div>
                     </div>
 
                 </div>
@@ -1624,7 +1657,7 @@
                 <div class="card">
                     <div class="card-title">🔍 Sorgulama</div>
                     <div class="form-group">
-                        <label for="taskId">Task ID (İsteğe bağlı - boş bırakırsanız tüm tasklar gösterilir)</label>
+                        <label for="taskId">Task ID (İsteğe bağlı)</label>
                         <input type="text" id="taskId" placeholder="Örn: abc123-def456">
                     </div>
                     <div class="btn-group task-btn-group">
@@ -1813,7 +1846,13 @@
                     }
                     readableEl.style.display = showJson ? 'none' : 'block';
                 } else {
-                    readableEl.style.display = 'none';
+                    // Error: show readable error card when JSON is off
+                    if (!showJson) {
+                        readableEl.innerHTML = renderErrorReadable(data);
+                        readableEl.style.display = 'block';
+                    } else {
+                        readableEl.style.display = 'none';
+                    }
                 }
             }
         }
@@ -1850,17 +1889,31 @@
         function renderTaskIdReadable(data) {
             if (!data.task_id) return '';
             return `
-                <div style="background:var(--panel); border:1px solid var(--border-bright); border-radius:var(--radius-sm); padding:1rem 1.25rem; display:flex; align-items:center; gap:1rem; flex-wrap:wrap;">
-                    <span style="font-size:1.5rem;">🎯</span>
-                    <div style="flex:1;">
-                        <div style="font-family:'JetBrains Mono',monospace; font-size:0.62rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--violet); margin-bottom:4px;">Task Oluşturuldu</div>
-                        <div style="font-family:'JetBrains Mono',monospace; font-size:0.85rem; color:var(--text); word-break:break-all;">${data.task_id}</div>
+                <div style="background:var(--panel); border:1px solid var(--border-bright); border-radius:var(--radius-sm); padding:0.75rem 1rem; width:100%; box-sizing:border-box;">
+                    <div style="display:flex; align-items:center; gap:0.625rem; margin-bottom:6px;">
+                        <span style="font-size:1.1rem; flex-shrink:0;">🎯</span>
+                        <div style="font-family:'JetBrains Mono',monospace; font-size:0.62rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--violet); flex:1;">Task Oluşturuldu</div>
+                        <button onclick="quickQueryTask('${data.task_id}')" style="flex-shrink:0; padding:4px 12px; font-size:0.6rem; background:var(--cyan-dim); border:1px solid rgba(34,211,238,0.3); color:var(--cyan); box-shadow:none; transform:none; border-radius:6px; white-space:nowrap;">🔍 Sorgula</button>
                     </div>
-                    <button onclick="quickQueryTask('${data.task_id}')" style="padding:6px 14px; font-size:0.62rem; background:var(--cyan-dim); border:1px solid rgba(34,211,238,0.3); color:var(--cyan); box-shadow:none; transform:none; border-radius:6px;">🔍 Sorgula</button>
+                    <div style="font-family:'JetBrains Mono',monospace; font-size:0.8rem; color:var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; width:100%; box-sizing:border-box;">${data.task_id}</div>
                 </div>`;
         }
 
-        // Quick query a specific task from the list
+        function renderErrorReadable(data) {
+            const title = data.error || 'Hata';
+            const message = data.message || JSON.stringify(data);
+            return `
+                <div style="background:var(--rose-dim); border:1px solid rgba(244,63,94,0.35); border-radius:var(--radius-sm); padding:1rem 1.25rem; display:flex; align-items:flex-start; gap:0.875rem;">
+                    <span style="font-size:1.4rem; flex-shrink:0;">❌</span>
+                    <div style="min-width:0;">
+                        <div style="font-family:'JetBrains Mono',monospace; font-size:0.62rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--rose); margin-bottom:4px;">Hata</div>
+                        <div style="font-size:0.85rem; color:var(--text); font-weight:600; margin-bottom:2px;">${title}</div>
+                        ${message !== title ? `<div style="font-size:0.8rem; color:var(--text-dim);">${message}</div>` : ''}
+                    </div>
+                </div>`;
+        }
+
+        
         function quickQueryTask(taskId) {
             document.getElementById('taskId').value = taskId;
             showPage('page-tasks', document.getElementById('nav-tasks'));
@@ -2184,6 +2237,10 @@
                 statusBox.style.display = showJson ? 'block' : 'none';
                 if (response.ok) {
                     displayTaskCard(taskId, data);
+                } else if (!showJson) {
+                    // JSON kapalıyken hata kartı göster
+                    const container = document.getElementById('tasksContainer');
+                    container.innerHTML = renderErrorReadable(data);
                 }
             } catch (error) {
                 alert('Hata: ' + error.message);
@@ -2200,6 +2257,10 @@
                 statusBox.style.display = showJson ? 'block' : 'none';
                 if (response.ok && data.tasks) {
                     displayAllTasks(data);
+                } else if (!response.ok && !showJson) {
+                    // JSON kapalıyken hata kartı göster
+                    const container = document.getElementById('tasksContainer');
+                    container.innerHTML = renderErrorReadable(data);
                 }
             } catch (error) {
                 alert('Hata: ' + error.message);
