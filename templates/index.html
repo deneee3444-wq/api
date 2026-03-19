@@ -1391,6 +1391,13 @@
                 <span class="nav-icon">📋</span>
                 <span class="nav-label">Task Durumu</span>
             </a>
+
+            <div class="nav-section-label">Döküman</div>
+
+            <a class="nav-item" href="/api-doc" target="_blank">
+                <span class="nav-icon">📖</span>
+                <span class="nav-label">API Dokümantasyonu</span>
+            </a>
         </nav>
 
         <div class="sidebar-footer">
@@ -1792,9 +1799,10 @@
             onI2vModelChange();
         });
 
-        const API_BASE = () => document.getElementById('apiUrl').value || 'https://api-pe7w.onrender.com';
+        const API_BASE = () => document.getElementById('apiUrl').value;
         const API_KEY = () => document.getElementById('apiKey').value;
         let autoRefreshInterval = null;
+        let currentViewMode = 'all'; // 'all' veya 'single'
         
         // Pagination variables
         let allTasks = [];
@@ -1955,6 +1963,7 @@
         
         function quickQueryTask(taskId) {
             document.getElementById('taskId').value = taskId;
+            currentViewMode = 'single';
             showPage('page-tasks', document.getElementById('nav-tasks'));
             checkTaskStatus();
         }
@@ -2273,6 +2282,7 @@
                 alert('Lütfen Task ID girin!');
                 return;
             }
+            currentViewMode = 'single';
 
             try {
                 const { response, data } = await apiCall(`/api/status/${taskId}`);
@@ -2294,6 +2304,7 @@
 
         // Check All Tasks
         async function checkAllTasks() {
+            currentViewMode = 'all';
             try {
                 const { response, data } = await apiCall(`/api/status?page=${currentPage}&per_page=${tasksPerPage}`);
                 const showJson = document.getElementById('settingShowJson')?.checked ?? true;
@@ -2611,11 +2622,20 @@
             }
             
             autoRefreshInterval = setInterval(() => {
-                checkAllTasks();
+                if (currentViewMode === 'single' && document.getElementById('taskId').value) {
+                    checkTaskStatus();
+                } else {
+                    checkAllTasks();
+                }
             }, 5000);
             
             alert('Otomatik yenileme başlatıldı! (5 saniyede bir)');
-            checkAllTasks(); // İlk kontrolü hemen yap
+            // İlk kontrolü hemen yap
+            if (currentViewMode === 'single' && document.getElementById('taskId').value) {
+                checkTaskStatus();
+            } else {
+                checkAllTasks();
+            }
         }
 
         function stopAutoRefresh() {
