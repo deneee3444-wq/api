@@ -1,0 +1,1515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Documentation — CreativeLabs</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --void:        #03020a;
+            --depth:       #07050f;
+            --surface:     #0e0b1a;
+            --elevated:    #161223;
+            --panel:       #1c1830;
+            --border:      rgba(139,92,246,0.15);
+            --border-bright: rgba(139,92,246,0.4);
+            --violet:      #8b5cf6;
+            --violet-glow: rgba(139,92,246,0.25);
+            --violet-dim:  rgba(139,92,246,0.1);
+            --amber:       #f59e0b;
+            --amber-dim:   rgba(245,158,11,0.08);
+            --cyan:        #22d3ee;
+            --cyan-dim:    rgba(34,211,238,0.1);
+            --rose:        #f43f5e;
+            --rose-dim:    rgba(244,63,94,0.12);
+            --emerald:     #10b981;
+            --emerald-dim: rgba(16,185,129,0.12);
+            --text:        #ede9ff;
+            --text-dim:    #9b93b8;
+            --text-muted:  #5a5270;
+            /* compat aliases */
+            --bg-deep:     #03020a;
+            --bg-card:     #161223;
+            --bg-code:     #07050f;
+            --text-primary: #ede9ff;
+            --green:       #10b981;
+            --green-dim:   rgba(16,185,129,0.12);
+            --red:         #f43f5e;
+            --nav-width:   270px;
+            --header-h:    60px;
+            --radius:      14px;
+            --radius-sm:   8px;
+            --shadow:      0 20px 60px rgba(0,0,0,0.8);
+            --transition:  0.25s cubic-bezier(0.4,0,0.2,1);
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; scroll-padding-top: 80px; }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: var(--void);
+            color: var(--text);
+            line-height: 1.65;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed; inset: 0;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+            background-size: 200px; pointer-events: none; z-index: 9999; opacity: 0.6;
+        }
+
+        body::after {
+            content: ''; position: fixed; inset: 0;
+            background:
+                radial-gradient(ellipse 80% 50% at 20% 10%, rgba(139,92,246,0.07) 0%, transparent 60%),
+                radial-gradient(ellipse 60% 40% at 80% 80%, rgba(245,158,11,0.05) 0%, transparent 60%),
+                radial-gradient(ellipse 50% 60% at 60% 30%, rgba(34,211,238,0.03) 0%, transparent 50%);
+            pointer-events: none; z-index: 0;
+        }
+
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-track { background: var(--void); }
+        ::-webkit-scrollbar-thumb { background: var(--violet-dim); border-radius: 99px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--violet); }
+
+        /* ─── TOPBAR ─────────────────────────────── */
+        .topbar {
+            position: fixed; top: 0; left: 0; right: 0;
+            height: var(--header-h); z-index: 100;
+            background: rgba(7,5,15,0.85);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; padding: 0 24px; gap: 16px;
+        }
+
+        .topbar-logo {
+            font-family: 'Orbitron', monospace; font-weight: 900; font-size: 1.05rem;
+            letter-spacing: 0.06em;
+            background: linear-gradient(135deg, var(--violet) 0%, var(--cyan) 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+            text-decoration: none; display: flex; align-items: center; gap: 10px; white-space: nowrap;
+        }
+
+        .brand-icon {
+            width: 34px; height: 34px;
+            background: linear-gradient(135deg, var(--violet), var(--cyan));
+            border-radius: 9px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            flex-shrink: 0;
+            box-shadow: 0 0 20px var(--violet-glow);
+            -webkit-text-fill-color: initial;
+            color: white;
+        }
+
+        .brand-subtitle {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.6rem;
+            color: var(--text-muted);
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            margin-top: 4px;
+            -webkit-text-fill-color: var(--text-muted);
+        }
+
+        .topbar-spacer { flex: 1; }
+
+        /* ─── HAMBURGER ─────────────────────────── */
+        .hamburger {
+            display: none; flex-direction: column; justify-content: center; gap: 5px;
+            background: none; border: 1px solid var(--border); cursor: pointer;
+            padding: 4px 8px; width: 36px; height: 36px; border-radius: var(--radius-sm);
+        }
+        .hamburger span {
+            display: block; width: 18px; height: 2px;
+            background: var(--text-dim); border-radius: 2px;
+            transition: var(--transition); transform-origin: center;
+        }
+        .hamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+        .hamburger.open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
+        .hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+        /* ─── LAYOUT ─────────────────────────────── */
+        .layout { display: flex; padding-top: var(--header-h); min-height: 100vh; }
+
+        /* ─── SIDEBAR ───────────────────────────── */
+        .sidebar {
+            width: var(--nav-width); flex-shrink: 0;
+            position: fixed; top: var(--header-h); left: 0; bottom: 0;
+            overflow-y: auto; background: var(--depth);
+            border-right: 1px solid var(--border);
+            padding: 16px 12px; z-index: 90;
+            transition: transform var(--transition);
+        }
+
+        .sidebar::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 300px;
+            background: radial-gradient(ellipse at top left, rgba(139,92,246,0.12), transparent 70%);
+            pointer-events: none;
+        }
+
+        .nav-group-label {
+            font-family: 'JetBrains Mono', monospace; font-size: 0.6rem;
+            text-transform: uppercase; letter-spacing: 0.14em; color: var(--text-muted);
+            padding: 10px 10px 6px; margin-top: 8px;
+        }
+        .nav-group-label:first-child { margin-top: 0; }
+
+        .sidebar a {
+            display: flex; align-items: center; gap: 11px; color: var(--text-dim);
+            text-decoration: none; padding: 11px 14px; border-radius: var(--radius-sm);
+            transition: all var(--transition); margin-bottom: 2px;
+            font-size: 0.875rem; font-weight: 500;
+            border: 1px solid transparent; position: relative;
+        }
+
+        .sidebar a:hover { background: var(--violet-dim); color: var(--text); border-color: var(--border); }
+
+        .sidebar a.active {
+            background: linear-gradient(135deg, rgba(139,92,246,0.18), rgba(34,211,238,0.06));
+            color: var(--violet); border-color: var(--border-bright);
+            box-shadow: 0 0 20px rgba(139,92,246,0.1);
+        }
+
+        .sidebar a.active::before {
+            content: ''; position: absolute; left: -1px; top: 20%; bottom: 20%;
+            width: 3px; background: var(--violet); border-radius: 0 3px 3px 0;
+            box-shadow: 0 0 10px var(--violet);
+        }
+
+        .sidebar-backdrop {
+            display: none; position: fixed; inset: 0;
+            background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); z-index: 89;
+        }
+
+        /* ─── CONTENT ───────────────────────────── */
+        .content { flex: 1; margin-left: var(--nav-width); min-width: 0; position: relative; z-index: 1; }
+
+        /* ─── HERO ──────────────────────────────── */
+        .hero {
+            position: relative; padding: 72px 48px 60px;
+            overflow: hidden; border-bottom: 1px solid var(--border);
+        }
+
+        .hero-grid {
+            position: absolute; inset: 0;
+            background-image:
+                linear-gradient(rgba(139,92,246,0.04) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(139,92,246,0.04) 1px, transparent 1px);
+            background-size: 40px 40px; animation: gridDrift 30s linear infinite;
+        }
+
+        .hero-glow {
+            position: absolute; width: 600px; height: 400px; top: -100px; right: -100px;
+            background: radial-gradient(ellipse, rgba(139,92,246,0.1) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .hero-glow-2 {
+            position: absolute; width: 400px; height: 300px; bottom: -80px; left: 100px;
+            background: radial-gradient(ellipse, rgba(34,211,238,0.06) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        @keyframes gridDrift { 0% { transform: translate(0,0); } 100% { transform: translate(40px,40px); } }
+
+        .hero-eyebrow {
+            font-family: 'JetBrains Mono', monospace; font-size: 0.65rem;
+            letter-spacing: 0.16em; text-transform: uppercase; color: var(--violet);
+            margin-bottom: 16px; position: relative; display: inline-flex; align-items: center; gap: 8px;
+        }
+        .hero-eyebrow::before { content: ''; display: inline-block; width: 20px; height: 1px; background: var(--violet); }
+
+        .hero h1 {
+            font-family: 'Orbitron', monospace; font-size: clamp(1.6rem, 4vw, 2.8rem);
+            font-weight: 900; line-height: 1.15; letter-spacing: -0.01em;
+            color: var(--text); position: relative; margin-bottom: 18px;
+        }
+        .hero h1 span { color: var(--violet); }
+
+        .hero-sub {
+            font-size: 1rem; color: var(--text-dim);
+            position: relative; max-width: 520px; margin-bottom: 36px;
+        }
+
+        .hero-pills { display: flex; flex-wrap: wrap; gap: 10px; position: relative; }
+
+        .pill {
+            display: inline-flex; align-items: center; gap: 6px;
+            font-family: 'JetBrains Mono', monospace; font-size: 0.68rem;
+            padding: 4px 12px; border-radius: 99px; border: 1px solid; letter-spacing: 0.06em;
+        }
+        .pill.cyan   { color: var(--cyan);    border-color: rgba(34,211,238,0.3);  background: var(--cyan-dim); }
+        .pill.violet { color: var(--violet);  border-color: rgba(139,92,246,0.3);  background: var(--violet-dim); }
+        .pill.green  { color: var(--emerald); border-color: rgba(16,185,129,0.3);  background: var(--emerald-dim); }
+        .pill.amber  { color: var(--amber);   border-color: rgba(245,158,11,0.3);  background: var(--amber-dim); }
+
+        /* ─── SECTIONS ──────────────────────────── */
+        .sections-wrapper { padding: 40px 48px 80px; display: flex; flex-direction: column; gap: 32px; }
+
+        section {
+            background: var(--elevated); border: 1px solid var(--border);
+            border-radius: var(--radius); padding: 40px; scroll-margin-top: 80px;
+            transition: border-color var(--transition), box-shadow var(--transition);
+            position: relative; overflow: hidden;
+        }
+
+        section::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(139,92,246,0.4), transparent);
+        }
+
+        section:hover {
+            border-color: rgba(139,92,246,0.3);
+            box-shadow: 0 8px 40px rgba(139,92,246,0.08);
+        }
+
+        section > h2 {
+            font-family: 'Orbitron', monospace; font-size: 1rem; font-weight: 700;
+            letter-spacing: 0.05em; color: var(--text); margin-bottom: 24px;
+            display: flex; align-items: center; gap: 12px;
+            padding-bottom: 20px; border-bottom: 1px solid var(--border);
+        }
+        section > h2 .emoji { font-size: 1.2rem; }
+
+        h3 {
+            font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.1em; color: var(--violet);
+            margin: 32px 0 14px;
+        }
+
+        p { color: var(--text-dim); font-size: 0.93rem; line-height: 1.7; }
+
+        /* ─── ENDPOINT ──────────────────────────── */
+        .endpoint {
+            display: flex; align-items: center; gap: 14px; padding: 14px 18px;
+            background: var(--panel); border: 1px solid var(--border-bright);
+            border-radius: var(--radius-sm); margin: 16px 0;
+            font-family: 'JetBrains Mono', monospace; font-size: 0.88rem; flex-wrap: wrap;
+        }
+        .endpoint code { color: var(--cyan); word-break: break-all; }
+
+        .method {
+            padding: 4px 10px; border-radius: 6px; font-weight: 700; font-size: 0.68rem;
+            font-family: 'JetBrains Mono', monospace; letter-spacing: 0.08em; white-space: nowrap;
+        }
+        .method.get  { background: rgba(34,211,238,0.12); color: var(--cyan);    border: 1px solid rgba(34,211,238,0.3); }
+        .method.post { background: var(--emerald-dim);     color: var(--emerald); border: 1px solid rgba(16,185,129,0.35); }
+
+        /* ─── CODE TABS ─────────────────────────── */
+        .code-tabs {
+            margin: 18px 0; background: var(--depth);
+            border-radius: var(--radius); overflow: hidden; border: 1px solid var(--border);
+        }
+
+        .tab-headers {
+            display: flex; align-items: center; background: rgba(139,92,246,0.05);
+            border-bottom: 1px solid var(--border); padding: 0 8px; gap: 2px;
+        }
+
+        .tab-btn {
+            background: transparent; border: none; color: var(--text-muted);
+            padding: 10px 14px; border-radius: 6px 6px 0 0; cursor: pointer;
+            font-family: 'JetBrains Mono', monospace; font-size: 0.68rem; font-weight: 700;
+            letter-spacing: 0.08em; transition: var(--transition);
+            border-bottom: 2px solid transparent; text-transform: uppercase;
+        }
+        .tab-btn:hover { color: var(--text); }
+        .tab-btn.active { color: var(--violet); border-bottom-color: var(--violet); }
+
+        .copy-btn {
+            background: var(--violet-dim); border: 1px solid var(--border); color: var(--text-dim);
+            font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; padding: 5px 10px;
+            border-radius: 6px; cursor: pointer; transition: var(--transition);
+            display: flex; align-items: center; gap: 5px;
+            letter-spacing: 0.06em; text-transform: uppercase;
+        }
+        .tab-headers .copy-btn { margin-left: auto; margin-right: 8px; }
+        .copy-btn:hover { background: var(--violet); color: #fff; border-color: var(--violet); }
+        .copy-btn.copied { color: var(--emerald) !important; border-color: rgba(16,185,129,0.4) !important; }
+
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; }
+
+        pre { padding: 20px 22px; overflow-x: auto; line-height: 1.7; margin: 0; }
+
+        pre code {
+            font-family: 'JetBrains Mono', monospace; font-size: 0.82rem;
+            color: var(--text-dim); background: none;
+        }
+
+        :not(pre) > code {
+            font-family: 'JetBrains Mono', monospace; font-size: 0.82em;
+            color: var(--violet); background: var(--violet-dim); padding: 2px 6px; border-radius: 4px;
+        }
+
+        .code-string  { color: #7dd3fc; }
+        .code-key     { color: #f9a8d4; }
+        .code-keyword { color: #c4b5fd; }
+        .code-comment { color: var(--text-muted); font-style: italic; }
+        .code-number  { color: #fde68a; }
+        .code-bool    { color: #fca5a5; }
+
+        /* ─── RESPONSE BOX ──────────────────────── */
+        .response-box {
+            background: var(--depth); border: 1px solid rgba(16,185,129,0.2);
+            border-radius: var(--radius); margin: 16px 0; overflow: hidden;
+        }
+        .response-box-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 10px 16px; background: rgba(16,185,129,0.06);
+            border-bottom: 1px solid rgba(16,185,129,0.15);
+        }
+        .response-box-header h4 {
+            font-family: 'JetBrains Mono', monospace; font-size: 0.68rem;
+            letter-spacing: 0.1em; text-transform: uppercase; color: var(--emerald);
+        }
+        .response-box pre { padding: 18px 20px; }
+
+        /* ─── TABLES ────────────────────────────── */
+        .table-wrap {
+            width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch;
+            border-radius: var(--radius); border: 1px solid var(--border); margin: 18px 0;
+        }
+        .param-table { width: 100%; border-collapse: collapse; min-width: 500px; }
+        .param-table th {
+            background: rgba(139,92,246,0.08); color: var(--text);
+            font-family: 'JetBrains Mono', monospace; font-size: 0.68rem; font-weight: 700;
+            letter-spacing: 0.1em; text-transform: uppercase; padding: 12px 16px;
+            text-align: left; border-bottom: 1px solid var(--border-bright); white-space: nowrap;
+        }
+        .param-table td {
+            padding: 13px 16px; border-bottom: 1px solid var(--border);
+            color: var(--text-dim); font-size: 0.875rem; vertical-align: top;
+        }
+        .param-table tr:last-child td { border-bottom: none; }
+        .param-table tr:hover td { background: rgba(139,92,246,0.04); }
+
+        .badge {
+            display: inline-block; padding: 2px 8px; border-radius: 99px;
+            font-size: 0.65rem; font-family: 'JetBrains Mono', monospace;
+            font-weight: 700; letter-spacing: 0.06em;
+        }
+        .badge.required { background: var(--rose-dim);   color: var(--rose);    border: 1px solid rgba(244,63,94,0.3); }
+        .badge.optional { background: var(--violet-dim); color: var(--violet);  border: 1px solid rgba(139,92,246,0.3); }
+
+        /* ─── ALERTS ────────────────────────────── */
+        .alert {
+            padding: 16px 20px; border-radius: var(--radius-sm);
+            margin: 20px 0; border-left: 3px solid; font-size: 0.88rem;
+        }
+        .alert strong { font-weight: 600; }
+        .alert.info    { background: rgba(34,211,238,0.06); border-color: var(--cyan);    color: var(--cyan); }
+        .alert.warning { background: var(--amber-dim);       border-color: var(--amber);   color: var(--amber); }
+        .alert.success { background: var(--emerald-dim);     border-color: var(--emerald); color: var(--emerald); }
+        .alert ul { margin-top: 8px; padding-left: 18px; }
+        .alert li { margin-top: 5px; }
+
+        /* ─── CONCURRENT CALLOUT ────────────────── */
+        .concurrent-callout {
+            display: flex; align-items: center; gap: 20px;
+            background: linear-gradient(135deg, rgba(139,92,246,0.1) 0%, rgba(34,211,238,0.06) 100%);
+            border: 1px solid var(--border-bright); border-radius: var(--radius);
+            padding: 20px 24px; margin: 20px 0;
+        }
+        .concurrent-num {
+            font-family: 'Orbitron', monospace; font-size: 3rem; font-weight: 900;
+            color: var(--violet); line-height: 1; white-space: nowrap;
+            text-shadow: 0 0 30px var(--violet-glow);
+        }
+        .concurrent-text { font-size: 0.88rem; color: var(--text-dim); line-height: 1.5; }
+        .concurrent-text strong {
+            display: block; color: var(--text); font-size: 0.97rem;
+            margin-bottom: 4px; font-family: 'Outfit', sans-serif; font-weight: 600;
+        }
+
+        /* ─── STATUS ────────────────────────────── */
+        .status-pending   { color: var(--amber); }
+        .status-running   { color: var(--cyan); }
+        .status-completed { color: var(--emerald); }
+        .status-failed    { color: var(--rose); }
+        .status-error     { color: var(--rose); }
+        .status-timeout   { color: #fb923c; }
+
+        /* ─── FOOTER ────────────────────────────── */
+        footer {
+            text-align: center; padding: 48px 20px;
+            border-top: 1px solid var(--border); color: var(--text-muted);
+            font-size: 0.85rem; font-family: 'JetBrains Mono', monospace;
+        }
+        footer span { color: var(--violet); }
+
+        /* ─── RESPONSIVE ────────────────────────── */
+        @media (max-width: 900px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); box-shadow: 24px 0 60px rgba(0,0,0,0.5); }
+            .sidebar-backdrop.open { display: block; }
+            .hamburger { display: flex; }
+            .content { margin-left: 0; }
+            .hero { padding: 44px 24px 40px; }
+            .sections-wrapper { padding: 24px 20px 60px; }
+            section { padding: 28px 20px; }
+            .concurrent-callout { flex-direction: column; align-items: flex-start; gap: 10px; }
+        }
+
+        @media (max-width: 500px) {
+            .hero h1 { font-size: 1.6rem; }
+            .hero-pills { gap: 8px; }
+            .pill { font-size: 0.62rem; }
+            section > h2 { font-size: 0.9rem; }
+        }
+
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+        section { animation: fadeUp 0.4s ease both; }
+        section:nth-child(1) { animation-delay: 0.05s; }
+        section:nth-child(2) { animation-delay: 0.1s; }
+        section:nth-child(3) { animation-delay: 0.15s; }
+        section:nth-child(4) { animation-delay: 0.2s; }
+        section:nth-child(5) { animation-delay: 0.25s; }
+        section:nth-child(6) { animation-delay: 0.3s; }
+        section:nth-child(7) { animation-delay: 0.35s; }
+        section:nth-child(8) { animation-delay: 0.4s; }
+    </style>
+</head>
+<body>
+
+<!-- ─── TOP NAVIGATION BAR ──────────────────────────────────────── -->
+<nav class="topbar">
+    <button class="hamburger" id="hamburger" aria-label="Toggle navigation">
+        <span></span><span></span><span></span>
+    </button>
+    <a href="#" class="topbar-logo">
+        <div class="brand-icon">🎬</div>
+        <div>
+            <div>CreativeLabs</div>
+            <div class="brand-subtitle">AI Studio Interface</div>
+        </div>
+    </a>
+    <span class="topbar-spacer"></span>
+</nav>
+
+<!-- ─── SIDEBAR ─────────────────────────────────────────────────── -->
+<div class="sidebar-backdrop" id="backdrop"></div>
+
+<aside class="sidebar" id="sidebar">
+    <div class="nav-group-label">General</div>
+    <a href="#authentication">🔐 Authentication</a>
+    <a href="#base-url">🌐 Base URL</a>
+    <a href="#quota">📈 Quota Check</a>
+
+    <div class="nav-group-label">Endpoints</div>
+    <a href="#image-gen">🖼 Image Generation</a>
+    <a href="#video-gen">🎥 Video Generation</a>
+    <a href="#status">📊 Task Status</a>
+    <a href="#errors">❌ Errors & Limits</a>
+</aside>
+
+<!-- ─── MAIN CONTENT ─────────────────────────────────────────────── -->
+<div class="layout">
+    <div class="content">
+
+        <!-- HERO -->
+        <div class="hero">
+            <div class="hero-grid"></div>
+            <div class="hero-glow"></div>
+            <div class="hero-glow-2"></div>
+            <div class="hero-eyebrow">API Reference</div>
+            <h1>CreativeLabs<br><span>Generation API</span></h1>
+            <p class="hero-sub">Image and Video generation powered by state-of-the-art AI models. Fully async, quota-based.</p>
+            <div class="hero-pills">
+                <span class="pill cyan">🖼 Image</span>
+                <span class="pill violet">🎥 Video</span>
+                <span class="pill amber">⚡ 10 Concurrent Tasks</span>
+            </div>
+        </div>
+
+        <!-- SECTIONS -->
+        <div class="sections-wrapper">
+
+            <!-- Authentication -->
+            <section id="authentication">
+                <h2><span class="emoji">🔐</span> Authentication</h2>
+                <p>All API requests require authentication using an API key in the Authorization header.</p>
+
+                <h3>API Key</h3>
+                <div class="code-tabs">
+                    <div class="tab-headers">
+                        <span style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--text-muted);padding:0 6px;">KEY</span>
+                        <button class="copy-btn" onclick="copyBlock(this, 'auth-key')">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+                            Copy
+                        </button>
+                    </div>
+                    <pre><code id="auth-key">sk_live_7f9a2b4e6c8d1a3f5e9b7c2d4a6f8e1b3c5d7f9a2b4e6c8d1a3f5e9b7c2d4a6f</code></pre>
+                </div>
+
+                <h3>Header Format</h3>
+                <div class="code-tabs">
+                    <div class="tab-headers">
+                        <span style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--text-muted);padding:0 6px;">HEADER</span>
+                        <button class="copy-btn" onclick="copyBlock(this, 'auth-header')">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+                            Copy
+                        </button>
+                    </div>
+                    <pre><code id="auth-header">Authorization: Bearer <span class="code-string">YOUR_API_KEY</span></code></pre>
+                </div>
+            </section>
+
+            <!-- Base URL -->
+            <section id="base-url">
+                <h2><span class="emoji">🌐</span> Base URL</h2>
+                <div class="endpoint">
+                    <code>http://127.0.0.1:5000</code>
+                </div>
+            </section>
+
+            <!-- Quota -->
+            <section id="quota">
+                <h2><span class="emoji">📈</span> Check Quota</h2>
+
+                <div class="endpoint">
+                    <span class="method get">GET</span>
+                    <code>/api/quota</code>
+                </div>
+
+                <p>Check your remaining quota available for generation tasks.</p>
+
+                <div class="concurrent-callout">
+                    <div class="concurrent-num">10</div>
+                    <div class="concurrent-text">
+                        <strong>Maximum Concurrent Tasks</strong>
+                        Up to 10 tasks can run simultaneously. Check <code>available_slots</code> in the quota response to know how many slots are free before submitting new tasks.
+                    </div>
+                </div>
+
+                <div class="code-tabs">
+                    <div class="tab-headers">
+                        <button class="tab-btn active" onclick="showTab(this, 'quota-curl')">CURL</button>
+                        <button class="tab-btn" onclick="showTab(this, 'quota-py')">PYTHON</button>
+                        <button class="copy-btn" onclick="copyActiveTab(this)">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+                            Copy
+                        </button>
+                    </div>
+                    <div id="quota-curl" class="tab-panel active">
+<pre><code>curl -X GET http://127.0.0.1:5000/api/quota \
+  -H <span class="code-string">"Authorization: Bearer YOUR_API_KEY"</span></code></pre>
+                    </div>
+                    <div id="quota-py" class="tab-panel">
+<pre><code><span class="code-keyword">import</span> requests
+
+url = <span class="code-string">"http://127.0.0.1:5000/api/quota"</span>
+headers = {<span class="code-string">"Authorization"</span>: <span class="code-string">"Bearer YOUR_API_KEY"</span>}
+
+response = requests.get(url, headers=headers)
+print(response.json())</code></pre>
+                    </div>
+                </div>
+
+                <div class="response-box">
+                    <div class="response-box-header">
+                        <h4>Success Response (200 OK)</h4>
+                        <button class="copy-btn" onclick="copyBlock(this, 'quota-resp')">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+                            Copy
+                        </button>
+                    </div>
+<pre><code id="quota-resp">{
+  <span class="code-key">"quota"</span>: <span class="code-number">42</span>,
+  <span class="code-key">"running_tasks"</span>: <span class="code-number">1</span>,
+  <span class="code-key">"max_concurrent"</span>: <span class="code-number">10</span>,
+  <span class="code-key">"available_slots"</span>: <span class="code-number">9</span>
+}</code></pre>
+                </div>
+
+                <div class="alert warning">
+                    <strong>⚠️ Important Quota Information:</strong>
+                    <p style="margin-top:5px;">Every successful API operation consumes <strong>1 Quota</strong> unit. This applies to:</p>
+                    <ul>
+                        <li>Image Generation (Text-to-Image or Image-to-Image)</li>
+                        <li>Video Generation (Text-to-Video or Image-to-Video)</li>
+                    </ul>
+                    <p style="margin-top:8px;">Once the quota reaches 0, new generation requests will fail.</p>
+                </div>
+            </section>
+
+            <!-- Image Generation -->
+            <section id="image-gen">
+                <h2><span class="emoji">🖼</span> Image Generation</h2>
+
+                <div class="endpoint">
+                    <span class="method post">POST</span>
+                    <code>/api/generate/image</code>
+                </div>
+
+                <p>Generate images from text prompts or transform existing images.</p>
+
+                <h3>Request Body</h3>
+                <div class="table-wrap">
+                    <table class="param-table">
+                        <thead>
+                            <tr>
+                                <th>Parameter</th>
+                                <th>Type</th>
+                                <th>Required</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>prompt</code></td>
+                                <td>string</td>
+                                <td><span class="badge required">Required</span></td>
+                                <td>Text description of the desired image. <strong>Max 4000 characters.</strong></td>
+                            </tr>
+                            <tr>
+                                <td><code>reference_images</code></td>
+                                <td>array</td>
+                                <td><span class="badge optional">Optional</span></td>
+                                <td>Array of base64 encoded images for img2img transformation. Multiple character references supported. <strong>Max 5 images.</strong></td>
+                            </tr>
+                            <tr>
+                                <td><code>model</code></td>
+                                <td>string</td>
+                                <td><span class="badge optional">Optional</span></td>
+                                <td>Model version (default: NANO BANANA PRO)<br>
+                                Options: <code>NANO_BANANA_PRO</code>, <code>NANO_BANANA</code>, <code>NANO_BANANA_2</code></td>
+                            </tr>
+                            <tr>
+                                <td><code>resolution</code></td>
+                                <td>string</td>
+                                <td><span class="badge optional">Optional</span></td>
+                                <td><strong>Only for NANO BANANA PRO and NANO BANANA 2 models:</strong> 1K, 2K, 4K (default: 2K)<br>
+                                <em>Not applicable for NANO BANANA model</em></td>
+                            </tr>
+                            <tr>
+                                <td><code>size</code></td>
+                                <td>string</td>
+                                <td><span class="badge optional">Optional</span></td>
+                                <td><strong>For all image models:</strong><br>
+                                16:9, 9:16, 1:1, 3:4, 4:3, 3:2<br>
+                                (default: 16:9)</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="alert info">
+                    <strong>📌 Model Compatibility:</strong>
+                    <ul>
+                        <li><strong>NANO BANANA PRO:</strong> Supports resolution (1K, 2K, 4K) and all size options</li>
+                        <li><strong>NANO BANANA 2:</strong> Supports resolution (1K, 2K, 4K) and all size options</li>
+                        <li><strong>NANO BANANA:</strong> Only supports size options (no resolution parameter)</li>
+                    </ul>
+                </div>
+
+                <h3>Example Request (NANO BANANA PRO Model — Text-to-Image)</h3>
+                <div class="code-tabs">
+                    <div class="tab-headers">
+                        <button class="tab-btn active" onclick="showTab(this, 'img-t2i-curl')">CURL</button>
+                        <button class="tab-btn" onclick="showTab(this, 'img-t2i-py')">PYTHON</button>
+                        <button class="copy-btn" onclick="copyActiveTab(this)">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+                            Copy
+                        </button>
+                    </div>
+                    <div id="img-t2i-curl" class="tab-panel active">
+<pre><code>curl -X POST http://127.0.0.1:5000/api/generate/image \
+  -H <span class="code-string">"Authorization: Bearer YOUR_API_KEY"</span> \
+  -H <span class="code-string">"Content-Type: application/json"</span> \
+  -d '{
+    <span class="code-key">"prompt"</span>: <span class="code-string">"a futuristic city with neon lights, ultra realistic, 4k"</span>,
+    <span class="code-key">"model"</span>: <span class="code-string">"NANO_BANANA_PRO"</span>,
+    <span class="code-key">"resolution"</span>: <span class="code-string">"2K"</span>,
+    <span class="code-key">"size"</span>: <span class="code-string">"16:9"</span>
+  }'</code></pre>
+                    </div>
+                    <div id="img-t2i-py" class="tab-panel">
+<pre><code><span class="code-keyword">import</span> requests
+
+url = <span class="code-string">"http://127.0.0.1:5000/api/generate/image"</span>
+payload = {
+    <span class="code-string">"prompt"</span>: <span class="code-string">"a futuristic city with neon lights, ultra realistic, 4k"</span>,
+    <span class="code-string">"model"</span>: <span class="code-string">"NANO_BANANA_PRO"</span>,
+    <span class="code-string">"resolution"</span>: <span class="code-string">"2K"</span>,
+    <span class="code-string">"size"</span>: <span class="code-string">"16:9"</span>
+}
+headers = {<span class="code-string">"Authorization"</span>: <span class="code-string">"Bearer YOUR_API_KEY"</span>}
+
+resp = requests.post(url, json=payload, headers=headers)
+print(resp.json())</code></pre>
+                    </div>
+                </div>
+
+                <h3>Example Request (NANO BANANA PRO Model — Image-to-Image)</h3>
+                <div class="code-tabs">
+                    <div class="tab-headers">
+                        <button class="tab-btn active" onclick="showTab(this, 'img-i2i-curl')">CURL</button>
+                        <button class="tab-btn" onclick="showTab(this, 'img-i2i-py')">PYTHON</button>
+                        <button class="copy-btn" onclick="copyActiveTab(this)">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+                            Copy
+                        </button>
+                    </div>
+                    <div id="img-i2i-curl" class="tab-panel active">
+<pre><code>curl -X POST http://127.0.0.1:5000/api/generate/image \
+  -H <span class="code-string">"Authorization: Bearer YOUR_API_KEY"</span> \
+  -H <span class="code-string">"Content-Type: application/json"</span> \
+  -d '{
+    <span class="code-key">"prompt"</span>: <span class="code-string">"make it look like a van gogh painting"</span>,
+    <span class="code-key">"reference_images"</span>: [<span class="code-string">"BASE64_ENCODED_IMAGE_HERE"</span>],
+    <span class="code-key">"model"</span>: <span class="code-string">"NANO_BANANA_PRO"</span>,
+    <span class="code-key">"resolution"</span>: <span class="code-string">"2K"</span>,
+    <span class="code-key">"size"</span>: <span class="code-string">"1:1"</span>
+  }'</code></pre>
+                    </div>
+                    <div id="img-i2i-py" class="tab-panel">
+<pre><code><span class="code-keyword">import</span> requests
+
+url = <span class="code-string">"http://127.0.0.1:5000/api/generate/image"</span>
+payload = {
+    <span class="code-string">"prompt"</span>: <span class="code-string">"make it look like a van gogh painting"</span>,
+    <span class="code-string">"reference_images"</span>: [<span class="code-string">"BASE64_ENCODED_IMAGE_HERE"</span>],
+    <span class="code-string">"model"</span>: <span class="code-string">"NANO_BANANA_PRO"</span>,
+    <span class="code-string">"resolution"</span>: <span class="code-string">"2K"</span>,
+    <span class="code-string">"size"</span>: <span class="code-string">"1:1"</span>
+}
+headers = {<span class="code-string">"Authorization"</span>: <span class="code-string">"Bearer YOUR_API_KEY"</span>}
+
+resp = requests.post(url, json=payload, headers=headers)
+print(resp.json())</code></pre>
+                    </div>
+                </div>
+
+                <h3>Example Request (NANO BANANA Model — Text-to-Image)</h3>
+                <div class="code-tabs">
+                    <div class="tab-headers">
+                        <button class="tab-btn active" onclick="showTab(this, 'img-nano-t2i-curl')">CURL</button>
+                        <button class="tab-btn" onclick="showTab(this, 'img-nano-t2i-py')">PYTHON</button>
+                        <button class="copy-btn" onclick="copyActiveTab(this)">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+                            Copy
+                        </button>
+                    </div>
+                    <div id="img-nano-t2i-curl" class="tab-panel active">
+<pre><code>curl -X POST http://127.0.0.1:5000/api/generate/image \
+  -H <span class="code-string">"Authorization: Bearer YOUR_API_KEY"</span> \
+  -H <span class="code-string">"Content-Type: application/json"</span> \
+  -d '{
+    <span class="code-key">"prompt"</span>: <span class="code-string">"beautiful sunset over ocean"</span>,
+    <span class="code-key">"model"</span>: <span class="code-string">"NANO_BANANA"</span>,
+    <span class="code-key">"size"</span>: <span class="code-string">"3:2"</span>
+  }'</code></pre>
+                    </div>
+                    <div id="img-nano-t2i-py" class="tab-panel">
+<pre><code><span class="code-keyword">import</span> requests
+
+url = <span class="code-string">"http://127.0.0.1:5000/api/generate/image"</span>
+payload = {
+    <span class="code-string">"prompt"</span>: <span class="code-string">"beautiful sunset over ocean"</span>,
+    <span class="code-string">"model"</span>: <span class="code-string">"NANO_BANANA"</span>,
+    <span class="code-string">"size"</span>: <span class="code-string">"3:2"</span>
+}
+headers = {<span class="code-string">"Authorization"</span>: <span class="code-string">"Bearer YOUR_API_KEY"</span>}
+
+resp = requests.post(url, json=payload, headers=headers)
+print(resp.json())</code></pre>
+                    </div>
+                </div>
+
+                <h3>Example Request (NANO BANANA Model — Image-to-Image)</h3>
+                <div class="code-tabs">
+                    <div class="tab-headers">
+                        <button class="tab-btn active" onclick="showTab(this, 'img-nano-i2i-curl')">CURL</button>
+                        <button class="tab-btn" onclick="showTab(this, 'img-nano-i2i-py')">PYTHON</button>
+                        <button class="copy-btn" onclick="copyActiveTab(this)">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+                            Copy
+                        </button>
+                    </div>
+                    <div id="img-nano-i2i-curl" class="tab-panel active">
+<pre><code>curl -X POST http://127.0.0.1:5000/api/generate/image \
+  -H <span class="code-string">"Authorization: Bearer YOUR_API_KEY"</span> \
+  -H <span class="code-string">"Content-Type: application/json"</span> \
+  -d '{
+    <span class="code-key">"prompt"</span>: <span class="code-string">"cyberpunk style"</span>,
+    <span class="code-key">"reference_images"</span>: [<span class="code-string">"BASE64_ENCODED_IMAGE_HERE"</span>],
+    <span class="code-key">"model"</span>: <span class="code-string">"NANO_BANANA"</span>,
+    <span class="code-key">"size"</span>: <span class="code-string">"16:9"</span>
+  }'</code></pre>
+                    </div>
+                    <div id="img-nano-i2i-py" class="tab-panel">
+<pre><code><span class="code-keyword">import</span> requests
+
+url = <span class="code-string">"http://127.0.0.1:5000/api/generate/image"</span>
+payload = {
+    <span class="code-string">"prompt"</span>: <span class="code-string">"cyberpunk style"</span>,
+    <span class="code-string">"reference_images"</span>: [<span class="code-string">"BASE64_ENCODED_IMAGE_HERE"</span>],
+    <span class="code-string">"model"</span>: <span class="code-string">"NANO_BANANA"</span>,
+    <span class="code-string">"size"</span>: <span class="code-string">"16:9"</span>
+}
+headers = {<span class="code-string">"Authorization"</span>: <span class="code-string">"Bearer YOUR_API_KEY"</span>}
+
+resp = requests.post(url, json=payload, headers=headers)
+print(resp.json())</code></pre>
+                    </div>
+                </div>
+
+                <div class="response-box">
+                    <div class="response-box-header">
+                        <h4>Success Response (200 OK)</h4>
+                    </div>
+<pre><code>{
+  <span class="code-key">"task_id"</span>: <span class="code-string">"abc123-def456-ghi789"</span>
+}</code></pre>
+                </div>
+
+                <div class="alert warning">
+                    <strong>⚠️ Cost:</strong> This operation consumes 1 Quota.
+                </div>
+            </section>
+
+            <!-- Video Generation -->
+            <section id="video-gen">
+                <h2><span class="emoji">🎥</span> Video Generation</h2>
+
+                <div class="endpoint">
+                    <span class="method post">POST</span>
+                    <code>/api/generate/video</code>
+                </div>
+
+                <p>Generate videos from text prompts or animate existing images using SORA 2 or VEO 3 models.</p>
+
+                <h3>Request Body</h3>
+                <div class="table-wrap">
+                    <table class="param-table">
+                        <thead>
+                            <tr>
+                                <th>Parameter</th>
+                                <th>Type</th>
+                                <th>Required</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>prompt</code></td>
+                                <td>string</td>
+                                <td><span class="badge required">Required</span></td>
+                                <td>Text description of the desired video/animation. <strong>Max 2000 characters.</strong></td>
+                            </tr>
+                            <tr>
+                                <td><code>model</code></td>
+                                <td>string</td>
+                                <td><span class="badge optional">Optional</span></td>
+                                <td>Video generation model:<br>
+                                • <strong>SORA 2</strong> (default) — 10 seconds, 720p<br>
+                                • <strong>VEO 3</strong> — 8 seconds, 720p</td>
+                            </tr>
+                            <tr>
+                                <td><code>size</code></td>
+                                <td>string</td>
+                                <td><span class="badge optional">Optional</span></td>
+                                <td>16:9, 9:16 (default: 16:9)</td>
+                            </tr>
+                            <tr>
+                                <td><code>start_frame</code></td>
+                                <td>string</td>
+                                <td><span class="badge optional">Optional</span></td>
+                                <td>Base64 encoded start frame image for img2video animation</td>
+                            </tr>
+                            <tr>
+                                <td><code>end_frame</code></td>
+                                <td>string</td>
+                                <td><span class="badge optional">Optional</span></td>
+                                <td><strong>VEO 3 only.</strong> Base64 encoded end frame image. Requires <code>start_frame</code> to also be provided.</td>
+                            </tr>
+                            <tr>
+                                <td><code>reference_images</code></td>
+                                <td>array</td>
+                                <td><span class="badge optional">Optional</span></td>
+                                <td><strong>VEO 3 only.</strong> Array of base64 encoded reference images to guide style/content. <strong>Max 3 images.</strong> Cannot be used together with <code>start_frame</code> or <code>end_frame</code>.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="alert info">
+                    <strong>📌 Video Model Info:</strong>
+                    <ul>
+                        <li><strong>SORA 2 (default):</strong> Duration: 10 seconds, Resolution: 720p. Supports text-to-video and image-to-video.</li>
+                        <li><strong>VEO 3:</strong> Duration: 8 seconds, Resolution: 720p. Supports text-to-video, image-to-video (start frame), start+end frame, and reference images.</li>
+                        <li><strong>Supported Sizes:</strong> 16:9, 9:16 (both models)</li>
+                    </ul>
+                </div>
+
+                <h3>Example Request (SORA 2 Model — Text-to-Video)</h3>
+                <div class="code-tabs">
+                    <div class="tab-headers">
+                        <button class="tab-btn active" onclick="showTab(this, 'vid-t2v-curl')">CURL</button>
+                        <button class="tab-btn" onclick="showTab(this, 'vid-t2v-py')">PYTHON</button>
+                        <button class="copy-btn" onclick="copyActiveTab(this)">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+                            Copy
+                        </button>
+                    </div>
+                    <div id="vid-t2v-curl" class="tab-panel active">
+<pre><code>curl -X POST http://127.0.0.1:5000/api/generate/video \
+  -H <span class="code-string">"Authorization: Bearer YOUR_API_KEY"</span> \
+  -H <span class="code-string">"Content-Type: application/json"</span> \
+  -d '{
+    <span class="code-key">"prompt"</span>: <span class="code-string">"a dragon flying over mountains, cinematic"</span>,
+    <span class="code-key">"model"</span>: <span class="code-string">"SORA_2"</span>,
+    <span class="code-key">"size"</span>: <span class="code-string">"16:9"</span>
+  }'</code></pre>
+                    </div>
+                    <div id="vid-t2v-py" class="tab-panel">
+<pre><code><span class="code-keyword">import</span> requests
+
+url = <span class="code-string">"http://127.0.0.1:5000/api/generate/video"</span>
+payload = {
+    <span class="code-string">"prompt"</span>: <span class="code-string">"a dragon flying over mountains, cinematic"</span>,
+    <span class="code-string">"model"</span>: <span class="code-string">"SORA_2"</span>,
+    <span class="code-string">"size"</span>: <span class="code-string">"16:9"</span>
+}
+headers = {<span class="code-string">"Authorization"</span>: <span class="code-string">"Bearer YOUR_API_KEY"</span>}
+
+resp = requests.post(url, json=payload, headers=headers)
+print(resp.json())</code></pre>
+                    </div>
+                </div>
+
+                <h3>Example Request (VEO 3 Model — Image-to-Video)</h3>
+                <div class="code-tabs">
+                    <div class="tab-headers">
+                        <button class="tab-btn active" onclick="showTab(this, 'vid-i2v-curl')">CURL</button>
+                        <button class="tab-btn" onclick="showTab(this, 'vid-i2v-py')">PYTHON</button>
+                        <button class="copy-btn" onclick="copyActiveTab(this)">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+                            Copy
+                        </button>
+                    </div>
+                    <div id="vid-i2v-curl" class="tab-panel active">
+<pre><code>curl -X POST http://127.0.0.1:5000/api/generate/video \
+  -H <span class="code-string">"Authorization: Bearer YOUR_API_KEY"</span> \
+  -H <span class="code-string">"Content-Type: application/json"</span> \
+  -d '{
+    <span class="code-key">"prompt"</span>: <span class="code-string">"smooth camera movement, cinematic"</span>,
+    <span class="code-key">"start_frame"</span>: <span class="code-string">"BASE64_ENCODED_IMAGE_HERE"</span>,
+    <span class="code-key">"model"</span>: <span class="code-string">"VEO_3"</span>,
+    <span class="code-key">"size"</span>: <span class="code-string">"16:9"</span>
+  }'</code></pre>
+                    </div>
+                    <div id="vid-i2v-py" class="tab-panel">
+<pre><code><span class="code-keyword">import</span> requests
+
+url = <span class="code-string">"http://127.0.0.1:5000/api/generate/video"</span>
+payload = {
+    <span class="code-string">"prompt"</span>: <span class="code-string">"smooth camera movement, cinematic"</span>,
+    <span class="code-string">"start_frame"</span>: <span class="code-string">"BASE64_ENCODED_IMAGE_HERE"</span>,
+    <span class="code-string">"model"</span>: <span class="code-string">"VEO_3"</span>,
+    <span class="code-key">"size"</span>: <span class="code-string">"16:9"</span>
+}
+headers = {<span class="code-string">"Authorization"</span>: <span class="code-string">"Bearer YOUR_API_KEY"</span>}
+
+resp = requests.post(url, json=payload, headers=headers)
+print(resp.json())</code></pre>
+                    </div>
+                </div>
+
+                <h3>Example Request (VEO 3 Model — Start Frame + End Frame)</h3>
+                <div class="code-tabs">
+                    <div class="tab-headers">
+                        <button class="tab-btn active" onclick="showTab(this, 'vid-endframe-curl')">CURL</button>
+                        <button class="tab-btn" onclick="showTab(this, 'vid-endframe-py')">PYTHON</button>
+                        <button class="copy-btn" onclick="copyActiveTab(this)">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+                            Copy
+                        </button>
+                    </div>
+                    <div id="vid-endframe-curl" class="tab-panel active">
+<pre><code>curl -X POST http://127.0.0.1:5000/api/generate/video \
+  -H <span class="code-string">"Authorization: Bearer YOUR_API_KEY"</span> \
+  -H <span class="code-string">"Content-Type: application/json"</span> \
+  -d '{
+    <span class="code-key">"prompt"</span>: <span class="code-string">"smooth camera movement, cinematic"</span>,
+    <span class="code-key">"model"</span>: <span class="code-string">"VEO_3"</span>,
+    <span class="code-key">"start_frame"</span>: <span class="code-string">"BASE64_START_FRAME"</span>,
+    <span class="code-key">"end_frame"</span>: <span class="code-string">"BASE64_END_FRAME"</span>,
+    <span class="code-key">"size"</span>: <span class="code-string">"16:9"</span>
+  }'</code></pre>
+                    </div>
+                    <div id="vid-endframe-py" class="tab-panel">
+<pre><code><span class="code-keyword">import</span> requests
+
+url = <span class="code-string">"http://127.0.0.1:5000/api/generate/video"</span>
+payload = {
+    <span class="code-string">"prompt"</span>: <span class="code-string">"smooth camera movement, cinematic"</span>,
+    <span class="code-string">"model"</span>: <span class="code-string">"VEO_3"</span>,
+    <span class="code-string">"start_frame"</span>: <span class="code-string">"BASE64_START_FRAME"</span>,
+    <span class="code-string">"end_frame"</span>: <span class="code-string">"BASE64_END_FRAME"</span>,
+    <span class="code-string">"size"</span>: <span class="code-string">"16:9"</span>
+}
+headers = {<span class="code-string">"Authorization"</span>: <span class="code-string">"Bearer YOUR_API_KEY"</span>}
+
+resp = requests.post(url, json=payload, headers=headers)
+print(resp.json())</code></pre>
+                    </div>
+                </div>
+
+                <h3>Example Request (VEO 3 Model — Reference Images)</h3>
+                <div class="code-tabs">
+                    <div class="tab-headers">
+                        <button class="tab-btn active" onclick="showTab(this, 'vid-ref-curl')">CURL</button>
+                        <button class="tab-btn" onclick="showTab(this, 'vid-ref-py')">PYTHON</button>
+                        <button class="copy-btn" onclick="copyActiveTab(this)">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+                            Copy
+                        </button>
+                    </div>
+                    <div id="vid-ref-curl" class="tab-panel active">
+<pre><code>curl -X POST http://127.0.0.1:5000/api/generate/video \
+  -H <span class="code-string">"Authorization: Bearer YOUR_API_KEY"</span> \
+  -H <span class="code-string">"Content-Type: application/json"</span> \
+  -d '{
+    <span class="code-key">"prompt"</span>: <span class="code-string">"cinematic scene inspired by the reference"</span>,
+    <span class="code-key">"model"</span>: <span class="code-string">"VEO_3"</span>,
+    <span class="code-key">"reference_images"</span>: [<span class="code-string">"BASE64_REF_1"</span>, <span class="code-string">"BASE64_REF_2"</span>],
+    <span class="code-key">"size"</span>: <span class="code-string">"16:9"</span>
+  }'</code></pre>
+                    </div>
+                    <div id="vid-ref-py" class="tab-panel">
+<pre><code><span class="code-keyword">import</span> requests
+
+url = <span class="code-string">"http://127.0.0.1:5000/api/generate/video"</span>
+payload = {
+    <span class="code-string">"prompt"</span>: <span class="code-string">"cinematic scene inspired by the reference"</span>,
+    <span class="code-string">"model"</span>: <span class="code-string">"VEO_3"</span>,
+    <span class="code-string">"reference_images"</span>: [<span class="code-string">"BASE64_REF_1"</span>, <span class="code-string">"BASE64_REF_2"</span>],
+    <span class="code-string">"size"</span>: <span class="code-string">"16:9"</span>
+}
+headers = {<span class="code-string">"Authorization"</span>: <span class="code-string">"Bearer YOUR_API_KEY"</span>}
+
+resp = requests.post(url, json=payload, headers=headers)
+print(resp.json())</code></pre>
+                    </div>
+                </div>
+
+                <div class="response-box">
+                    <div class="response-box-header">
+                        <h4>Success Response (200 OK)</h4>
+                    </div>
+<pre><code>{
+  <span class="code-key">"task_id"</span>: <span class="code-string">"xyz789-abc123-def456"</span>
+}</code></pre>
+                </div>
+
+                <div class="alert warning">
+                    <strong>⚠️ Cost:</strong> This operation consumes 1 Quota.
+                </div>
+            </section>
+
+            <!-- Task Status -->
+            <section id="status">
+                <h2><span class="emoji">📊</span> Task Status</h2>
+
+                <div class="concurrent-callout">
+                    <div class="concurrent-num">10</div>
+                    <div class="concurrent-text">
+                        <strong>Maximum Concurrent Tasks</strong>
+                        The system can process up to 10 tasks simultaneously. New tasks beyond this limit will remain in <code>pending</code> state until a slot opens.
+                    </div>
+                </div>
+
+                <h3>Check Single Task Status</h3>
+                <div class="endpoint">
+                    <span class="method get">GET</span>
+                    <code>/api/status/{task_id}</code>
+                </div>
+
+                <div class="code-tabs">
+                    <div class="tab-headers">
+                        <button class="tab-btn active" onclick="showTab(this, 'status-single-curl')">CURL</button>
+                        <button class="tab-btn" onclick="showTab(this, 'status-single-py')">PYTHON</button>
+                        <button class="copy-btn" onclick="copyActiveTab(this)">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+                            Copy
+                        </button>
+                    </div>
+                    <div id="status-single-curl" class="tab-panel active">
+<pre><code>curl -X GET http://127.0.0.1:5000/api/status/abc123-def456 \
+  -H <span class="code-string">"Authorization: Bearer YOUR_API_KEY"</span></code></pre>
+                    </div>
+                    <div id="status-single-py" class="tab-panel">
+<pre><code><span class="code-keyword">import</span> requests
+
+url = <span class="code-string">"http://127.0.0.1:5000/api/status/abc123-def456"</span>
+headers = {<span class="code-string">"Authorization"</span>: <span class="code-string">"Bearer YOUR_API_KEY"</span>}
+
+resp = requests.get(url, headers=headers)
+print(resp.json())</code></pre>
+                    </div>
+                </div>
+
+                <div class="response-box">
+                    <div class="response-box-header">
+                        <h4>Response Examples</h4>
+                    </div>
+<pre><code><span class="code-comment">// Image task (completed)</span>
+{
+  <span class="code-key">"task_id"</span>: <span class="code-string">"abc123-def456-ghi789"</span>,
+  <span class="code-key">"mode"</span>: <span class="code-string">"image"</span>,
+  <span class="code-key">"status"</span>: <span class="code-string">"completed"</span>,
+  <span class="code-key">"result_url"</span>: <span class="code-string">"https://cdn.example.com/output.jpg"</span>,
+  <span class="code-key">"prompt"</span>: <span class="code-string">"a futuristic city with neon lights"</span>,
+  <span class="code-key">"model"</span>: <span class="code-string">"NANO_BANANA_PRO"</span>,
+  <span class="code-key">"size"</span>: <span class="code-string">"16:9"</span>,
+  <span class="code-key">"resolution"</span>: <span class="code-string">"2K"</span>,
+  <span class="code-key">"reference_image_urls"</span>: [
+    <span class="code-string">"https://cdn.example.com/reference.jpg"</span>
+  ],
+  <span class="code-key">"logs"</span>: [
+    {<span class="code-key">"time"</span>: <span class="code-string">"2026-03-07 10:00:01"</span>, <span class="code-key">"message"</span>: <span class="code-string">"API Task ID: 21150821"</span>}
+  ],
+  <span class="code-key">"created_at"</span>: <span class="code-string">"2026-03-07T10:00:00"</span>
+}
+
+<span class="code-comment">// Video task (running)</span>
+{
+  <span class="code-key">"task_id"</span>: <span class="code-string">"xyz789-abc123-def456"</span>,
+  <span class="code-key">"mode"</span>: <span class="code-string">"video"</span>,
+  <span class="code-key">"status"</span>: <span class="code-string">"running"</span>,
+  <span class="code-key">"result_url"</span>: <span class="code-bool">null</span>,
+  <span class="code-key">"prompt"</span>: <span class="code-string">"a dragon flying over mountains, cinematic"</span>,
+  <span class="code-key">"model"</span>: <span class="code-string">"SORA_2"</span>,
+  <span class="code-key">"size"</span>: <span class="code-string">"16:9"</span>,
+  <span class="code-key">"resolution"</span>: <span class="code-string">"720p"</span>,
+  <span class="code-key">"duration"</span>: <span class="code-number">10</span>,
+  <span class="code-key">"reference_image_urls"</span>: [],
+  <span class="code-key">"logs"</span>: [
+    {<span class="code-key">"time"</span>: <span class="code-string">"2026-03-07 10:05:01"</span>, <span class="code-key">"message"</span>: <span class="code-string">"API Task ID: 21867560"</span>}
+  ],
+  <span class="code-key">"created_at"</span>: <span class="code-string">"2026-03-07T10:05:00"</span>
+}
+
+<span class="code-comment">// Any task (failed)</span>
+{
+  <span class="code-key">"task_id"</span>: <span class="code-string">"fail99-abc123-def456"</span>,
+  <span class="code-key">"mode"</span>: <span class="code-string">"image"</span>,
+  <span class="code-key">"status"</span>: <span class="code-string">"failed"</span>,
+  <span class="code-key">"result_url"</span>: <span class="code-bool">null</span>,
+  <span class="code-key">"prompt"</span>: <span class="code-string">"a futuristic city"</span>,
+  <span class="code-key">"model"</span>: <span class="code-string">"NANO_BANANA_PRO"</span>,
+  <span class="code-key">"size"</span>: <span class="code-string">"16:9"</span>,
+  <span class="code-key">"resolution"</span>: <span class="code-string">"2K"</span>,
+  <span class="code-key">"reference_image_urls"</span>: [],
+  <span class="code-key">"logs"</span>: [
+    {<span class="code-key">"time"</span>: <span class="code-string">"2026-03-07 10:01:00"</span>, <span class="code-key">"message"</span>: <span class="code-string">"Insufficient quota."</span>}
+  ],
+  <span class="code-key">"created_at"</span>: <span class="code-string">"2026-03-07T10:00:58"</span>
+}</code></pre>
+                </div>
+
+                <h3>Check All Tasks Status</h3>
+                <div class="endpoint">
+                    <span class="method get">GET</span>
+                    <code>/api/status</code>
+                </div>
+
+                <div class="code-tabs">
+                    <div class="tab-headers">
+                        <button class="tab-btn active" onclick="showTab(this, 'status-all-curl')">CURL</button>
+                        <button class="tab-btn" onclick="showTab(this, 'status-all-py')">PYTHON</button>
+                        <button class="copy-btn" onclick="copyActiveTab(this)">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+                            Copy
+                        </button>
+                    </div>
+                    <div id="status-all-curl" class="tab-panel active">
+<pre><code>curl -X GET http://127.0.0.1:5000/api/status \
+  -H <span class="code-string">"Authorization: Bearer YOUR_API_KEY"</span></code></pre>
+                    </div>
+                    <div id="status-all-py" class="tab-panel">
+<pre><code><span class="code-keyword">import</span> requests
+
+url = <span class="code-string">"http://127.0.0.1:5000/api/status"</span>
+headers = {<span class="code-string">"Authorization"</span>: <span class="code-string">"Bearer YOUR_API_KEY"</span>}
+
+resp = requests.get(url, headers=headers)
+print(resp.json())</code></pre>
+                    </div>
+                </div>
+
+                <div class="response-box">
+                    <div class="response-box-header">
+                        <h4>Success Response (200 OK)</h4>
+                    </div>
+<pre><code>{
+  <span class="code-key">"running_tasks"</span>: <span class="code-number">1</span>,
+  <span class="code-key">"max_concurrent"</span>: <span class="code-number">10</span>,
+  <span class="code-key">"tasks"</span>: [
+    {
+      <span class="code-key">"task_id"</span>: <span class="code-string">"abc123-def456-ghi789"</span>,
+      <span class="code-key">"mode"</span>: <span class="code-string">"image"</span>,
+      <span class="code-key">"status"</span>: <span class="code-string">"completed"</span>,
+      <span class="code-key">"result_url"</span>: <span class="code-string">"https://cdn.example.com/output.jpg"</span>,
+      <span class="code-key">"created_at"</span>: <span class="code-string">"2026-03-07T10:00:00"</span>
+    },
+    {
+      <span class="code-key">"task_id"</span>: <span class="code-string">"xyz789-abc123-def456"</span>,
+      <span class="code-key">"mode"</span>: <span class="code-string">"video"</span>,
+      <span class="code-key">"status"</span>: <span class="code-string">"running"</span>,
+      <span class="code-key">"result_url"</span>: <span class="code-bool">null</span>,
+      <span class="code-key">"created_at"</span>: <span class="code-string">"2026-03-07T10:05:00"</span>
+    }
+  ]
+}</code></pre>
+                </div>
+
+                <h3>Pagination (Optional)</h3>
+                <p>By default <code>/api/status</code> returns all tasks. Add <code>page</code> and <code>per_page</code> query parameters to paginate results.</p>
+
+                <div class="table-wrap">
+                    <table class="param-table">
+                        <thead>
+                            <tr>
+                                <th>Parameter</th>
+                                <th>Type</th>
+                                <th>Default</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>page</code></td>
+                                <td>integer</td>
+                                <td>—</td>
+                                <td>Page number (starting from 1). If omitted, all tasks are returned without pagination.</td>
+                            </tr>
+                            <tr>
+                                <td><code>per_page</code></td>
+                                <td>integer</td>
+                                <td>6</td>
+                                <td>Number of tasks per page. Only used when <code>page</code> is provided.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="response-box">
+                    <div class="response-box-header">
+                        <h4>Paginated Response (200 OK)</h4>
+                    </div>
+<pre><code><span class="code-comment">// GET /api/status?page=1&per_page=6</span>
+{
+  <span class="code-key">"tasks"</span>: [ <span class="code-comment">/* ... */</span> ],
+  <span class="code-key">"running_tasks"</span>: <span class="code-number">1</span>,
+  <span class="code-key">"max_concurrent"</span>: <span class="code-number">10</span>,
+  <span class="code-key">"page"</span>: <span class="code-number">1</span>,
+  <span class="code-key">"per_page"</span>: <span class="code-number">6</span>,
+  <span class="code-key">"total"</span>: <span class="code-number">42</span>,
+  <span class="code-key">"total_pages"</span>: <span class="code-number">7</span>
+}</code></pre>
+                </div>
+
+                <h3>Status Values</h3>
+                <div class="table-wrap">
+                    <table class="param-table">
+                        <thead>
+                            <tr>
+                                <th>Status</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code class="status-pending">pending</code></td>
+                                <td>Task created, waiting to start</td>
+                            </tr>
+                            <tr>
+                                <td><code class="status-running">running</code></td>
+                                <td>Task is currently processing</td>
+                            </tr>
+                            <tr>
+                                <td><code class="status-completed">completed</code></td>
+                                <td>Task finished successfully, result_url available</td>
+                            </tr>
+                            <tr>
+                                <td><code class="status-failed">failed</code></td>
+                                <td>Task failed, check logs for details</td>
+                            </tr>
+                            <tr>
+                                <td><code class="status-error">error</code></td>
+                                <td>Task encountered an error</td>
+                            </tr>
+                            <tr>
+                                <td><code class="status-timeout">timeout</code></td>
+                                <td>Task exceeded time limit</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Errors -->
+            <section id="errors">
+                <h2><span class="emoji">❌</span> Error Responses & Limits</h2>
+
+                <h3>Common Errors</h3>
+                <div class="response-box">
+                    <div class="response-box-header">
+                        <h4>Error Examples</h4>
+                    </div>
+<pre><code><span class="code-comment">// 401 Unauthorized</span>
+{
+  <span class="code-key">"error"</span>: <span class="code-string">"Unauthorized"</span>
+}
+
+<span class="code-comment">// 400 Bad Request</span>
+{
+  <span class="code-key">"error"</span>: <span class="code-string">"Prompt required"</span>
+}
+
+<span class="code-comment">// 404 Not Found</span>
+{
+  <span class="code-key">"error"</span>: <span class="code-string">"Task not found"</span>
+}
+
+<span class="code-comment">// 503 Service Unavailable</span>
+{
+  <span class="code-key">"error"</span>: <span class="code-string">"No quota available"</span>
+}</code></pre>
+                </div>
+
+                <h3>Best Practices</h3>
+                <div class="alert info">
+                    <ul>
+                        <li>Poll task status every 10 seconds for image tasks</li>
+                        <li>Poll task status every 5–10 seconds for video tasks</li>
+                        <li>Image generation takes approximately 30–120 seconds</li>
+                        <li>Video generation takes approximately 60–300 seconds</li>
+                        <li><strong>Always check quota</strong> before submitting multiple tasks</li>
+                        <li>Store task IDs for later retrieval</li>
+                    </ul>
+                </div>
+            </section>
+
+        </div><!-- /.sections-wrapper -->
+
+        <footer>
+            <p>© 2026 <span>CreativeLabs</span> API Documentation</p>
+            <p style="margin-top:8px;opacity:0.5;">Made with 💜 by CreativeLabs</p>
+        </footer>
+
+    </div><!-- /.content -->
+</div><!-- /.layout -->
+
+<script>
+    // ── Tab switching
+    function showTab(btn, panelId) {
+        const container = btn.closest('.code-tabs');
+        container.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        container.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById(panelId).classList.add('active');
+    }
+
+    // ── Copy active tab content
+    function copyActiveTab(btn) {
+        const container = btn.closest('.code-tabs');
+        const activePanel = container.querySelector('.tab-panel.active');
+        if (!activePanel) return;
+        const text = activePanel.querySelector('pre').innerText;
+        copyToClipboard(text, btn);
+    }
+
+    // ── Copy by element ID
+    function copyBlock(btn, id) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        copyToClipboard(el.innerText, btn);
+    }
+
+    function copyToClipboard(text, btn) {
+        navigator.clipboard.writeText(text).then(() => {
+            const orig = btn.innerHTML;
+            btn.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Copied!`;
+            btn.classList.add('copied');
+            setTimeout(() => {
+                btn.innerHTML = orig;
+                btn.classList.remove('copied');
+            }, 2000);
+        }).catch(() => {
+            // fallback
+            const ta = document.createElement('textarea');
+            ta.value = text;
+            ta.style.position = 'fixed';
+            ta.style.opacity = '0';
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            document.body.removeChild(ta);
+        });
+    }
+
+    // ── Hamburger menu
+    const hamburger = document.getElementById('hamburger');
+    const sidebar = document.getElementById('sidebar');
+    const backdrop = document.getElementById('backdrop');
+
+    function closeSidebar() {
+        hamburger.classList.remove('open');
+        sidebar.classList.remove('open');
+        backdrop.classList.remove('open');
+        document.body.style.overflow = '';
+    }
+
+    hamburger.addEventListener('click', () => {
+        const isOpen = sidebar.classList.contains('open');
+        if (isOpen) {
+            closeSidebar();
+        } else {
+            hamburger.classList.add('open');
+            sidebar.classList.add('open');
+            backdrop.classList.add('open');
+            document.body.style.overflow = 'hidden';
+        }
+    });
+
+    backdrop.addEventListener('click', closeSidebar);
+
+    // Close sidebar on nav link click (mobile)
+    sidebar.querySelectorAll('a').forEach(a => {
+        a.addEventListener('click', () => {
+            if (window.innerWidth <= 900) closeSidebar();
+        });
+    });
+
+    // ── Active nav highlight on scroll
+    const sections = document.querySelectorAll('section[id]');
+    const navLinks = document.querySelectorAll('.sidebar a');
+
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                navLinks.forEach(link => {
+                    link.classList.toggle('active', link.getAttribute('href') === '#' + entry.target.id);
+                });
+            }
+        });
+    }, { rootMargin: '-60px 0px -70% 0px', threshold: 0 });
+
+    sections.forEach(s => observer.observe(s));
+</script>
+
+</body>
+</html>
