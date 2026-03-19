@@ -757,6 +757,10 @@ def handle_exception(e):
 def index():
     return render_template('index.html')
 
+@app.route('/api-doc', methods=['GET'])
+def api_doc():
+    return render_template('apiDocNoTTS.html')
+
 @app.route('/api/generate/image', methods=['POST'])
 def generate_image():
     api_key_id = verify_api_key()
