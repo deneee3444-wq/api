@@ -248,7 +248,7 @@ def process_image_task(task_id, params, api_key_id):
             if ref_urls:
                 db.update_task_reference_urls(task_id, ref_urls)
 
-            for _ in range(300):
+            for _ in range(1000):
                 if _shutdown_event.wait(2):
                     return  # Shutdown — task 'running' kalır, recovery halleder
                 try:
@@ -420,7 +420,7 @@ def process_video_task(task_id, params, api_key_id):
                 if start_url or end_url:
                     db.update_task_frame_urls(task_id, start_frame_url=start_url, end_frame_url=end_url)
             
-            for _ in range(600):
+            for _ in range(1000):
                 if _shutdown_event.wait(5):
                     return  # Shutdown — task 'running' kalır, recovery halleder
                 try:
@@ -610,7 +610,7 @@ def poll_image_recovery(task_id, api_task_id, token, account_email=None, api_key
     """Polling worker for recovered image tasks."""
     try:
         headers = {"authorization": f"Bearer {token}", **DEVICE_HEADERS}
-        for _ in range(300):
+        for _ in range(1000):
             if _shutdown_event.wait(5):
                 return  # Shutdown — task 'running' kalır, recovery halleder
             try:
@@ -645,7 +645,7 @@ def poll_video_recovery(task_id, api_task_id, token, account_email=None, api_key
     """Polling worker for recovered video tasks."""
     try:
         headers = {"authorization": f"Bearer {token}", **DEVICE_HEADERS}
-        for _ in range(600):
+        for _ in range(1000):
             if _shutdown_event.wait(10):
                 return  # Shutdown — task 'running' kalır, recovery halleder
             try:
