@@ -515,7 +515,6 @@ def process_tts_task(task_id, params, api_key_id):
                                     if speech_url:
                                         db.update_task_status(task_id, 'completed', speech_url)
                                         db.add_task_log(task_id, "TTS generation successful.")
-                                        db.release_account(api_key_id, account['email'])
                                         return
                                 elif state == 'FAIL':
                                     db.update_task_status(task_id, 'failed')
