@@ -32,14 +32,11 @@ URL_SUBMIT_IMG = "https://api.deevid.ai/text-to-image/task/submit"
 URL_SUBMIT_VIDEO = "https://api.deevid.ai/image-to-video/task/submit"
 URL_SUBMIT_TXT_VIDEO = "https://api.deevid.ai/text-to-video/task/submit"
 URL_SUBMIT_CHARACTER_VIDEO = "https://api.deevid.ai/character-to-video/task/submit"
+URL_SUBMIT_TTS = "https://api.deevid.ai/text-to-speech/task/submit"
+URL_TTS_VOICES = "https://api.deevid.ai/public-voices"
 URL_ASSETS = "https://api.deevid.ai/my-assets?limit=50&assetType=All&filter=CREATION"
 URL_VIDEO_TASKS = "https://api.deevid.ai/video/tasks?page=1&size=20"
 URL_QUOTA = "https://api.deevid.ai/subscription/plan"
-
-# ElevenLabs Configuration
-ELEVENLABS_API_KEY = "sk_d7cd9c0991b928ab3a7b9f04b0dedfcd7d56d790f2cca302"
-ELEVENLABS_TTS_URL = "https://api.elevenlabs.io/v1/text-to-speech"
-ELEVENLABS_VOICES_URL = "https://api.elevenlabs.io/v1/voices"
 
 # Frontend model name → Deevid model version mapping
 IMAGE_MODEL_MAP = {
@@ -453,68 +450,89 @@ def process_video_task(task_id, params, api_key_id):
     except Exception:
         db.update_task_status(task_id, 'error')
 
-def process_tts_task(task_id, params):
-    """Worker for ElevenLabs TTS generation."""
+def process_tts_task(task_id, params, api_key_id):
+    """Worker for Deevid TTS generation."""
     try:
         db.update_task_status(task_id, 'running')
         try:
-            if not ELEVENLABS_API_KEY:
+            token, account = login_with_retry(api_key_id, task_id=task_id)
+            if not token:
                 db.update_task_status(task_id, 'failed')
-                db.add_task_log(task_id, "ElevenLabs API key not configured.")
+                db.add_task_log(task_id, "Login failed.")
                 return
 
-            voice_id = params.get('voice_id', 'EXAVITQu4vr4xnSDxMaL')  # Default: Bella
             text = params.get('text', '')
-            
             if not text:
                 db.update_task_status(task_id, 'failed')
                 db.add_task_log(task_id, "Text is required.")
+                db.release_account(api_key_id, account['email'])
                 return
 
-            # Voice settings
-            stability = params.get('stability', 0.5)
-            similarity_boost = params.get('similarity_boost', 0.75)
-            style = params.get('style', 0.0)
-            speed = params.get('speed', 1.0)
-            
-            url = f"{ELEVENLABS_TTS_URL}/{voice_id}"
-            
-            headers = {
-                "Accept": "audio/mpeg",
-                "Content-Type": "application/json",
-                "xi-api-key": ELEVENLABS_API_KEY
-            }
-            
+            headers = {"authorization": f"Bearer {token}", "Content-Type": "application/json"}
+
             payload = {
                 "text": text,
-                "model_id": params.get('model_id', 'eleven_multilingual_v2'),
-                "voice_settings": {
-                    "stability": stability,
-                    "similarity_boost": similarity_boost,
-                    "style": style,
-                    "use_speaker_boost": params.get('use_speaker_boost', True)
-                }
+                "voiceId": params.get('voiceId', 'English_expressive_narrator'),
+                "speed": params.get('speed', 1.0),
+                "pitch": params.get('pitch', 0),
+                "volume": params.get('volume', 1.0),
+                "modelVersion": params.get('modelVersion', 'MODEL_SEVEN_SPEECH_26_TURBO'),
             }
-            
-            if speed != 1.0:
-                payload["voice_settings"]["speed"] = speed
+            emotion = params.get('emotion', 'auto')
+            if emotion and emotion != 'auto':
+                payload['emotion'] = emotion
 
-            db.add_task_log(task_id, f"Generating TTS with voice: {voice_id}")
-            
-            response = requests.post(url, json=payload, headers=headers, timeout=60)
-            
-            if response.status_code == 200:
-                audio_base64 = base64.b64encode(response.content).decode('utf-8')
-                
-                db.update_task_status(task_id, 'completed', f"data:audio/mpeg;base64,{audio_base64}")
-                db.add_task_log(task_id, "TTS generation successful.")
-            else:
+            db.add_task_log(task_id, f"Submitting TTS with voice: {payload['voiceId']}")
+
+            resp = requests.post(URL_SUBMIT_TTS, json=payload, headers=headers, timeout=30)
+            resp_json = resp.json()
+
+            error = resp_json.get('error')
+            if error and error.get('code') != 0:
                 db.update_task_status(task_id, 'failed')
-                db.add_task_log(task_id, f"ElevenLabs API error: {response.status_code} - {response.text}")
-                
+                db.add_task_log(task_id, f"Submit error: {resp_json}")
+                db.release_account(api_key_id, account['email'])
+                return
+
+            api_task_id = str(resp_json['data']['data']['taskId'])
+            db.update_task_external_data(task_id, api_task_id, token)
+            db.add_task_log(task_id, f"API Task ID: {api_task_id}")
+
+            poll_headers = {"authorization": f"Bearer {token}"}
+            for _ in range(600):  # max ~30 dakika
+                if _shutdown_event.wait(3):
+                    return
+                try:
+                    poll = requests.get(URL_ASSETS, headers=poll_headers).json()
+                    groups = poll.get('data', {}).get('data', {}).get('groups', [])
+                    for group in groups:
+                        for item in group.get('items', []):
+                            creation = item.get('detail', {}).get('creation', {})
+                            if str(creation.get('taskId')) == api_task_id:
+                                state = creation.get('taskState')
+                                if state == 'SUCCESS':
+                                    speech_url = creation.get('speechUrl')
+                                    if speech_url:
+                                        db.update_task_status(task_id, 'completed', speech_url)
+                                        db.add_task_log(task_id, "TTS generation successful.")
+                                        db.release_account(api_key_id, account['email'])
+                                        return
+                                elif state == 'FAIL':
+                                    db.update_task_status(task_id, 'failed')
+                                    db.add_task_log(task_id, "TTS task failed on Deevid.")
+                                    db.release_account(api_key_id, account['email'])
+                                    return
+                except:
+                    pass
+
+            db.update_task_status(task_id, 'timeout')
+            db.release_account(api_key_id, account['email'])
+
         except Exception as e:
             db.update_task_status(task_id, 'error')
             db.add_task_log(task_id, str(e))
+            if 'account' in locals() and account:
+                db.release_account(api_key_id, account['email'])
     except Exception:
         db.update_task_status(task_id, 'error')
 
@@ -859,9 +877,9 @@ def generate_tts():
     data = request.json
     if not data or 'text' not in data:
         return jsonify({"error": "Text required"}), 400
-    
-    if not ELEVENLABS_API_KEY:
-        return jsonify({"error": "ElevenLabs API key not configured"}), 500
+
+    if db.get_account_count(api_key_id) == 0:
+        return jsonify({"error": "No quota available"}), 503
     
     running_count = db.get_running_task_count(api_key_id)
     if running_count >= MAX_CONCURRENT_TASKS:
@@ -871,37 +889,34 @@ def generate_tts():
         }), 429
     
     task_id = str(uuid.uuid4())
-    db.create_task(api_key_id, task_id, 'tts')
+    db.create_task(api_key_id, task_id, 'tts', prompt=data.get('text'))
     
-    threading.Thread(target=process_tts_task, args=(task_id, data)).start()
+    threading.Thread(target=process_tts_task, args=(task_id, data, api_key_id)).start()
     return jsonify({"task_id": task_id})
 
-@app.route('/api/elevenlabs/voices', methods=['GET'])
-def get_elevenlabs_voices():
+@app.route('/api/tts/voices', methods=['GET'])
+def get_tts_voices():
     api_key_id = verify_api_key()
     if not api_key_id:
         return jsonify({"error": "Unauthorized"}), 401
-    
-    if not ELEVENLABS_API_KEY:
-        return jsonify({"error": "ElevenLabs API key not configured"}), 500
-    
+
+    token, account = login_with_retry(api_key_id)
+    if not token:
+        return jsonify({"error": "No quota available"}), 503
+
     try:
-        headers = {"xi-api-key": ELEVENLABS_API_KEY}
-        response = requests.get(ELEVENLABS_VOICES_URL, headers=headers)
-        
-        if response.status_code == 200:
-            voices_data = response.json()
-            simplified_voices = [
-                {
-                    "name": voice.get("name"),
-                    "voice_id": voice.get("voice_id")
-                }
-                for voice in voices_data.get("voices", [])
-            ]
-            return jsonify({"voices": simplified_voices})
-        else:
-            return jsonify({"error": f"Failed to fetch voices: {response.text}"}), response.status_code
+        headers = {"authorization": f"Bearer {token}"}
+        # İlk istek: total sayısını al
+        r = requests.get(f"{URL_TTS_VOICES}?page=1&pageSize=30&source=minimax", headers=headers)
+        total = r.json()["data"]["data"]["total"]
+        # İkinci istek: hepsini çek
+        r2 = requests.get(f"{URL_TTS_VOICES}?page=1&pageSize={total}&source=minimax", headers=headers)
+        voices = r2.json()["data"]["data"]["data"]
+        db.release_account(api_key_id, account['email'])
+        return jsonify({"voices": voices})
     except Exception as e:
+        if 'account' in locals() and account:
+            db.release_account(api_key_id, account['email'])
         return jsonify({"error": str(e)}), 500
 
 @app.route('/api/status/<task_id>', methods=['GET'])
@@ -913,7 +928,10 @@ def get_task_status(task_id):
     task = db.get_task(api_key_id, task_id)
     if not task:
         return jsonify({"error": "Task not found"}), 404
-    return jsonify(filter_task_fields(task))
+    
+    result = filter_task_fields(task)
+    
+    return jsonify(result)
     
 @app.route('/api/status', methods=['GET'])
 def get_all_tasks_status():
