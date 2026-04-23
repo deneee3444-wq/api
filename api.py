@@ -358,6 +358,33 @@ def process_video_task(task_id, params, api_key_id):
                     }
                     url_submit = URL_SUBMIT_CHARACTER_VIDEO
             
+            # VIDU_Q3 modeli için (sadece img2vid, 5sn, 720p)
+            elif model == 'VIDU_Q3':
+                if not is_i2v:
+                    db.update_task_status(task_id, 'failed')
+                    db.add_task_log(task_id, "VIDU_Q3 model only supports image-to-video.")
+                    db.release_account(api_key_id, account['email'])
+                    return
+
+                img_data = base64.b64decode(params['start_frame'])
+                img_id = upload_image(token, img_data)
+                if not img_id:
+                    db.update_task_status(task_id, 'failed')
+                    db.add_task_log(task_id, "Start frame upload failed.")
+                    db.release_account(api_key_id, account['email'])
+                    return
+
+                payload = {
+                    "userImageId": int(str(img_id).strip()),
+                    "prompt": params.get('prompt', ''),
+                    "lengthOfSecond": 5,
+                    "resolution": "720p",
+                    "aiPromptEnhance": False,
+                    "addEndFrame": False,
+                    "modelVersion": "MODEL_TWO_Q_3_PRO"
+                }
+                url_submit = URL_SUBMIT_VIDEO
+
             # SORA_2 modeli için (varsayılan)
             else:
                 payload = {
@@ -856,7 +883,7 @@ def generate_video():
     model = data.get('model', 'SORA_2')
     size = data.get('size', '16:9')
     resolution = '720p'
-    duration = 8 if model == 'VEO_3' else 10
+    duration = 5 if model == 'VIDU_Q3' else (8 if model == 'VEO_3' else 10)
     db.create_task(api_key_id, task_id, 'video',
                    prompt=data.get('prompt'),
                    model=model,
