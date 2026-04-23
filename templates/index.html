@@ -1640,9 +1640,10 @@
                                 <select id="i2vModel" onchange="onI2vModelChange()">
                                     <option value="SORA_2" selected>SORA_2</option>
                                     <option value="VEO_3">VEO_3</option>
+                                    <option value="VIDU_Q3">VIDU_Q3</option>
                                 </select>
                             </div>
-                            <div class="form-group">
+                            <div class="form-group" id="i2vSizeGroup">
                                 <label for="i2vSize">size</label>
                                 <select id="i2vSize">
                                     <option value="16:9" selected>16:9</option>
@@ -1683,7 +1684,7 @@
                                 
                             </div>
                         </div>
-                        <small style="color: var(--text-muted); display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.75rem; font-size: 0.75rem;"><span style="font-size:0.75rem; flex-shrink:0;">ℹ️</span>SORA_2: 10 saniye · VEO_3: 8 saniye · VEO_3'te End Frame ve Reference Images desteği mevcuttur.</small>
+                        <small style="color: var(--text-muted); display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.75rem; font-size: 0.75rem;"><span style="font-size:0.75rem; flex-shrink:0;">ℹ️</span>VIDU_Q3: 5 saniye · SORA_2: 10 saniye · VEO_3: 8 saniye · VEO_3'te End Frame ve Reference Images desteği mevcuttur.</small>
                         <button onclick="generateImageToVideo()">🎞️ Video Oluştur</button>
                         <div id="i2vResponse" class="response-box" style="display:none;"></div>
                         <div id="i2vReadable" style="display:none; margin-top:1.25rem; width:100%; max-width:100%; overflow:hidden;"></div>
@@ -2031,6 +2032,10 @@
         function onI2vModelChange() {
             const model = document.getElementById('i2vModel').value;
             const isVeo = model === 'VEO_3';
+            const isViduQ3 = model === 'VIDU_Q3';
+
+            // Size selector: VIDU_Q3'te gizle (ratio seçeneği yok)
+            document.getElementById('i2vSizeGroup').style.display = isViduQ3 ? 'none' : 'block';
 
             // Sub-tab nav: sadece VEO_3'te göster
             document.getElementById('i2vSubTabNav').style.display = isVeo ? 'flex' : 'none';
@@ -2172,8 +2177,12 @@
             const body = {
                 prompt,
                 model: document.getElementById('i2vModel').value,
-                size: document.getElementById('i2vSize').value
             };
+
+            // VIDU_Q3 için size seçeneği yok
+            if (body.model !== 'VIDU_Q3') {
+                body.size = document.getElementById('i2vSize').value;
+            }
 
             // Determine active sub-tab
             const startEndActive = document.getElementById('subtab-startend').style.display !== 'none';
