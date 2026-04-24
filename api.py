@@ -33,6 +33,7 @@ URL_SUBMIT_VIDEO = "https://api.deevid.ai/image-to-video/task/submit"
 URL_SUBMIT_TXT_VIDEO = "https://api.deevid.ai/text-to-video/task/submit"
 URL_SUBMIT_CHARACTER_VIDEO = "https://api.deevid.ai/character-to-video/task/submit"
 URL_SUBMIT_TTS = "https://api.deevid.ai/text-to-speech/task/submit"
+URL_SUBMIT_MULTIMODAL_VIDEO = "https://api.deevid.ai/video/multimodal/task"
 URL_TTS_VOICES = "https://api.deevid.ai/public-voices"
 URL_ASSETS = "https://api.deevid.ai/my-assets?limit=50&assetType=All&filter=CREATION"
 URL_VIDEO_TASKS = "https://api.deevid.ai/video/tasks?page=1&size=20"
@@ -389,6 +390,79 @@ def process_video_task(task_id, params, api_key_id):
                     "modelVersion": "MODEL_TWO_Q_3_PRO"
                 }
                 url_submit = URL_SUBMIT_VIDEO
+
+            # KLING_3_0_OMNI modeli için
+            elif model == 'KLING_3_0_OMNI':
+                reference_images = params.get('reference_images', [])
+
+                if is_i2v:
+                    # IMAGE2VIDEO: start frame + opsiyonel end frame
+                    asset_ids = []
+                    img_data = base64.b64decode(params['start_frame'])
+                    img_id = upload_image(token, img_data)
+                    if not img_id:
+                        db.update_task_status(task_id, 'failed')
+                        db.add_task_log(task_id, "Start frame upload failed.")
+                        db.release_account(api_key_id, account['email'])
+                        return
+                    asset_ids.append(int(str(img_id).strip()))
+
+                    end_frame = params.get('end_frame')
+                    if end_frame:
+                        end_frame_data = base64.b64decode(end_frame)
+                        end_frame_id = upload_image(token, end_frame_data)
+                        if not end_frame_id:
+                            db.update_task_status(task_id, 'failed')
+                            db.add_task_log(task_id, "End frame upload failed.")
+                            db.release_account(api_key_id, account['email'])
+                            return
+                        asset_ids.append(int(str(end_frame_id).strip()))
+
+                    payload = {
+                        "assetIds": asset_ids,
+                        "prompt": params.get('prompt', ''),
+                        "resolution": "480p",
+                        "duration": 5,
+                        "type": "IMAGE2VIDEO"
+                    }
+
+                elif reference_images:
+                    # CHARACTER2VIDEO: reference images + ratio
+                    asset_ids = []
+                    for ref_b64 in reference_images:
+                        ref_data = base64.b64decode(ref_b64)
+                        ref_id = upload_image(token, ref_data)
+                        if not ref_id:
+                            db.update_task_status(task_id, 'failed')
+                            db.add_task_log(task_id, "Reference image upload failed.")
+                            db.release_account(api_key_id, account['email'])
+                            return
+                        asset_ids.append(int(str(ref_id).strip()))
+
+                    size_raw = params.get('size', '16:9')
+                    ratio = SIZE_MAP.get(size_raw, 'SIXTEEN_BY_NINE')
+                    payload = {
+                        "assetIds": asset_ids,
+                        "prompt": params.get('prompt', ''),
+                        "resolution": "480p",
+                        "duration": 5,
+                        "ratio": ratio,
+                        "type": "CHARACTER2VIDEO"
+                    }
+
+                else:
+                    # TXT2VIDEO
+                    size_raw = params.get('size', '16:9')
+                    ratio = SIZE_MAP.get(size_raw, 'SIXTEEN_BY_NINE')
+                    payload = {
+                        "prompt": params.get('prompt', ''),
+                        "resolution": "480p",
+                        "duration": 5,
+                        "ratio": ratio,
+                        "type": "TXT2VIDEO"
+                    }
+
+                url_submit = URL_SUBMIT_MULTIMODAL_VIDEO
 
             # SORA_2 modeli için (varsayılan)
             else:
@@ -867,10 +941,28 @@ def generate_video():
     if db.get_account_count(api_key_id) == 0:
         return jsonify({"error": "No quota available"}), 503
 
+    if data.get('model') == 'VIDU_Q3':
+        if not data.get('start_frame'):
+            return jsonify({"error": "VIDU_Q3 model requires a start frame (image)"}), 400
+        if data.get('end_frame'):
+            return jsonify({"error": "VIDU_Q3 model does not support end_frame"}), 400
+        if data.get('reference_images'):
+            return jsonify({"error": "VIDU_Q3 model does not support reference_images"}), 400
+
     if data.get('model') == 'VEO_3' and data.get('end_frame') and not data.get('start_frame'):
         return jsonify({"error": "end_frame requires image (start frame) to be provided"}), 400
 
     if data.get('model') == 'VEO_3':
+        reference_images = data.get('reference_images', [])
+        if isinstance(reference_images, list) and len(reference_images) > 3:
+            return jsonify({"error": "Maximum 3 reference images allowed"}), 400
+        if reference_images and (data.get('start_frame') or data.get('end_frame')):
+            return jsonify({"error": "reference_images cannot be used together with image or end_frame"}), 400
+
+    if data.get('model') == 'KLING_3_0_OMNI' and data.get('end_frame') and not data.get('start_frame'):
+        return jsonify({"error": "end_frame requires image (start frame) to be provided"}), 400
+
+    if data.get('model') == 'KLING_3_0_OMNI':
         reference_images = data.get('reference_images', [])
         if isinstance(reference_images, list) and len(reference_images) > 3:
             return jsonify({"error": "Maximum 3 reference images allowed"}), 400
@@ -895,6 +987,10 @@ def generate_video():
     elif model == 'VEO_3':
         duration = 8
         resolution = '720p'
+    elif model == 'KLING_3_0_OMNI':
+        duration = 5
+        resolution = '480p'
+        size = data.get('size', '16:9')
     else:
         duration = 10
         resolution = '720p'
