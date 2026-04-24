@@ -887,7 +887,7 @@ print(resp.json())</code></pre>
                     <code>/api/generate/video</code>
                 </div>
 
-                <p>Generate videos from text prompts or animate existing images using SORA 2 or VEO 3 models.</p>
+                <p>Generate videos from text prompts or animate existing images using SORA_2, VEO_3, or VIDU_Q3 models.</p>
 
                 <h3>Request Body</h3>
                 <div class="table-wrap">
@@ -912,14 +912,21 @@ print(resp.json())</code></pre>
                                 <td>string</td>
                                 <td><span class="badge optional">Optional</span></td>
                                 <td>Video generation model:<br>
-                                • <strong>SORA 2</strong> (default) — 10 seconds, 720p<br>
-                                • <strong>VEO 3</strong> — 8 seconds, 720p</td>
+                                • <strong>SORA_2</strong> (default) — 10 seconds, 720p<br>
+                                • <strong>VEO_3</strong> — 8 seconds, 720p<br>
+                                • <strong>VIDU_Q3</strong> — image-to-video only; 720p/5s or 512p/10s</td>
                             </tr>
                             <tr>
                                 <td><code>size</code></td>
                                 <td>string</td>
                                 <td><span class="badge optional">Optional</span></td>
-                                <td>16:9, 9:16 (default: 16:9)</td>
+                                <td>16:9, 9:16 (default: 16:9). <strong>VIDU_Q3:</strong> send <code>"AUTO"</code> — size is determined automatically from the input image.</td>
+                            </tr>
+                            <tr>
+                                <td><code>duration</code></td>
+                                <td>integer</td>
+                                <td><span class="badge optional">Optional</span></td>
+                                <td><strong>VIDU_Q3 only.</strong> Duration in seconds: <code>5</code> (720p) or <code>10</code> (512p). Default: 5.</td>
                             </tr>
                             <tr>
                                 <td><code>start_frame</code></td>
@@ -931,13 +938,13 @@ print(resp.json())</code></pre>
                                 <td><code>end_frame</code></td>
                                 <td>string</td>
                                 <td><span class="badge optional">Optional</span></td>
-                                <td><strong>VEO 3 only.</strong> Base64 encoded end frame image. Requires <code>start_frame</code> to also be provided.</td>
+                                <td><strong>VEO_3 only.</strong> Base64 encoded end frame image. Requires <code>start_frame</code> to also be provided.</td>
                             </tr>
                             <tr>
                                 <td><code>reference_images</code></td>
                                 <td>array</td>
                                 <td><span class="badge optional">Optional</span></td>
-                                <td><strong>VEO 3 only.</strong> Array of base64 encoded reference images to guide style/content. <strong>Max 3 images.</strong> Cannot be used together with <code>start_frame</code> or <code>end_frame</code>.</td>
+                                <td><strong>VEO_3 only.</strong> Array of base64 encoded reference images to guide style/content. <strong>Max 3 images.</strong> Cannot be used together with <code>start_frame</code> or <code>end_frame</code>.</td>
                             </tr>
                         </tbody>
                     </table>
@@ -946,9 +953,10 @@ print(resp.json())</code></pre>
                 <div class="alert info">
                     <strong>📌 Video Model Info:</strong>
                     <ul>
-                        <li><strong>SORA 2 (default):</strong> Duration: 10 seconds, Resolution: 720p. Supports text-to-video and image-to-video.</li>
-                        <li><strong>VEO 3:</strong> Duration: 8 seconds, Resolution: 720p. Supports text-to-video, image-to-video (start frame), start+end frame, and reference images.</li>
-                        <li><strong>Supported Sizes:</strong> 16:9, 9:16 (both models)</li>
+                        <li><strong>SORA_2 (default):</strong> Duration: 10 seconds, Resolution: 720p. Supports text-to-video and image-to-video.</li>
+                        <li><strong>VEO_3:</strong> Duration: 8 seconds, Resolution: 720p. Supports text-to-video, image-to-video (start frame), start+end frame, and reference images.</li>
+                        <li><strong>VIDU_Q3:</strong> Image-to-video only. Two modes: <code>duration=5</code> → 720p, <code>duration=10</code> → 512p. Send <code>size="AUTO"</code>.</li>
+                        <li><strong>Supported Sizes:</strong> 16:9, 9:16 (SORA_2 &amp; VEO_3) · AUTO (VIDU_Q3)</li>
                     </ul>
                 </div>
 
@@ -1096,6 +1104,46 @@ payload = {
     <span class="code-string">"model"</span>: <span class="code-string">"VEO_3"</span>,
     <span class="code-string">"reference_images"</span>: [<span class="code-string">"BASE64_REF_1"</span>, <span class="code-string">"BASE64_REF_2"</span>],
     <span class="code-string">"size"</span>: <span class="code-string">"16:9"</span>
+}
+headers = {<span class="code-string">"Authorization"</span>: <span class="code-string">"Bearer YOUR_API_KEY"</span>}
+
+resp = requests.post(url, json=payload, headers=headers)
+print(resp.json())</code></pre>
+                    </div>
+                </div>
+
+                <h3>Example Request (VIDU Q3 Model — Image-to-Video)</h3>
+                <div class="code-tabs">
+                    <div class="tab-headers">
+                        <button class="tab-btn active" onclick="showTab(this, 'vid-viduq3-curl')">CURL</button>
+                        <button class="tab-btn" onclick="showTab(this, 'vid-viduq3-py')">PYTHON</button>
+                        <button class="copy-btn" onclick="copyActiveTab(this)">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+                            Copy
+                        </button>
+                    </div>
+                    <div id="vid-viduq3-curl" class="tab-panel active">
+<pre><code>curl -X POST http://127.0.0.1:5000/api/generate/video \
+  -H <span class="code-string">"Authorization: Bearer YOUR_API_KEY"</span> \
+  -H <span class="code-string">"Content-Type: application/json"</span> \
+  -d '{
+    <span class="code-key">"prompt"</span>: <span class="code-string">"smooth camera movement, cinematic"</span>,
+    <span class="code-key">"model"</span>: <span class="code-string">"VIDU_Q3"</span>,
+    <span class="code-key">"size"</span>: <span class="code-string">"AUTO"</span>,
+    <span class="code-key">"duration"</span>: <span class="code-number">5</span>,
+    <span class="code-key">"start_frame"</span>: <span class="code-string">"BASE64_ENCODED_IMAGE_HERE"</span>
+  }'</code></pre>
+                    </div>
+                    <div id="vid-viduq3-py" class="tab-panel">
+<pre><code><span class="code-keyword">import</span> requests
+
+url = <span class="code-string">"http://127.0.0.1:5000/api/generate/video"</span>
+payload = {
+    <span class="code-string">"prompt"</span>: <span class="code-string">"smooth camera movement, cinematic"</span>,
+    <span class="code-string">"model"</span>: <span class="code-string">"VIDU_Q3"</span>,
+    <span class="code-string">"size"</span>: <span class="code-string">"AUTO"</span>,
+    <span class="code-string">"duration"</span>: <span class="code-number">5</span>,
+    <span class="code-string">"start_frame"</span>: <span class="code-string">"BASE64_ENCODED_IMAGE_HERE"</span>
 }
 headers = {<span class="code-string">"Authorization"</span>: <span class="code-string">"Bearer YOUR_API_KEY"</span>}
 
