@@ -374,11 +374,16 @@ def process_video_task(task_id, params, api_key_id):
                     db.release_account(api_key_id, account['email'])
                     return
 
+                vidu_duration = int(params.get('duration', 5))
+                if vidu_duration not in [5, 10]:
+                    vidu_duration = 5
+                vidu_resolution = "512p" if vidu_duration == 10 else "720p"
+
                 payload = {
                     "userImageId": int(str(img_id).strip()),
                     "prompt": params.get('prompt', ''),
-                    "lengthOfSecond": 5,
-                    "resolution": "720p",
+                    "lengthOfSecond": vidu_duration,
+                    "resolution": vidu_resolution,
                     "aiPromptEnhance": False,
                     "addEndFrame": False,
                     "modelVersion": "MODEL_TWO_Q_3_PRO"
@@ -882,8 +887,17 @@ def generate_video():
     task_id = str(uuid.uuid4())
     model = data.get('model', 'SORA_2')
     size = data.get('size', '16:9')
-    resolution = '720p'
-    duration = 5 if model == 'VIDU_Q3' else (8 if model == 'VEO_3' else 10)
+    if model == 'VIDU_Q3':
+        duration = int(data.get('duration', 5))
+        if duration not in [5, 10]:
+            duration = 5
+        resolution = '512p' if duration == 10 else '720p'
+    elif model == 'VEO_3':
+        duration = 8
+        resolution = '720p'
+    else:
+        duration = 10
+        resolution = '720p'
     db.create_task(api_key_id, task_id, 'video',
                    prompt=data.get('prompt'),
                    model=model,
