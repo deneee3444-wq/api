@@ -886,7 +886,7 @@ def generate_video():
     
     task_id = str(uuid.uuid4())
     model = data.get('model', 'SORA_2')
-    size = data.get('size', '16:9')
+    size = 'AUTO' if model == 'VIDU_Q3' else data.get('size', '16:9')
     if model == 'VIDU_Q3':
         duration = int(data.get('duration', 5))
         if duration not in [5, 10]:
