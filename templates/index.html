@@ -1609,6 +1609,7 @@
                                 <select id="t2vModel" onchange="onT2vModelChange()">
                                     <option value="SORA_2" selected>SORA_2</option>
                                     <option value="VEO_3">VEO_3</option>
+                                    <option value="KLING_3_0_OMNI">KLING_3_0_OMNI</option>
                                 </select>
                             </div>
                             <div class="form-group">
@@ -1634,7 +1635,7 @@
                                 </select>
                             </div>
                         </div>
-                        <small style="color: var(--text-muted); display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.75rem; font-size: 0.75rem;"><span style="font-size:0.75rem; flex-shrink:0;">ℹ️</span>SORA_2: 720p · 10 sn &nbsp;|&nbsp; VEO_3: 720p · 8 sn · End Frame ve Reference Images desteği mevcuttur.</small>
+                        <small style="color: var(--text-muted); display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.75rem; font-size: 0.75rem;"><span style="font-size:0.75rem; flex-shrink:0;">ℹ️</span>SORA_2: 720p · 10 sn &nbsp;|&nbsp; VEO_3: 720p · 8 sn &nbsp;|&nbsp; KLING_3_0_OMNI: 480p · 5 sn · 16:9/9:16/1:1/4:3/3:4</small>
                         <button onclick="generateTextToVideo()">🎬 Video Oluştur</button>
                         <div id="t2vResponse" class="response-box" style="display:none;"></div>
                         <div id="t2vReadable" style="display:none; margin-top:1.25rem; width:100%; max-width:100%; overflow:hidden;"></div>
@@ -1656,6 +1657,7 @@
                                     <option value="SORA_2" selected>SORA_2</option>
                                     <option value="VEO_3">VEO_3</option>
                                     <option value="VIDU_Q3">VIDU_Q3</option>
+                                    <option value="KLING_3_0_OMNI">KLING_3_0_OMNI</option>
                                 </select>
                             </div>
                             <div class="form-group" id="i2vSizeGroup">
@@ -1716,7 +1718,7 @@
                                 
                             </div>
                         </div>
-                        <small style="color: var(--text-muted); display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.75rem; font-size: 0.75rem;"><span style="font-size:0.75rem; flex-shrink:0;">ℹ️</span>VIDU_Q3: 720p/5sn veya 512p/10sn &nbsp;|&nbsp; SORA_2: 720p · 10 sn &nbsp;|&nbsp; VEO_3: 720p · 8 sn · End Frame ve Reference Images desteği mevcuttur.</small>
+                        <small style="color: var(--text-muted); display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.75rem; font-size: 0.75rem;"><span style="font-size:0.75rem; flex-shrink:0;">ℹ️</span>VIDU_Q3: 720p/5sn veya 512p/10sn &nbsp;|&nbsp; SORA_2: 720p · 10 sn &nbsp;|&nbsp; VEO_3: 720p · 8 sn · End Frame ve Ref. Images &nbsp;|&nbsp; KLING_3_0_OMNI: 480p · 5 sn · Start/End Frame ve Ref. Images desteği mevcuttur.</small>
                         <button onclick="generateImageToVideo()">🎞️ Video Oluştur</button>
                         <div id="i2vResponse" class="response-box" style="display:none;"></div>
                         <div id="i2vReadable" style="display:none; margin-top:1.25rem; width:100%; max-width:100%; overflow:hidden;"></div>
@@ -2066,33 +2068,38 @@
             const model = document.getElementById('i2vModel').value;
             const isVeo = model === 'VEO_3';
             const isViduQ3 = model === 'VIDU_Q3';
+            const isKling = model === 'KLING_3_0_OMNI';
 
-            // Size selector: VIDU_Q3'te AUTO göster (readonly), diğerlerinde normal
+            // Size selector
             const sizeSelect = document.getElementById('i2vSize');
             if (isViduQ3) {
                 sizeSelect.innerHTML = '<option value="AUTO">AUTO</option>';
                 sizeSelect.disabled = true;
+            } else if (isKling) {
+                sizeSelect.innerHTML = '<option value="16:9">16:9</option><option value="9:16">9:16</option><option value="1:1">1:1</option><option value="4:3">4:3</option><option value="3:4">3:4</option>';
+                sizeSelect.disabled = false;
+                sizeSelect.value = '16:9';
             } else {
                 sizeSelect.innerHTML = '<option value="16:9">16:9</option><option value="9:16">9:16</option>';
                 sizeSelect.disabled = false;
                 sizeSelect.value = '16:9';
             }
 
-            // Sub-tab nav: sadece VEO_3'te göster
-            document.getElementById('i2vSubTabNav').style.display = isVeo ? 'flex' : 'none';
+            // Sub-tab nav: VEO_3 ve KLING_3_0_OMNI'de göster
+            document.getElementById('i2vSubTabNav').style.display = (isVeo || isKling) ? 'flex' : 'none';
 
-            // End Frame: sadece VEO_3'te göster
-            document.getElementById('i2vEndFrameGroup').style.display = isVeo ? 'block' : 'none';
+            // End Frame: VEO_3 ve KLING_3_0_OMNI'de göster
+            document.getElementById('i2vEndFrameGroup').style.display = (isVeo || isKling) ? 'block' : 'none';
 
             // End Frame label
             const endFrameLabel = document.getElementById('i2vEndFrameLabel');
-            if (endFrameLabel) endFrameLabel.textContent = isVeo ? 'End Frame' : 'End Frame *';
+            if (endFrameLabel) endFrameLabel.textContent = (isVeo || isKling) ? 'End Frame' : 'End Frame *';
 
             // Reference Images label
             const refImagesLabel = document.getElementById('i2vRefImagesFormLabel');
-            if (refImagesLabel) refImagesLabel.textContent = isVeo ? 'REFERENCE IMAGES *' : 'REFERENCE IMAGES';
+            if (refImagesLabel) refImagesLabel.textContent = (isVeo || isKling) ? 'REFERENCE IMAGES *' : 'REFERENCE IMAGES';
 
-            // Reference Images paneli: sadece VEO_3'te erişilebilir
+            // Reference Images paneli: VEO_3 ve KLING_3_0_OMNI'de erişilebilir
             document.getElementById('subtab-refimages').style.display = 'none';
             document.getElementById('subtab-startend').style.display = 'block';
 
@@ -2118,6 +2125,12 @@
                 durSelect.innerHTML = '<option value="8">8 saniye</option>';
                 durSelect.disabled = true;
                 durInput.value = '8';
+            } else if (isKling) {
+                resSelect.innerHTML = '<option value="480p">480p</option>';
+                resSelect.disabled = true;
+                durSelect.innerHTML = '<option value="5">5 saniye</option>';
+                durSelect.disabled = true;
+                durInput.value = '5';
             } else {
                 resSelect.innerHTML = '<option value="720p">720p</option>';
                 resSelect.disabled = true;
@@ -2139,10 +2152,21 @@
         function onT2vModelChange() {
             const model = document.getElementById('t2vModel').value;
             const durSelect = document.getElementById('t2vDurationDisplay');
+            const resSelect = document.getElementById('t2vResolutionDisplay');
+            const sizeSelect = document.getElementById('t2vSize');
+
             if (model === 'VEO_3') {
                 durSelect.innerHTML = '<option>8 saniye</option>';
+                resSelect.innerHTML = '<option>720p</option>';
+                sizeSelect.innerHTML = '<option value="16:9">16:9</option><option value="9:16">9:16</option>';
+            } else if (model === 'KLING_3_0_OMNI') {
+                durSelect.innerHTML = '<option>5 saniye</option>';
+                resSelect.innerHTML = '<option>480p</option>';
+                sizeSelect.innerHTML = '<option value="16:9">16:9</option><option value="9:16">9:16</option><option value="1:1">1:1</option><option value="4:3">4:3</option><option value="3:4">3:4</option>';
             } else {
                 durSelect.innerHTML = '<option>10 saniye</option>';
+                resSelect.innerHTML = '<option>720p</option>';
+                sizeSelect.innerHTML = '<option value="16:9">16:9</option><option value="9:16">9:16</option>';
             }
         }
 
@@ -2278,11 +2302,11 @@
 
                 const endInput = document.getElementById('i2vEndFrame');
                 if (endInput.files && endInput.files.length > 0) {
-                    if (body.model !== 'VEO_3') { alert('End Frame yalnızca VEO_3 modeliyle kullanılabilir!'); return; }
+                    if (body.model !== 'VEO_3' && body.model !== 'KLING_3_0_OMNI') { alert('End Frame yalnızca VEO_3 ve KLING_3_0_OMNI modelleriyle kullanılabilir!'); return; }
                     body.end_frame = await fileToBase64(endInput.files[0]);
                 }
             } else {
-                if (body.model !== 'VEO_3') { alert('Reference Images yalnızca VEO_3 modeliyle kullanılabilir!'); return; }
+                if (body.model !== 'VEO_3' && body.model !== 'KLING_3_0_OMNI') { alert('Reference Images yalnızca VEO_3 ve KLING_3_0_OMNI modelleriyle kullanılabilir!'); return; }
                 const refInput = document.getElementById('i2vRefImages');
                 if (!refInput.files || refInput.files.length === 0) {
                     alert('Lütfen en az 1 referans görsel seçin!'); return;
