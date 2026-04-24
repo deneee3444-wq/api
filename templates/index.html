@@ -1606,7 +1606,7 @@
                         <div class="form-row cols-2">
                             <div class="form-group">
                                 <label for="t2vModel">model</label>
-                                <select id="t2vModel">
+                                <select id="t2vModel" onchange="onT2vModelChange()">
                                     <option value="SORA_2" selected>SORA_2</option>
                                     <option value="VEO_3">VEO_3</option>
                                 </select>
@@ -1619,7 +1619,22 @@
                                 </select>
                             </div>
                         </div>
-                        <small style="color: var(--text-muted); display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.75rem; font-size: 0.75rem;"><span style="font-size:0.75rem; flex-shrink:0;">ℹ️</span>SORA_2: 10 saniye · VEO_3: 8 saniye · VEO_3'te End Frame ve Reference Images desteği mevcuttur.</small>
+                        <!-- Model Spec Row: Resolution + Duration -->
+                        <div class="form-row cols-2">
+                            <div class="form-group">
+                                <label>resolution</label>
+                                <select id="t2vResolutionDisplay" disabled>
+                                    <option>720p</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>duration</label>
+                                <select id="t2vDurationDisplay" disabled>
+                                    <option>10 saniye</option>
+                                </select>
+                            </div>
+                        </div>
+                        <small style="color: var(--text-muted); display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.75rem; font-size: 0.75rem;"><span style="font-size:0.75rem; flex-shrink:0;">ℹ️</span>SORA_2: 720p · 10 sn &nbsp;|&nbsp; VEO_3: 720p · 8 sn · End Frame ve Reference Images desteği mevcuttur.</small>
                         <button onclick="generateTextToVideo()">🎬 Video Oluştur</button>
                         <div id="t2vResponse" class="response-box" style="display:none;"></div>
                         <div id="t2vReadable" style="display:none; margin-top:1.25rem; width:100%; max-width:100%; overflow:hidden;"></div>
@@ -1649,6 +1664,23 @@
                                     <option value="16:9" selected>16:9</option>
                                     <option value="9:16">9:16</option>
                                 </select>
+                            </div>
+                        </div>
+                        <!-- Model Spec Row: Resolution + Duration -->
+                        <div class="form-row cols-2" id="i2vSpecRow">
+                            <div class="form-group">
+                                <label for="i2vResolution">resolution</label>
+                                <select id="i2vResolution" onchange="onI2vResolutionChange()">
+                                    <option value="720p" selected>720p</option>
+                                    <option value="512p">512p</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="i2vDurationSelect">duration</label>
+                                <select id="i2vDurationSelect" disabled>
+                                    <option value="5">5 saniye</option>
+                                </select>
+                                <input type="hidden" id="i2vDuration" value="5">
                             </div>
                         </div>
                         <!-- Sub Tabs -->
@@ -1684,7 +1716,7 @@
                                 
                             </div>
                         </div>
-                        <small style="color: var(--text-muted); display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.75rem; font-size: 0.75rem;"><span style="font-size:0.75rem; flex-shrink:0;">ℹ️</span>VIDU_Q3: 5 saniye · SORA_2: 10 saniye · VEO_3: 8 saniye · VEO_3'te End Frame ve Reference Images desteği mevcuttur.</small>
+                        <small style="color: var(--text-muted); display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.75rem; font-size: 0.75rem;"><span style="font-size:0.75rem; flex-shrink:0;">ℹ️</span>VIDU_Q3: 720p/5sn veya 512p/10sn &nbsp;|&nbsp; SORA_2: 720p · 10 sn &nbsp;|&nbsp; VEO_3: 720p · 8 sn · End Frame ve Reference Images desteği mevcuttur.</small>
                         <button onclick="generateImageToVideo()">🎞️ Video Oluştur</button>
                         <div id="i2vResponse" class="response-box" style="display:none;"></div>
                         <div id="i2vReadable" style="display:none; margin-top:1.25rem; width:100%; max-width:100%; overflow:hidden;"></div>
@@ -1798,6 +1830,7 @@
             updateCounter('i2vPrompt', 'i2vPromptCounter', 2000);
             updateCounter('i2iPrompt', 'i2iPromptCounter', 4000);
             onI2vModelChange();
+            onT2vModelChange();
         });
 
         const API_BASE = () => document.getElementById('apiUrl').value;
@@ -2034,8 +2067,16 @@
             const isVeo = model === 'VEO_3';
             const isViduQ3 = model === 'VIDU_Q3';
 
-            // Size selector: VIDU_Q3'te gizle (ratio seçeneği yok)
-            document.getElementById('i2vSizeGroup').style.display = isViduQ3 ? 'none' : 'block';
+            // Size selector: VIDU_Q3'te AUTO göster (readonly), diğerlerinde normal
+            const sizeSelect = document.getElementById('i2vSize');
+            if (isViduQ3) {
+                sizeSelect.innerHTML = '<option value="AUTO">AUTO</option>';
+                sizeSelect.disabled = true;
+            } else {
+                sizeSelect.innerHTML = '<option value="16:9">16:9</option><option value="9:16">9:16</option>';
+                sizeSelect.disabled = false;
+                sizeSelect.value = '16:9';
+            }
 
             // Sub-tab nav: sadece VEO_3'te göster
             document.getElementById('i2vSubTabNav').style.display = isVeo ? 'flex' : 'none';
@@ -2043,28 +2084,66 @@
             // End Frame: sadece VEO_3'te göster
             document.getElementById('i2vEndFrameGroup').style.display = isVeo ? 'block' : 'none';
 
-            // End Frame label: VEO_3'te isteğe bağlı olduğunu belirt
+            // End Frame label
             const endFrameLabel = document.getElementById('i2vEndFrameLabel');
-            if (endFrameLabel) {
-                endFrameLabel.textContent = isVeo ? 'End Frame' : 'End Frame *';
-            }
+            if (endFrameLabel) endFrameLabel.textContent = isVeo ? 'End Frame' : 'End Frame *';
 
-            // Reference Images label: VEO_3'te zorunlu olduğunu belirt
+            // Reference Images label
             const refImagesLabel = document.getElementById('i2vRefImagesFormLabel');
-            if (refImagesLabel) {
-                refImagesLabel.textContent = isVeo ? 'REFERENCE IMAGES *' : 'REFERENCE IMAGES';
-            }
+            if (refImagesLabel) refImagesLabel.textContent = isVeo ? 'REFERENCE IMAGES *' : 'REFERENCE IMAGES';
 
             // Reference Images paneli: sadece VEO_3'te erişilebilir
             document.getElementById('subtab-refimages').style.display = 'none';
-
-            // Start Frame panelini her zaman aktif yap
             document.getElementById('subtab-startend').style.display = 'block';
 
             // Sub-tab butonlarını sıfırla
             document.querySelectorAll('.sub-tab-btn').forEach(b => b.classList.remove('active'));
             const firstSubBtn = document.querySelector('.sub-tab-btn');
             if (firstSubBtn) firstSubBtn.classList.add('active');
+
+            // Resolution select + Duration readonly select
+            const resSelect = document.getElementById('i2vResolution');
+            const durSelect = document.getElementById('i2vDurationSelect');
+            const durInput  = document.getElementById('i2vDuration');
+
+            if (isViduQ3) {
+                resSelect.innerHTML = '<option value="720p">720p</option><option value="512p">512p</option>';
+                resSelect.disabled = false;
+                durSelect.innerHTML = '<option value="5">5 saniye</option>';
+                durSelect.disabled = true;
+                durInput.value = '5';
+            } else if (isVeo) {
+                resSelect.innerHTML = '<option value="720p">720p</option>';
+                resSelect.disabled = true;
+                durSelect.innerHTML = '<option value="8">8 saniye</option>';
+                durSelect.disabled = true;
+                durInput.value = '8';
+            } else {
+                resSelect.innerHTML = '<option value="720p">720p</option>';
+                resSelect.disabled = true;
+                durSelect.innerHTML = '<option value="10">10 saniye</option>';
+                durSelect.disabled = true;
+                durInput.value = '10';
+            }
+        }
+
+        function onI2vResolutionChange() {
+            const model = document.getElementById('i2vModel').value;
+            if (model !== 'VIDU_Q3') return;
+            const res = document.getElementById('i2vResolution').value;
+            const dur = res === '512p' ? 10 : 5;
+            document.getElementById('i2vDurationSelect').innerHTML = `<option value="${dur}">${dur} saniye</option>`;
+            document.getElementById('i2vDuration').value = dur;
+        }
+
+        function onT2vModelChange() {
+            const model = document.getElementById('t2vModel').value;
+            const durSelect = document.getElementById('t2vDurationDisplay');
+            if (model === 'VEO_3') {
+                durSelect.innerHTML = '<option>8 saniye</option>';
+            } else {
+                durSelect.innerHTML = '<option>10 saniye</option>';
+            }
         }
 
         function onI2iRefChange(input) {
@@ -2179,9 +2258,12 @@
                 model: document.getElementById('i2vModel').value,
             };
 
-            // VIDU_Q3 için size seçeneği yok
+            // VIDU_Q3 için size AUTO, diğerleri seçilen değer
             if (body.model !== 'VIDU_Q3') {
                 body.size = document.getElementById('i2vSize').value;
+            } else {
+                body.size = 'AUTO';
+                body.duration = parseInt(document.getElementById('i2vDuration').value) || 5;
             }
 
             // Determine active sub-tab
@@ -2353,6 +2435,8 @@
                     resultHTML = `<img src="${taskData.result_url}" class="result-image" alt="Result">`;
                 } else if (taskData.mode === 'video') {
                     resultHTML = `<video src="${taskData.result_url}" class="result-video" controls></video>`;
+                } else if (taskData.mode === 'tts') {
+                    resultHTML = `<audio src="${taskData.result_url}" controls style="width:100%; margin-top:1rem; border-radius:var(--radius-sm);"></audio>`;
                 }
             }
 
@@ -2486,6 +2570,8 @@
                         resultHTML = `<img src="${taskData.result_url}" class="result-image" alt="Result">`;
                     } else if (taskData.mode === 'video') {
                         resultHTML = `<video src="${taskData.result_url}" class="result-video" controls></video>`;
+                    } else if (taskData.mode === 'tts') {
+                        resultHTML = `<audio src="${taskData.result_url}" controls style="width:100%; margin-top:1rem; border-radius:var(--radius-sm);"></audio>`;
                     }
                 }
 
