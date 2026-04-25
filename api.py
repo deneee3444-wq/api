@@ -159,8 +159,10 @@ def resize_image(image_bytes):
         print(f"Resize error: {e}")
         return None
 
-def upload_image(token, image_bytes):
-    """Uploads image to API and returns image ID."""
+def upload_image(token, image_bytes, use_asset_id=False):
+    """Uploads image to API and returns image ID.
+    use_asset_id=True: KLING_3_0_OMNI için assetId döner, aksi halde id döner.
+    """
     headers = {"authorization": f"Bearer {token}", **DEVICE_HEADERS}
     resized = resize_image(image_bytes)
     if not resized: return None
@@ -170,7 +172,8 @@ def upload_image(token, image_bytes):
     try:
         resp = requests.post(URL_UPLOAD, headers=headers, files=files, data=data)
         if resp.status_code in [200, 201]:
-            return resp.json()['data']['data']['id']
+            key = 'assetId' if use_asset_id else 'id'
+            return resp.json()['data']['data'][key]
     except Exception as e:
         print(f"Upload error: {e}")
     return None
@@ -399,7 +402,7 @@ def process_video_task(task_id, params, api_key_id):
                     # IMAGE2VIDEO: start frame + opsiyonel end frame
                     asset_ids = []
                     img_data = base64.b64decode(params['start_frame'])
-                    img_id = upload_image(token, img_data)
+                    img_id = upload_image(token, img_data, use_asset_id=True)
                     if not img_id:
                         db.update_task_status(task_id, 'failed')
                         db.add_task_log(task_id, "Start frame upload failed.")
@@ -410,7 +413,7 @@ def process_video_task(task_id, params, api_key_id):
                     end_frame = params.get('end_frame')
                     if end_frame:
                         end_frame_data = base64.b64decode(end_frame)
-                        end_frame_id = upload_image(token, end_frame_data)
+                        end_frame_id = upload_image(token, end_frame_data, use_asset_id=True)
                         if not end_frame_id:
                             db.update_task_status(task_id, 'failed')
                             db.add_task_log(task_id, "End frame upload failed.")
@@ -431,7 +434,7 @@ def process_video_task(task_id, params, api_key_id):
                     asset_ids = []
                     for ref_b64 in reference_images:
                         ref_data = base64.b64decode(ref_b64)
-                        ref_id = upload_image(token, ref_data)
+                        ref_id = upload_image(token, ref_data, use_asset_id=True)
                         if not ref_id:
                             db.update_task_status(task_id, 'failed')
                             db.add_task_log(task_id, "Reference image upload failed.")
