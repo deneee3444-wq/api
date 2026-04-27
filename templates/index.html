@@ -1514,6 +1514,7 @@
                                     <option value="NANO_BANANA_PRO" selected>NANO_BANANA_PRO</option>
                                     <option value="NANO_BANANA">NANO_BANANA</option>
                                     <option value="NANO_BANANA_2">NANO_BANANA_2</option>
+                                    <option value="GPT_IMAGE_2">GPT_IMAGE_2</option>
                                 </select>
                             </div>
                             <div class="form-group">
@@ -1536,7 +1537,7 @@
                                 <option value="4K">4K</option>
                             </select>
                         </div>
-                        <small style="color: var(--text-muted); display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.75rem; font-size: 0.75rem;"><span style="font-size:0.75rem; flex-shrink:0;">ℹ️</span>NANO_BANANA_PRO ve NANO_BANANA_2 modelleri Resolution seçeneği sunar.</small>
+                        <small style="color: var(--text-muted); display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.75rem; font-size: 0.75rem;"><span style="font-size:0.75rem; flex-shrink:0;">ℹ️</span>NANO_BANANA_PRO, NANO_BANANA_2 ve GPT_IMAGE_2 modelleri Resolution seçeneği sunar.</small>
                         <button onclick="generateImage()">✨ Görsel Oluştur</button>
                         <div id="imageResponse" class="response-box" style="display:none;"></div>
                         <div id="imageReadable" style="display:none; margin-top:1.25rem; width:100%; max-width:100%; overflow:hidden;"></div>
@@ -1558,6 +1559,7 @@
                                     <option value="NANO_BANANA_PRO" selected>NANO_BANANA_PRO</option>
                                     <option value="NANO_BANANA">NANO_BANANA</option>
                                     <option value="NANO_BANANA_2">NANO_BANANA_2</option>
+                                    <option value="GPT_IMAGE_2">GPT_IMAGE_2</option>
                                 </select>
                             </div>
                             <div class="form-group">
@@ -1588,7 +1590,7 @@
                             </div>
                             
                         </div>
-                        <small style="color: var(--text-muted); display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.75rem; font-size: 0.75rem;"><span style="font-size:0.75rem; flex-shrink:0;">ℹ️</span>NANO_BANANA_PRO ve NANO_BANANA_2 modelleri Resolution seçeneği sunar.</small>
+                        <small style="color: var(--text-muted); display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.75rem; font-size: 0.75rem;"><span style="font-size:0.75rem; flex-shrink:0;">ℹ️</span>NANO_BANANA_PRO, NANO_BANANA_2 ve GPT_IMAGE_2 modelleri Resolution seçeneği sunar.</small>
                         <button onclick="generateImageToImage()">🔄 Görsel Dönüştür</button>
                         <div id="i2iResponse" class="response-box" style="display:none;"></div>
                         <div id="i2iReadable" style="display:none; margin-top:1.25rem; width:100%; max-width:100%; overflow:hidden;"></div>
@@ -2036,8 +2038,8 @@
                 size: document.getElementById('imageSize').value
             };
 
-            // NANO_PRO / NANO_2 için resolution ekle
-            if (body.model === 'NANO_BANANA_PRO' || body.model === 'NANO_BANANA_2') {
+            // NANO_PRO / NANO_2 / GPT_IMAGE_2 için resolution ekle
+            if (body.model === 'NANO_BANANA_PRO' || body.model === 'NANO_BANANA_2' || body.model === 'GPT_IMAGE_2') {
                 body.resolution = document.getElementById('imageResolution').value;
             }
 
@@ -2184,7 +2186,7 @@
         function onI2iModelChange() {
             const model = document.getElementById('i2iModel').value;
             document.getElementById('i2iResolutionGroup').style.display =
-                (model === 'NANO_BANANA_PRO' || model === 'NANO_BANANA_2') ? 'block' : 'none';
+                (model === 'NANO_BANANA_PRO' || model === 'NANO_BANANA_2' || model === 'GPT_IMAGE_2') ? 'block' : 'none';
         }
 
         async function generateImageToImage() {
@@ -2203,7 +2205,7 @@
                 size: document.getElementById('i2iSize').value
             };
 
-            if (body.model === 'NANO_BANANA_PRO' || body.model === 'NANO_BANANA_2') {
+            if (body.model === 'NANO_BANANA_PRO' || body.model === 'NANO_BANANA_2' || body.model === 'GPT_IMAGE_2') {
                 body.resolution = document.getElementById('i2iResolution').value;
             }
 
@@ -2227,7 +2229,7 @@
         function onImageModelChange() {
             const model = document.getElementById('imageModel').value;
             document.getElementById('imageResolutionGroup').style.display = 
-                model === 'NANO_BANANA_PRO' || model === 'NANO_BANANA_2' ? 'block' : 'none';
+                (model === 'NANO_BANANA_PRO' || model === 'NANO_BANANA_2' || model === 'GPT_IMAGE_2') ? 'block' : 'none';
         }
 
         function updateCounter(textareaId, counterId, max) {
