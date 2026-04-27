@@ -34,6 +34,7 @@ URL_SUBMIT_TXT_VIDEO = "https://api.deevid.ai/text-to-video/task/submit"
 URL_SUBMIT_CHARACTER_VIDEO = "https://api.deevid.ai/character-to-video/task/submit"
 URL_SUBMIT_TTS = "https://api.deevid.ai/text-to-speech/task/submit"
 URL_SUBMIT_MULTIMODAL_VIDEO = "https://api.deevid.ai/video/multimodal/task"
+URL_SUBMIT_QUALITY_V2_5 = "https://api.deevid.ai/generation/task"
 URL_TTS_VOICES = "https://api.deevid.ai/public-voices"
 URL_ASSETS = "https://api.deevid.ai/my-assets?limit=50&assetType=All&filter=CREATION"
 URL_VIDEO_TASKS = "https://api.deevid.ai/video/tasks?page=1&size=20"
@@ -159,24 +160,30 @@ def resize_image(image_bytes):
         print(f"Resize error: {e}")
         return None
 
-def upload_image(token, image_bytes, use_asset_id=False):
+def upload_image(token, image_bytes, use_asset_id=False, return_url=False):
     """Uploads image to API and returns image ID.
     use_asset_id=True: KLING_3_0_OMNI için assetId döner, aksi halde id döner.
+    return_url=True: (assetId, assetUrl) tuple döner — QUALITY_V2_5 için.
     """
     headers = {"authorization": f"Bearer {token}", **DEVICE_HEADERS}
     resized = resize_image(image_bytes)
-    if not resized: return None
+    if not resized: return (None, None) if return_url else None
     
     files = {"file": ("image.png", resized, "image/png")}
     data = {"width": "1024", "height": "1536"} 
     try:
         resp = requests.post(URL_UPLOAD, headers=headers, files=files, data=data)
         if resp.status_code in [200, 201]:
+            d = resp.json()['data']['data']
+            if return_url:
+                asset_id = str(d['assetId'])
+                asset_url = d.get('url') or f"https://cdn2.deevid.ai/user-image/{d['imageName']}" #asset_url = d.get('url', '')
+                return asset_id, asset_url
             key = 'assetId' if use_asset_id else 'id'
-            return resp.json()['data']['data'][key]
+            return d[key]
     except Exception as e:
         print(f"Upload error: {e}")
-    return None
+    return (None, None) if return_url else None
 
 def process_image_task(task_id, params, api_key_id):
     """Worker for image generation."""
@@ -195,6 +202,81 @@ def process_image_task(task_id, params, api_key_id):
 
             headers = {"authorization": f"Bearer {token}", **DEVICE_HEADERS}
             
+            model_version_raw = params.get('model', 'NANO_BANANA_PRO')
+
+            # GPT_IMAGE_2: yeni endpoint ve payload yapısı
+            if model_version_raw == 'GPT_IMAGE_2':
+                asset_ids = []
+                asset_urls = []
+                for img_base64 in params.get('reference_images', []):
+                    img_data = base64.b64decode(img_base64)
+                    aid, aurl = upload_image(token, img_data, return_url=True)
+                    if not aid:
+                        db.update_task_status(task_id, 'failed')
+                        db.add_task_log(task_id, "Image upload failed.")
+                        db.release_account(api_key_id, account['email'])
+                        return
+                    asset_ids.append(aid)
+                    asset_urls.append(aurl)
+
+                inputs = {"prompt": params.get('prompt', '')}
+                if asset_ids:
+                    inputs["assetIds"] = asset_ids
+                    inputs["assetUrls"] = asset_urls
+
+                payload = {
+                    "selection": {"modality": "image", "capability": "image-to-image", "model": "gpt-image-2"},
+                    "inputs": inputs,
+                    "params": {
+                        "aspect_ratio": params.get('size', '16:9'),
+                        "resolution": params.get('resolution', '1K'),
+                        "count": 1
+                    }
+                }
+
+                db.update_task_token(task_id, token)
+                resp = requests.post(URL_SUBMIT_QUALITY_V2_5, headers=headers, json=payload)
+                resp_json = resp.json()
+
+                error = resp_json.get('error')
+                if error and error.get('code') != 0:
+                    db.update_task_status(task_id, 'failed')
+                    db.add_task_log(task_id, f"Submit error: {resp_json}")
+                    db.release_account(api_key_id, account['email'])
+                    return
+
+                api_task_id = str(resp_json['data']['data']['taskId'])
+                db.update_task_external_data(task_id, api_task_id, token)
+                db.add_task_log(task_id, f"API Task ID: {api_task_id}")
+
+                if asset_urls:
+                    db.update_task_reference_urls(task_id, asset_urls)
+
+                for _ in range(1000):
+                    if _shutdown_event.wait(2):
+                        return
+                    try:
+                        poll = requests.get(URL_ASSETS, headers=headers).json()
+                        groups = poll.get('data', {}).get('data', {}).get('groups', [])
+                        for group in groups:
+                            for item in group.get('items', []):
+                                creation = item.get('detail', {}).get('creation', {})
+                                if str(creation.get('taskId')) == api_task_id:
+                                    if creation.get('taskState') == 'SUCCESS':
+                                        urls = creation.get('noWaterMarkImageUrl', [])
+                                        if urls:
+                                            db.update_task_status(task_id, 'completed', urls[0])
+                                            return
+                                    elif creation.get('taskState') == 'FAIL':
+                                        db.update_task_status(task_id, 'failed')
+                                        db.release_account(api_key_id, account['email'])
+                                        return
+                    except:
+                        pass
+                db.update_task_status(task_id, 'timeout')
+                db.release_account(api_key_id, account['email'])
+                return
+
             user_image_ids = []
             images = params.get('reference_images', [])
 
@@ -394,7 +476,46 @@ def process_video_task(task_id, params, api_key_id):
                 }
                 url_submit = URL_SUBMIT_VIDEO
 
-            # KLING_3_0_OMNI modeli için
+            # QUALITY_V2_5 modeli için (sadece img2vid, 5sn/720p veya 10sn/480p)
+            elif model == 'QUALITY_V2_5':
+                if not is_i2v:
+                    db.update_task_status(task_id, 'failed')
+                    db.add_task_log(task_id, "QUALITY_V2_5 model only supports image-to-video.")
+                    db.release_account(api_key_id, account['email'])
+                    return
+
+                img_data = base64.b64decode(params['start_frame'])
+                asset_id, asset_url = upload_image(token, img_data, return_url=True)
+                if not asset_id:
+                    db.update_task_status(task_id, 'failed')
+                    db.add_task_log(task_id, "Start frame upload failed.")
+                    db.release_account(api_key_id, account['email'])
+                    return
+
+                db.update_task_frame_urls(task_id, start_frame_url=asset_url, end_frame_url=None)
+
+                qv_duration = int(params.get('duration', 5))
+                if qv_duration not in [5, 10]:
+                    qv_duration = 5
+                qv_resolution = "480p" if qv_duration == 10 else "720p"
+
+                payload = {
+                    "selection": {
+                        "model": "quality-v2.5",
+                        "modality": "video",
+                        "capability": "start-image"
+                    },
+                    "inputs": {
+                        "prompt": params.get('prompt', ''),
+                        "assetIds": [asset_id],
+                        "assetUrls": [asset_url]
+                    },
+                    "params": {
+                        "duration": str(qv_duration),
+                        "resolution": qv_resolution
+                    }
+                }
+                url_submit = URL_SUBMIT_QUALITY_V2_5
             elif model == 'KLING_3_0_OMNI':
                 reference_images = params.get('reference_images', [])
 
@@ -516,16 +637,46 @@ def process_video_task(task_id, params, api_key_id):
 
             reference_images = params.get("reference_images", [])
             if reference_images:
-                # Karakter/referans görseller → reference_image_urls
                 if orig_urls:
                     db.update_task_reference_urls(task_id, orig_urls)
             else:
-                # Start / end frame → ayrı kolonlara kaydet
                 start_url = orig_urls[0] if orig_urls else None
                 end_url = end_frame_resp_url if end_frame_resp_url else None
                 if start_url or end_url:
                     db.update_task_frame_urls(task_id, start_frame_url=start_url, end_frame_url=end_url)
-            
+
+            # QUALITY_V2_5: URL_ASSETS ile poll et (groups/items/creation yapısı)
+            if model == 'QUALITY_V2_5':
+                for _ in range(1000):
+                    if _shutdown_event.wait(5):
+                        return
+                    try:
+                        poll = requests.get(URL_ASSETS, headers=headers).json()
+                        groups = poll.get('data', {}).get('data', {}).get('groups', [])
+                        for group in groups:
+                            for item in group.get('items', []):
+                                creation = item.get('detail', {}).get('creation', {})
+                                if str(creation.get('taskId')) == api_task_id:
+                                    # start_frame_url'yi buradan kaydet
+                                    poll_orig_urls = creation.get('originalImageNameUrls') or []
+                                    if poll_orig_urls:
+                                        db.update_task_frame_urls(task_id, start_frame_url=poll_orig_urls[0], end_frame_url=None)
+                                    if creation.get('taskState') == 'SUCCESS':
+                                        url = creation.get('noWaterMarkVideoUrl') or creation.get('noWatermarkVideoUrl')
+                                        if isinstance(url, list) and url: url = url[0]
+                                        if url:
+                                            db.update_task_status(task_id, 'completed', url)
+                                            return
+                                    elif creation.get('taskState') == 'FAIL':
+                                        db.update_task_status(task_id, 'failed')
+                                        db.release_account(api_key_id, account['email'])
+                                        return
+                    except:
+                        pass
+                db.update_task_status(task_id, 'timeout')
+                db.release_account(api_key_id, account['email'])
+                return
+
             for _ in range(1000):
                 if _shutdown_event.wait(5):
                     return  # Shutdown — task 'running' kalır, recovery halleder
@@ -952,6 +1103,14 @@ def generate_video():
         if data.get('reference_images'):
             return jsonify({"error": "VIDU_Q3 model does not support reference_images"}), 400
 
+    if data.get('model') == 'QUALITY_V2_5':
+        if not data.get('start_frame'):
+            return jsonify({"error": "QUALITY_V2_5 model requires a start frame (image)"}), 400
+        if data.get('end_frame'):
+            return jsonify({"error": "QUALITY_V2_5 model does not support end_frame"}), 400
+        if data.get('reference_images'):
+            return jsonify({"error": "QUALITY_V2_5 model does not support reference_images"}), 400
+
     if data.get('model') == 'VEO_3' and data.get('end_frame') and not data.get('start_frame'):
         return jsonify({"error": "end_frame requires image (start frame) to be provided"}), 400
 
@@ -981,12 +1140,17 @@ def generate_video():
     
     task_id = str(uuid.uuid4())
     model = data.get('model', 'SORA_2')
-    size = 'AUTO' if model == 'VIDU_Q3' else data.get('size', '16:9')
+    size = 'AUTO' if model in ('VIDU_Q3', 'QUALITY_V2_5') else data.get('size', '16:9')
     if model == 'VIDU_Q3':
         duration = int(data.get('duration', 5))
         if duration not in [5, 10]:
             duration = 5
         resolution = '512p' if duration == 10 else '720p'
+    elif model == 'QUALITY_V2_5':
+        duration = int(data.get('duration', 5))
+        if duration not in [5, 10]:
+            duration = 5
+        resolution = '480p' if duration == 10 else '720p'
     elif model == 'VEO_3':
         duration = 8
         resolution = '720p'
