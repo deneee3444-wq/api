@@ -1660,6 +1660,7 @@
                                     <option value="VEO_3">VEO_3</option>
                                     <option value="VIDU_Q3">VIDU_Q3</option>
                                     <option value="KLING_3_0_OMNI">KLING_3_0_OMNI</option>
+                                    <option value="QUALITY_V2_5">QUALITY_V2_5</option>
                                 </select>
                             </div>
                             <div class="form-group" id="i2vSizeGroup">
@@ -1681,7 +1682,7 @@
                             </div>
                             <div class="form-group">
                                 <label for="i2vDurationSelect">duration</label>
-                                <select id="i2vDurationSelect" disabled>
+                                <select id="i2vDurationSelect" disabled onchange="onI2vDurationChange()">
                                     <option value="5">5 saniye</option>
                                 </select>
                                 <input type="hidden" id="i2vDuration" value="5">
@@ -1720,7 +1721,7 @@
                                 
                             </div>
                         </div>
-                        <small style="color: var(--text-muted); display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.75rem; font-size: 0.75rem;"><span style="font-size:0.75rem; flex-shrink:0;">ℹ️</span>SORA_2: 720p · 10 sn &nbsp;|&nbsp; VEO_3: 720p · 8 sn &nbsp;|&nbsp; KLING_3_0_OMNI: 480p · 5 sn &nbsp;|&nbsp; VIDU_Q3: 720p · 5 sn veya 512p · 10 sn</small>
+                        <small style="color: var(--text-muted); display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.75rem; font-size: 0.75rem;"><span style="font-size:0.75rem; flex-shrink:0;">ℹ️</span>SORA_2: 720p · 10 sn &nbsp;|&nbsp; VEO_3: 720p · 8 sn &nbsp;|&nbsp; KLING_3_0_OMNI: 480p · 5 sn &nbsp;|&nbsp; VIDU_Q3: 720p · 5 sn veya 512p · 10 sn &nbsp;|&nbsp; QUALITY_V2_5: 720p · 5 sn veya 480p · 10 sn</small>
                         <button onclick="generateImageToVideo()">🎞️ Video Oluştur</button>
                         <div id="i2vResponse" class="response-box" style="display:none;"></div>
                         <div id="i2vReadable" style="display:none; margin-top:1.25rem; width:100%; max-width:100%; overflow:hidden;"></div>
@@ -2071,10 +2072,11 @@
             const isVeo = model === 'VEO_3';
             const isViduQ3 = model === 'VIDU_Q3';
             const isKling = model === 'KLING_3_0_OMNI';
+            const isQuality = model === 'QUALITY_V2_5';
 
             // Size selector
             const sizeSelect = document.getElementById('i2vSize');
-            if (isViduQ3) {
+            if (isViduQ3 || isQuality) {
                 sizeSelect.innerHTML = '<option value="AUTO">AUTO</option>';
                 sizeSelect.disabled = true;
             } else if (isKling) {
@@ -2110,7 +2112,7 @@
             const firstSubBtn = document.querySelector('.sub-tab-btn');
             if (firstSubBtn) firstSubBtn.classList.add('active');
 
-            // Resolution select + Duration readonly select
+            // Resolution select + Duration select
             const resSelect = document.getElementById('i2vResolution');
             const durSelect = document.getElementById('i2vDurationSelect');
             const durInput  = document.getElementById('i2vDuration');
@@ -2133,6 +2135,13 @@
                 durSelect.innerHTML = '<option value="5">5 saniye</option>';
                 durSelect.disabled = true;
                 durInput.value = '5';
+            } else if (isQuality) {
+                // QUALITY_V2_5: kullanıcı resolution seçer, duration otomatik türetilir
+                resSelect.innerHTML = '<option value="720p">720p</option><option value="480p">480p</option>';
+                resSelect.disabled = false;
+                durSelect.innerHTML = '<option value="5">5 saniye</option>';
+                durSelect.disabled = true;
+                durInput.value = '5';
             } else {
                 resSelect.innerHTML = '<option value="720p">720p</option>';
                 resSelect.disabled = true;
@@ -2144,10 +2153,24 @@
 
         function onI2vResolutionChange() {
             const model = document.getElementById('i2vModel').value;
-            if (model !== 'VIDU_Q3') return;
             const res = document.getElementById('i2vResolution').value;
-            const dur = res === '512p' ? 10 : 5;
-            document.getElementById('i2vDurationSelect').innerHTML = `<option value="${dur}">${dur} saniye</option>`;
+            if (model === 'VIDU_Q3') {
+                const dur = res === '512p' ? 10 : 5;
+                document.getElementById('i2vDurationSelect').innerHTML = `<option value="${dur}">${dur} saniye</option>`;
+                document.getElementById('i2vDuration').value = dur;
+            } else if (model === 'QUALITY_V2_5') {
+                const dur = res === '480p' ? 10 : 5;
+                document.getElementById('i2vDurationSelect').innerHTML = `<option value="${dur}">${dur} saniye</option>`;
+                document.getElementById('i2vDuration').value = dur;
+            }
+        }
+
+        function onI2vDurationChange() {
+            const model = document.getElementById('i2vModel').value;
+            if (model !== 'QUALITY_V2_5') return;
+            const dur = parseInt(document.getElementById('i2vDurationSelect').value) || 5;
+            const res = dur === 10 ? '480p' : '720p';
+            document.getElementById('i2vResolution').innerHTML = `<option value="${res}">${res}</option>`;
             document.getElementById('i2vDuration').value = dur;
         }
 
@@ -2284,8 +2307,8 @@
                 model: document.getElementById('i2vModel').value,
             };
 
-            // VIDU_Q3 için size AUTO, diğerleri seçilen değer
-            if (body.model !== 'VIDU_Q3') {
+            // VIDU_Q3 ve QUALITY_V2_5 için size AUTO, diğerleri seçilen değer
+            if (body.model !== 'VIDU_Q3' && body.model !== 'QUALITY_V2_5') {
                 body.size = document.getElementById('i2vSize').value;
             } else {
                 body.size = 'AUTO';
