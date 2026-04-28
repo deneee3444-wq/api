@@ -40,6 +40,12 @@ URL_ASSETS = "https://api.deevid.ai/my-assets?limit=50&assetType=All&filter=CREA
 URL_VIDEO_TASKS = "https://api.deevid.ai/video/tasks?page=1&size=20"
 URL_QUOTA = "https://api.deevid.ai/subscription/plan"
 
+# TTS frontend model name → Deevid modelVersion mapping
+TTS_MODEL_MAP = {
+    'MINIMAX':       'MODEL_SEVEN_SPEECH_26_HD',
+    'MINIMAX-TURBO': 'MODEL_SEVEN_SPEECH_26_TURBO',
+}
+
 # Frontend model name → Deevid model version mapping
 IMAGE_MODEL_MAP = {
     'NANO_BANANA_PRO': 'MODEL_FOUR_NANO_BANANA_PRO',
@@ -736,7 +742,7 @@ def process_tts_task(task_id, params, api_key_id):
                 "speed": params.get('speed', 1.0),
                 "pitch": params.get('pitch', 0),
                 "volume": params.get('volume', 1.0),
-                "modelVersion": params.get('modelVersion', 'MODEL_SEVEN_SPEECH_26_TURBO'),
+                "modelVersion": TTS_MODEL_MAP.get(params.get('model', 'MINIMAX-TURBO'), 'MODEL_SEVEN_SPEECH_26_TURBO'),
             }
             emotion = params.get('emotion', 'auto')
             if emotion and emotion != 'auto':
