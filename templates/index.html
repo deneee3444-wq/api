@@ -382,6 +382,66 @@
             box-shadow: 0 0 8px var(--violet-glow);
         }
 
+        /* TTS Range Sliders — thumb tam uca yapışır */
+        .tts-range {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 6px;
+            border-radius: 99px;
+            background: var(--input-bg);
+            border: 1px solid var(--border);
+            outline: none;
+            cursor: pointer;
+            /* padding sıfır — thumb kenar hizalaması için */
+            padding: 0;
+            margin: 6px 0;
+            box-sizing: border-box;
+        }
+        .tts-range::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--violet);
+            border: 2px solid rgba(139,92,246,0.5);
+            box-shadow: 0 0 8px var(--violet-glow);
+            cursor: pointer;
+            transition: background 0.2s, box-shadow 0.2s;
+        }
+        .tts-range::-webkit-slider-thumb:hover {
+            background: #a78bfa;
+            box-shadow: 0 0 14px var(--violet-glow);
+        }
+        .tts-range::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: var(--violet);
+            border: 2px solid rgba(139,92,246,0.5);
+            box-shadow: 0 0 8px var(--violet-glow);
+            cursor: pointer;
+        }
+        /* Emotion tag chips */
+        .tts-emotion-chip {
+            display: inline-flex;
+            align-items: center;
+            padding: 5px 14px;
+            border-radius: 99px;
+            border: 1px solid var(--border-bright);
+            background: var(--input-bg);
+            color: var(--text-dim);
+            font-size: 0.78rem;
+            cursor: pointer;
+            transition: background 0.18s, color 0.18s, border-color 0.18s;
+            user-select: none;
+        }
+        .tts-emotion-chip.active {
+            background: var(--violet-dim);
+            border-color: var(--violet);
+            color: var(--violet);
+        }
         .topbar-settings-btn {
             background: var(--violet-dim);
             border: 1px solid var(--border-bright);
@@ -1496,7 +1556,7 @@
                         <button class="tab-btn" onclick="switchTab('tab-i2i')"><span class="tab-icon">🔄</span> Image to Image</button>
                         <button class="tab-btn" onclick="switchTab('tab-t2v')"><span class="tab-icon">🎬</span> Text to Video</button>
                         <button class="tab-btn" onclick="switchTab('tab-i2v')"><span class="tab-icon">🎞️</span> Image to Video</button>
-                        <button class="tab-btn" onclick="switchTab('tab-tts')"><span class="tab-icon">🎵</span> Text to Speech</button>
+                        <button class="tab-btn" onclick="switchTab('tab-tts')"><span class="tab-icon">🔊</span> Text to Speech</button>
                     </div>
 
                     <!-- Text to Image -->
@@ -1730,61 +1790,75 @@
 
                     <!-- Text to Speech -->
                     <div class="tab-panel" id="tab-tts" style="display:none;">
-                        <div class="form-group">
-                            <label for="ttsText">metin *</label>
-                            <div class="prompt-wrap">
-                                <textarea id="ttsText" maxlength="5000" oninput="updateCounter('ttsText','ttsTextCounter',5000)" placeholder="Sese dönüştürmek istediğiniz metni girin..." style="min-height:130px;"></textarea>
-                                <span id="ttsTextCounter" class="prompt-counter">0/5000</span>
-                            </div>
-                        </div>
+
+                        <!-- Model + Ses -->
                         <div class="form-row cols-2">
-                            <div class="form-group">
-                                <label for="ttsVoice">ses (voice)</label>
-                                <div style="display:flex; gap:0.5rem; align-items:center;">
-                                    <select id="ttsVoice" style="flex:1;">
-                                        <option value="English_expressive_narrator">English_expressive_narrator</option>
-                                    </select>
-                                    <button onclick="loadTTSVoices()" style="flex-shrink:0; padding:0.625rem 0.875rem; font-size:0.62rem; letter-spacing:0.05em; white-space:nowrap; background:var(--cyan-dim); border:1px solid rgba(34,211,238,0.3); color:var(--cyan); box-shadow:none; transform:none; border-radius:var(--radius-sm);" title="API'den sesleri çek">↻ Yükle</button>
-                                </div>
-                            </div>
                             <div class="form-group">
                                 <label for="ttsModel">model</label>
                                 <select id="ttsModel">
-                                    <option value="MODEL_SEVEN_SPEECH_26_TURBO" selected>MODEL_SEVEN_SPEECH_26_TURBO</option>
-                                    <option value="MODEL_SEVEN_SPEECH_26">MODEL_SEVEN_SPEECH_26</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="form-row cols-3">
-                            <div class="form-group">
-                                <label for="ttsEmotion">emotion</label>
-                                <select id="ttsEmotion">
-                                    <option value="auto" selected>Auto</option>
-                                    <option value="happy">Happy</option>
-                                    <option value="sad">Sad</option>
-                                    <option value="angry">Angry</option>
-                                    <option value="fearful">Fearful</option>
-                                    <option value="disgusted">Disgusted</option>
-                                    <option value="surprised">Surprised</option>
+                                    <option value="MINIMAX-TURBO" selected>MINIMAX-TURBO</option>
+                                    <option value="MINIMAX">MINIMAX</option>
                                 </select>
                             </div>
                             <div class="form-group">
-                                <label for="ttsSpeed">hız (speed) <span id="ttsSpeedVal" style="color:var(--violet); font-weight:700;">1.0</span></label>
-                                <input type="range" id="ttsSpeed" min="0.5" max="2.0" step="0.1" value="1.0"
-                                    oninput="document.getElementById('ttsSpeedVal').textContent=parseFloat(this.value).toFixed(1)"
-                                    style="width:100%; height:6px; accent-color:var(--violet); cursor:pointer; background:var(--input-bg); border-radius:99px; border:1px solid var(--border); padding:0.35rem 0.5rem;">
-                            </div>
-                            <div class="form-group">
-                                <label for="ttsPitch">perde (pitch) <span id="ttsPitchVal" style="color:var(--violet); font-weight:700;">0</span></label>
-                                <input type="range" id="ttsPitch" min="-12" max="12" step="1" value="0"
-                                    oninput="document.getElementById('ttsPitchVal').textContent=this.value"
-                                    style="width:100%; height:6px; accent-color:var(--violet); cursor:pointer; background:var(--input-bg); border-radius:99px; border:1px solid var(--border); padding:0.35rem 0.5rem;">
+                                <label for="ttsVoice">ses</label>
+                                <div style="display:flex; gap:8px; align-items:stretch;">
+                                    <select id="ttsVoice" style="flex:1;">
+                                        <option value="" disabled selected>— Sesleri yükleyin —</option>
+                                    </select>
+                                    <button type="button" onclick="loadTtsVoices()" style="flex-shrink:0; padding:0 14px; font-size:0.78rem; white-space:nowrap;">🔄 Yükle</button>
+                                </div>
                             </div>
                         </div>
-                        <small style="color: var(--text-muted); display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.75rem; font-size: 0.75rem;"><span style="font-size:0.75rem; flex-shrink:0;">ℹ️</span>Ses oluşturma tamamlanınca Task Durumu sayfasında audio player ile dinleyebilirsiniz.</small>
-                        <button onclick="generateTTS()">🎵 Ses Oluştur</button>
+
+                        <!-- Emotion -->
+                        <div class="form-group" id="ttsEmotionGroup">
+                            <label>duygu (emotion)</label>
+                            <div id="ttsEmotionContainer" style="display:flex; flex-wrap:wrap; gap:8px; align-items:center; min-height:36px; padding:6px 0;"></div>
+                        </div>
+
+                        <!-- Text -->
+                        <div class="form-group">
+                            <label for="ttsText">metin *</label>
+                            <div class="prompt-wrap">
+                                <textarea id="ttsText" maxlength="5000" oninput="updateCounter('ttsText','ttsTextCounter',5000)" placeholder="Seslendirilecek metni girin..." style="min-height:100px;"></textarea>
+                                <span id="ttsTextCounter" class="prompt-counter">0/5000</span>
+                            </div>
+                        </div>
+
+                        <!-- Speed & Pitch -->
+                        <div class="form-row cols-2">
+                            <div class="form-group">
+                                <label>hız — <span id="ttsSpeedVal">1.0</span></label>
+                                <input type="range" id="ttsSpeed" class="tts-range" min="0.5" max="2.0" step="0.1" value="1.0"
+                                       oninput="syncTtsSlider(this,'ttsSpeedVal')">
+                                <div style="display:flex; justify-content:space-between; font-size:0.7rem; color:var(--text-muted); margin-top:2px;">
+                                    <span>0.5×</span><span>2.0×</span>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>perde — <span id="ttsPitchVal">0</span></label>
+                                <input type="range" id="ttsPitch" class="tts-range" min="-12" max="12" step="1" value="0"
+                                       oninput="syncTtsSlider(this,'ttsPitchVal')">
+                                <div style="display:flex; justify-content:space-between; font-size:0.7rem; color:var(--text-muted); margin-top:2px;">
+                                    <span>-12</span><span>+12</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Volume -->
+                        <div class="form-group">
+                            <label>ses seviyesi — <span id="ttsVolumeVal">1.0</span></label>
+                            <input type="range" id="ttsVolume" class="tts-range" min="0" max="2.0" step="0.1" value="1.0"
+                                   oninput="syncTtsSlider(this,'ttsVolumeVal')">
+                            <div style="display:flex; justify-content:space-between; font-size:0.7rem; color:var(--text-muted); margin-top:2px;">
+                                <span>0</span><span>2.0</span>
+                            </div>
+                        </div>
+
+                        <button onclick="generateTts()">🔊 Seslendirmeyi Başlat</button>
                         <div id="ttsResponse" class="response-box" style="display:none;"></div>
-                        <div id="ttsReadable" style="display:none; margin-top:1.25rem; width:100%; max-width:100%; overflow:hidden;"></div>
+                        <div id="ttsReadable" style="display:none; margin-top:1.25rem;"></div>
                     </div>
 
                 </div>
@@ -1896,7 +1970,6 @@
             updateCounter('i2iPrompt', 'i2iPromptCounter', 4000);
             onI2vModelChange();
             onT2vModelChange();
-            updateCounter('ttsText', 'ttsTextCounter', 5000);
         });
 
         const API_BASE = () => document.getElementById('apiUrl').value;
@@ -2329,6 +2402,10 @@
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             document.getElementById(id).style.display = 'block';
             event.currentTarget.classList.add('active');
+            if (id === 'tab-tts') {
+                initTtsEmotions();
+                updateCounter('ttsText', 'ttsTextCounter', 5000);
+            }
         }
 
         function switchSubTab(id) {
@@ -2882,68 +2959,98 @@
             }
         }
 
+        /* ══════════════════════════════════════
+           TTS
+        ══════════════════════════════════════ */
+        const TTS_EMOTIONS = ['auto', 'happy', 'sad', 'angry', 'fearful', 'disgusted', 'surprised'];
+
+        function initTtsEmotions() {
+            const container = document.getElementById('ttsEmotionContainer');
+            if (!container || container.children.length > 0) return;
+            TTS_EMOTIONS.forEach(emo => {
+                const chip = document.createElement('span');
+                chip.className = 'tts-emotion-chip' + (emo === 'auto' ? ' active' : '');
+                chip.textContent = emo;
+                chip.dataset.emo = emo;
+                chip.onclick = () => {
+                    container.querySelectorAll('.tts-emotion-chip').forEach(c => c.classList.remove('active'));
+                    chip.classList.add('active');
+                };
+                container.appendChild(chip);
+            });
+        }
+
+        function syncTtsSlider(input, labelId) {
+            const val = parseFloat(input.value);
+            const label = document.getElementById(labelId);
+            if (label) label.textContent = Number.isInteger(val) ? val : val.toFixed(1);
+        }
+
+        async function loadTtsVoices() {
+            const btn = document.querySelector('#tab-tts button[onclick="loadTtsVoices()"]');
+            if (btn) { btn.disabled = true; btn.textContent = '⏳'; }
+            try {
+                const res = await fetch(`${API_BASE()}/api/tts/voices`, {
+                    headers: { 'Authorization': `Bearer ${API_KEY()}` }
+                });
+                const data = await res.json();
+                const sel = document.getElementById('ttsVoice');
+                sel.innerHTML = '';
+                if (data.voices && data.voices.length > 0) {
+                    data.voices.forEach(v => {
+                        const opt = document.createElement('option');
+                        opt.value = v.voiceId || v.voice_id || v.id || v.name;
+                        opt.textContent = v.displayName || v.display_name || v.name || opt.value;
+                        sel.appendChild(opt);
+                    });
+                } else {
+                    sel.innerHTML = '<option value="" disabled selected>Ses bulunamadı</option>';
+                }
+            } catch(e) {
+                alert('Sesler yüklenirken hata: ' + e.message);
+            }
+            if (btn) { btn.disabled = false; btn.textContent = '🔄 Yükle'; }
+        }
+
+        async function generateTts() {
+            const text = document.getElementById('ttsText').value.trim();
+            if (!text) { alert('Lütfen metin girin!'); return; }
+            const voiceId = document.getElementById('ttsVoice').value;
+            if (!voiceId) { alert('Lütfen önce sesleri yükleyip bir ses seçin!'); return; }
+
+            const activeEmo = document.querySelector('.tts-emotion-chip.active');
+            const emotion = activeEmo ? activeEmo.dataset.emo : 'auto';
+
+            const payload = {
+                text,
+                voiceId,
+                model: document.getElementById('ttsModel').value,
+                speed: parseFloat(document.getElementById('ttsSpeed').value),
+                pitch: parseInt(document.getElementById('ttsPitch').value),
+                volume: parseFloat(document.getElementById('ttsVolume').value),
+                emotion,
+            };
+
+            try {
+                const res = await fetch(`${API_BASE()}/api/generate/tts`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${API_KEY()}`
+                    },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                displayResponseWithReadable('ttsResponse', 'ttsReadable', data, !res.ok, 'task');
+            } catch(e) {
+                displayResponseWithReadable('ttsResponse', 'ttsReadable', { error: e.message }, true, 'task');
+            }
+        }
+
         // Clean up on page unload
         window.addEventListener('beforeunload', () => {
             stopAutoRefresh();
         });
-
-        /* ══════════════════════════════════════
-           TEXT TO SPEECH
-        ══════════════════════════════════════ */
-        async function loadTTSVoices() {
-            const voiceSelect = document.getElementById('ttsVoice');
-            const currentVal = voiceSelect.value;
-            voiceSelect.disabled = true;
-            try {
-                const { response, data } = await apiCall('/api/tts/voices');
-                if (!response.ok || !data.voices) {
-                    alert('Sesler yüklenemedi: ' + (data.error || 'Bilinmeyen hata'));
-                    return;
-                }
-                voiceSelect.innerHTML = '';
-                data.voices.forEach(v => {
-                    const opt = document.createElement('option');
-                    const voiceId = v.voiceId || v.id || v.name || v;
-                    const label   = v.name || v.voiceId || v.id || v;
-                    opt.value = voiceId;
-                    opt.textContent = label;
-                    if (voiceId === currentVal) opt.selected = true;
-                    voiceSelect.appendChild(opt);
-                });
-                if (!voiceSelect.value && data.voices.length > 0) {
-                    voiceSelect.value = data.voices[0].voiceId || data.voices[0].id || data.voices[0];
-                }
-            } catch (err) {
-                alert('Sesler yüklenirken hata: ' + err.message);
-            } finally {
-                voiceSelect.disabled = false;
-            }
-        }
-
-        async function generateTTS() {
-            const text = document.getElementById('ttsText').value.trim();
-            if (!text) { alert('Lütfen metin girin!'); return; }
-
-            const body = {
-                text,
-                voiceId:      document.getElementById('ttsVoice').value,
-                modelVersion: document.getElementById('ttsModel').value,
-                speed:        parseFloat(document.getElementById('ttsSpeed').value),
-                pitch:        parseInt(document.getElementById('ttsPitch').value),
-                volume:       1.0,
-                emotion:      document.getElementById('ttsEmotion').value,
-            };
-
-            try {
-                const { response, data } = await apiCall('/api/generate/tts', 'POST', body);
-                displayResponseWithReadable('ttsResponse', 'ttsReadable', data, !response.ok, 'task');
-                if (response.ok && data.task_id) {
-                    document.getElementById('taskId').value = data.task_id;
-                }
-            } catch (err) {
-                displayResponseWithReadable('ttsResponse', 'ttsReadable', { error: err.message }, true, 'task');
-            }
-        }
     </script>
 </body>
 </html>
