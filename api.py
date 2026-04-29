@@ -23,7 +23,7 @@ atexit.register(lambda: _shutdown_event.set())
 API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.ewogICJyb2xlIjogImFub24iLAogICJpc3MiOiAic3VwYWJhc2UiLAogICJpYXQiOiAxNzM0OTY5NjAwLAogICJleHAiOiAxODkyNzM2MDAwCn0.4NnK23LGYvKPGuKI5rwQn2KbLMzzdE4jXpHwbGCqPqY"
 
 # Maximum concurrent tasks
-MAX_CONCURRENT_TASKS = 1000
+MAX_CONCURRENT_TASKS = 10
 
 # Deevid URLs
 URL_AUTH = "https://sp.deevid.ai/auth/v1/token?grant_type=password"
@@ -1482,7 +1482,8 @@ def get_all_tasks_status():
         except ValueError:
             return jsonify({"error": "Invalid per_page parameter"}), 400
 
-        tasks, total = db.get_tasks_paginated(api_key_id, page, per_page)
+        tasks_raw, total = db.get_tasks_paginated(api_key_id, page, per_page)
+        tasks = [filter_task_fields(t) for t in tasks_raw]
         import math
         total_pages = math.ceil(total / per_page) if total > 0 else 1
 
@@ -1496,8 +1497,10 @@ def get_all_tasks_status():
             "total_pages": total_pages
         })
 
+    tasks_raw = db.get_all_tasks(api_key_id)
+    tasks = [filter_task_fields(t) for t in tasks_raw]
     return jsonify({
-        "tasks": db.get_all_tasks(api_key_id),
+        "tasks": tasks,
         "running_tasks": running_count,
         "max_concurrent": MAX_CONCURRENT_TASKS
     })
