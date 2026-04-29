@@ -710,7 +710,7 @@
         }
 
         textarea {
-            resize: vertical;
+            resize: none;
             min-height: 110px;
             font-family: 'JetBrains Mono', monospace;
             font-size: 0.82rem;
@@ -1292,7 +1292,6 @@
 
         .pagination button::after { display: none; }
 
-        .pagination .page-btn { }
         .pagination .page-btn.active {
             background: var(--violet);
             color: #fff;
@@ -1334,7 +1333,7 @@
             font-family: 'JetBrains Mono', monospace;
             font-size: 0.8rem;
             text-align: center;
-            -moz-appearance: textfield;
+            appearance: textfield;
         }
         .pagination-goto input[type="number"]::-webkit-inner-spin-button,
         .pagination-goto input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; }
@@ -1445,6 +1444,22 @@
             }
             .content {
                 padding: 1rem;
+            }
+            /* Music mode buttons 2x2 grid on mobile */
+            #musicModeGroup.seg-group {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 6px;
+            }
+            #musicModeGroup .seg-btn {
+                min-width: 0;
+                font-size: 0.72rem;
+                padding: 8px 6px;
+            }
+            #musicInstrumentalGroup.seg-group {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 6px;
             }
         }
 
@@ -1608,8 +1623,8 @@
                         <div class="form-group">
                             <label for="imagePrompt">prompt *</label>
                             <div class="prompt-wrap">
-                                <textarea id="imagePrompt" maxlength="4000" oninput="updateCounter('imagePrompt','imagePromptCounter',4000)" placeholder="Oluşturmak istediğiniz görselin detaylı açıklaması..."></textarea>
-                                <span id="imagePromptCounter" class="prompt-counter">0/4000</span>
+                                <textarea id="imagePrompt" maxlength="5000" oninput="updateCounter('imagePrompt','imagePromptCounter',5000)" placeholder="Oluşturmak istediğiniz görselin detaylı açıklaması..."></textarea>
+                                <span id="imagePromptCounter" class="prompt-counter">0/5000</span>
                             </div>
                         </div>
                         <div class="form-row cols-2">
@@ -1631,6 +1646,8 @@
                                     <option value="3:4">3:4</option>
                                     <option value="4:3">4:3</option>
                                     <option value="3:2">3:2</option>
+                                    <option value="2:3">2:3</option>
+                                    <option value="AUTO">AUTO</option>
                                 </select>
                             </div>
                         </div>
@@ -1653,8 +1670,8 @@
                         <div class="form-group">
                             <label for="i2iPrompt">prompt *</label>
                             <div class="prompt-wrap">
-                                <textarea id="i2iPrompt" maxlength="4000" oninput="updateCounter('i2iPrompt','i2iPromptCounter',4000)" placeholder="Görseli nasıl dönüştürmek istediğinizi açıklayın..."></textarea>
-                                <span id="i2iPromptCounter" class="prompt-counter">0/4000</span>
+                                <textarea id="i2iPrompt" maxlength="5000" oninput="updateCounter('i2iPrompt','i2iPromptCounter',5000)" placeholder="Görseli nasıl dönüştürmek istediğinizi açıklayın..."></textarea>
+                                <span id="i2iPromptCounter" class="prompt-counter">0/5000</span>
                             </div>
                         </div>
                         <div class="form-row cols-2">
@@ -1676,6 +1693,8 @@
                                     <option value="3:4">3:4</option>
                                     <option value="4:3">4:3</option>
                                     <option value="3:2">3:2</option>
+                                    <option value="2:3">2:3</option>
+                                    <option value="AUTO">AUTO</option>
                                 </select>
                             </div>
                         </div>
@@ -1716,7 +1735,7 @@
                                 <select id="t2vModel" onchange="onT2vModelChange()">
                                     <option value="SORA_2" selected>SORA_2</option>
                                     <option value="VEO_3">VEO_3</option>
-                                    <option value="KLING_3_0_OMNI">KLING_3_0_OMNI</option>
+                                    <option value="SEEDANCE_2_0">SEEDANCE_2_0</option>
                                 </select>
                             </div>
                             <div class="form-group">
@@ -1742,7 +1761,7 @@
                                 </select>
                             </div>
                         </div>
-                        <small style="color: var(--text-muted); display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.75rem; font-size: 0.75rem;"><span style="font-size:0.75rem; flex-shrink:0;">ℹ️</span>SORA_2: 720p · 10 sn &nbsp;|&nbsp; VEO_3: 720p · 8 sn &nbsp;|&nbsp; KLING_3_0_OMNI: 480p · 5 sn</small>
+                        <small style="color: var(--text-muted); display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.75rem; font-size: 0.75rem;"><span style="font-size:0.75rem; flex-shrink:0;">ℹ️</span>SORA_2: 720p · 10 sn &nbsp;|&nbsp; VEO_3: 720p · 8 sn &nbsp;|&nbsp; SEEDANCE_2_0: 480p · 5 sn</small>
                         <button onclick="generateTextToVideo()">🎬 Video Oluştur</button>
                         <div id="t2vResponse" class="response-box" style="display:none;"></div>
                         <div id="t2vReadable" style="display:none; margin-top:1.25rem; width:100%; max-width:100%; overflow:hidden;"></div>
@@ -1764,7 +1783,7 @@
                                     <option value="SORA_2" selected>SORA_2</option>
                                     <option value="VEO_3">VEO_3</option>
                                     <option value="VIDU_Q3">VIDU_Q3</option>
-                                    <option value="KLING_3_0_OMNI">KLING_3_0_OMNI</option>
+                                    <option value="SEEDANCE_2_0">SEEDANCE_2_0</option>
                                     <option value="QUALITY_V2_5">QUALITY_V2_5</option>
                                 </select>
                             </div>
@@ -1826,7 +1845,7 @@
                                 
                             </div>
                         </div>
-                        <small style="color: var(--text-muted); display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.75rem; font-size: 0.75rem;"><span style="font-size:0.75rem; flex-shrink:0;">ℹ️</span>SORA_2: 720p · 10 sn &nbsp;|&nbsp; VEO_3: 720p · 8 sn &nbsp;|&nbsp; KLING_3_0_OMNI: 480p · 5 sn &nbsp;|&nbsp; VIDU_Q3: 720p · 5 sn veya 512p · 10 sn &nbsp;|&nbsp; QUALITY_V2_5: 720p · 5 sn veya 480p · 10 sn</small>
+                        <small style="color: var(--text-muted); display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.75rem; font-size: 0.75rem;"><span style="font-size:0.75rem; flex-shrink:0;">ℹ️</span>SORA_2: 720p · 10 sn &nbsp;|&nbsp; VEO_3: 720p · 8 sn &nbsp;|&nbsp; SEEDANCE_2_0: 480p · 5 sn &nbsp;|&nbsp; VIDU_Q3: 720p/5sn · 512p/5-10sn &nbsp;|&nbsp; QUALITY_V2_5: 720p/5sn · 480p/5-10sn</small>
                         <button onclick="generateImageToVideo()">🎞️ Video Oluştur</button>
                         <div id="i2vResponse" class="response-box" style="display:none;"></div>
                         <div id="i2vReadable" style="display:none; margin-top:1.25rem; width:100%; max-width:100%; overflow:hidden;"></div>
@@ -1865,8 +1884,8 @@
                         <div class="form-group">
                             <label for="ttsText">metin *</label>
                             <div class="prompt-wrap">
-                                <textarea id="ttsText" maxlength="5000" oninput="updateCounter('ttsText','ttsTextCounter',5000)" placeholder="Seslendirilecek metni girin..." style="min-height:100px;"></textarea>
-                                <span id="ttsTextCounter" class="prompt-counter">0/5000</span>
+                                <textarea id="ttsText" maxlength="6000" oninput="updateCounter('ttsText','ttsTextCounter',6000)" placeholder="Seslendirilecek metni girin..." style="min-height:100px;"></textarea>
+                                <span id="ttsTextCounter" class="prompt-counter">0/6000</span>
                             </div>
                         </div>
 
@@ -1920,9 +1939,9 @@
                             </div>
                         </div>
 
-                        <!-- INSTRUMENTAL toggle -->
+                        <!-- MAIN MODE toggle -->
                         <div class="form-group">
-                            <label style="margin-bottom:8px; display:block;">INSTRUMENTAL</label>
+                            <label>main mode</label>
                             <div class="seg-group" id="musicInstrumentalGroup">
                                 <button class="seg-btn active" data-val="false" onclick="onMusicInstrumentalChange(this)">Vocal</button>
                                 <button class="seg-btn" data-val="true" onclick="onMusicInstrumentalChange(this)">Instrumental</button>
@@ -1931,7 +1950,7 @@
 
                         <!-- MODE selector -->
                         <div class="form-group">
-                            <label style="margin-bottom:8px; display:block;">MODE</label>
+                            <label>mode</label>
                             <div class="seg-group seg-group--wrap" id="musicModeGroup">
                                 <button class="seg-btn active" data-val="TEXT" onclick="onMusicModeChange(this)">Text</button>
                                 <button class="seg-btn" data-val="COVER" onclick="onMusicModeChange(this)">Cover</button>
@@ -1943,8 +1962,8 @@
                         <div class="form-group">
                             <label for="musicPrompt">prompt *</label>
                             <div class="prompt-wrap">
-                                <textarea id="musicPrompt" maxlength="500" oninput="updateCounter('musicPrompt','musicPromptCounter',500)" placeholder="Müziği tarif edin — örn: upbeat rock anthem, melancholic piano..." style="min-height:80px;"></textarea>
-                                <span id="musicPromptCounter" class="prompt-counter">0/500</span>
+                                <textarea id="musicPrompt" maxlength="3000" oninput="updateCounter('musicPrompt','musicPromptCounter',3000)" placeholder="Müziği tarif edin — örn: upbeat rock anthem, melancholic piano..." style="min-height:80px;"></textarea>
+                                <span id="musicPromptCounter" class="prompt-counter">0/3000</span>
                             </div>
                         </div>
 
@@ -2075,10 +2094,10 @@
 
         window.addEventListener('DOMContentLoaded', () => {
             loadApiSettings();
-            updateCounter('imagePrompt', 'imagePromptCounter', 4000);
+            updateCounter('imagePrompt', 'imagePromptCounter', 5000);
             updateCounter('t2vPrompt', 't2vPromptCounter', 2000);
             updateCounter('i2vPrompt', 'i2vPromptCounter', 2000);
-            updateCounter('i2iPrompt', 'i2iPromptCounter', 4000);
+            updateCounter('i2iPrompt', 'i2iPromptCounter', 5000);
             onI2vModelChange();
             onT2vModelChange();
         });
@@ -2316,7 +2335,7 @@
             const model = document.getElementById('i2vModel').value;
             const isVeo = model === 'VEO_3';
             const isViduQ3 = model === 'VIDU_Q3';
-            const isKling = model === 'KLING_3_0_OMNI';
+            const isKling = model === 'SEEDANCE_2_0';
             const isQuality = model === 'QUALITY_V2_5';
 
             // Size selector
@@ -2399,24 +2418,31 @@
         function onI2vResolutionChange() {
             const model = document.getElementById('i2vModel').value;
             const res = document.getElementById('i2vResolution').value;
+            const durSelect = document.getElementById('i2vDurationSelect');
+            const durInput = document.getElementById('i2vDuration');
             if (model === 'VIDU_Q3') {
-                const dur = res === '512p' ? 10 : 5;
-                document.getElementById('i2vDurationSelect').innerHTML = `<option value="${dur}">${dur} saniye</option>`;
-                document.getElementById('i2vDuration').value = dur;
+                if (res === '512p') {
+                    durSelect.innerHTML = '<option value="5">5 saniye</option><option value="10">10 saniye</option>';
+                    durSelect.disabled = false;
+                } else {
+                    durSelect.innerHTML = '<option value="5">5 saniye</option>';
+                    durSelect.disabled = true;
+                }
+                durInput.value = durSelect.value;
             } else if (model === 'QUALITY_V2_5') {
-                const dur = res === '480p' ? 10 : 5;
-                document.getElementById('i2vDurationSelect').innerHTML = `<option value="${dur}">${dur} saniye</option>`;
-                document.getElementById('i2vDuration').value = dur;
+                if (res === '480p') {
+                    durSelect.innerHTML = '<option value="5">5 saniye</option><option value="10">10 saniye</option>';
+                    durSelect.disabled = false;
+                } else {
+                    durSelect.innerHTML = '<option value="5">5 saniye</option>';
+                    durSelect.disabled = true;
+                }
+                durInput.value = durSelect.value;
             }
         }
 
         function onI2vDurationChange() {
-            const model = document.getElementById('i2vModel').value;
-            if (model !== 'QUALITY_V2_5') return;
-            const dur = parseInt(document.getElementById('i2vDurationSelect').value) || 5;
-            const res = dur === 10 ? '480p' : '720p';
-            document.getElementById('i2vResolution').innerHTML = `<option value="${res}">${res}</option>`;
-            document.getElementById('i2vDuration').value = dur;
+            document.getElementById('i2vDuration').value = document.getElementById('i2vDurationSelect').value;
         }
 
         function onT2vModelChange() {
@@ -2429,7 +2455,7 @@
                 durSelect.innerHTML = '<option>8 saniye</option>';
                 resSelect.innerHTML = '<option>720p</option>';
                 sizeSelect.innerHTML = '<option value="16:9">16:9</option><option value="9:16">9:16</option>';
-            } else if (model === 'KLING_3_0_OMNI') {
+            } else if (model === 'SEEDANCE_2_0') {
                 durSelect.innerHTML = '<option>5 saniye</option>';
                 resSelect.innerHTML = '<option>480p</option>';
                 sizeSelect.innerHTML = '<option value="16:9">16:9</option><option value="9:16">9:16</option><option value="1:1">1:1</option><option value="4:3">4:3</option><option value="3:4">3:4</option>';
@@ -2515,10 +2541,10 @@
             event.currentTarget.classList.add('active');
             if (id === 'tab-tts') {
                 initTtsEmotions();
-                updateCounter('ttsText', 'ttsTextCounter', 5000);
+                updateCounter('ttsText', 'ttsTextCounter', 6000);
             }
             if (id === 'tab-music') {
-                updateCounter('musicPrompt', 'musicPromptCounter', 500);
+                updateCounter('musicPrompt', 'musicPromptCounter', 3000);
                 updateCounter('musicLyrics', 'musicLyricsCounter', 3000);
             }
         }
@@ -2561,11 +2587,12 @@
             };
 
             // VIDU_Q3 ve QUALITY_V2_5 için size AUTO, diğerleri seçilen değer
-            if (body.model !== 'VIDU_Q3' && body.model !== 'QUALITY_V2_5') {
-                body.size = document.getElementById('i2vSize').value;
-            } else {
+            if (body.model === 'VIDU_Q3' || body.model === 'QUALITY_V2_5') {
                 body.size = 'AUTO';
                 body.duration = parseInt(document.getElementById('i2vDuration').value) || 5;
+                body.resolution = document.getElementById('i2vResolution').value;
+            } else {
+                body.size = document.getElementById('i2vSize').value;
             }
 
             // Determine active sub-tab
@@ -2580,11 +2607,11 @@
 
                 const endInput = document.getElementById('i2vEndFrame');
                 if (endInput.files && endInput.files.length > 0) {
-                    if (body.model !== 'VEO_3' && body.model !== 'KLING_3_0_OMNI') { alert('End Frame yalnızca VEO_3 ve KLING_3_0_OMNI modelleriyle kullanılabilir!'); return; }
+                    if (body.model !== 'VEO_3' && body.model !== 'SEEDANCE_2_0') { alert('End Frame yalnızca VEO_3 ve SEEDANCE_2_0 modelleriyle kullanılabilir!'); return; }
                     body.end_frame = await fileToBase64(endInput.files[0]);
                 }
             } else {
-                if (body.model !== 'VEO_3' && body.model !== 'KLING_3_0_OMNI') { alert('Reference Images yalnızca VEO_3 ve KLING_3_0_OMNI modelleriyle kullanılabilir!'); return; }
+                if (body.model !== 'VEO_3' && body.model !== 'SEEDANCE_2_0') { alert('Reference Images yalnızca VEO_3 ve SEEDANCE_2_0 modelleriyle kullanılabilir!'); return; }
                 const refInput = document.getElementById('i2vRefImages');
                 if (!refInput.files || refInput.files.length === 0) {
                     alert('Lütfen en az 1 referans görsel seçin!'); return;
@@ -2876,16 +2903,7 @@
                 const statusClass = `status-${taskData.status}`;
                 
                 let resultHTML = '';
-                if (taskData.mode === 'music' && taskData.tracks && taskData.tracks.length > 0) {
-                    resultHTML = taskData.tracks.map(t => `
-                        <div style="display:flex;align-items:center;gap:12px;background:var(--panel);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 14px;margin-top:10px;">
-                            ${t.coverImageUrl ? `<img src="${t.coverImageUrl}" style="width:48px;height:48px;border-radius:8px;object-fit:cover;flex-shrink:0;">` : ''}
-                            <div style="flex:1;min-width:0;">
-                                <div style="font-family:'JetBrains Mono',monospace;font-size:0.62rem;color:var(--violet);text-transform:uppercase;margin-bottom:4px;">${t.musicName || ('Versiyon ' + t.version)}</div>
-                                <audio src="${t.musicUrl}" controls style="width:100%;height:28px;"></audio>
-                            </div>
-                        </div>`).join('');
-                } else if (taskData.result_url) {
+                if (taskData.result_url) {
                     if (taskData.mode === 'image') {
                         resultHTML = `<img src="${taskData.result_url}" class="result-image" alt="Result">`;
                     } else if (taskData.mode === 'video') {
@@ -2913,6 +2931,23 @@
 
                 const card = document.createElement('div');
                 card.className = 'task-card';
+
+                // For music: render tracks as side-by-side grid
+                let musicGridHTML = '';
+                if (taskData.mode === 'music' && taskData.tracks && taskData.tracks.length > 0) {
+                    musicGridHTML = `<div style="margin-top:10px; display:flex; flex-direction:column; gap:10px;">
+                        ${taskData.tracks.map(t => `
+                            <div style="display:flex;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 14px;">
+                                ${t.coverImageUrl ? `<img src="${t.coverImageUrl}" style="width:48px;height:48px;border-radius:8px;object-fit:cover;flex-shrink:0;">` : ''}
+                                <div style="flex:1;min-width:0;">
+                                    <div style="font-family:'JetBrains Mono',monospace;font-size:0.62rem;color:var(--violet);text-transform:uppercase;margin-bottom:4px;">${t.musicName || ('Versiyon ' + t.version)}</div>
+                                    <audio src="${t.musicUrl}" controls style="width:100%;height:28px;"></audio>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>`;
+                }
+
                 card.innerHTML = `
                     <h3 style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
                         <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">Task: ${taskId}</span>
@@ -2932,6 +2967,7 @@
                     </div>
                     ${logsHTML}
                     ${resultHTML}
+                    ${musicGridHTML}
                 `;
                 container.appendChild(card);
             });
@@ -3128,9 +3164,9 @@
             const mode = getMusicMode();
             const audioRequired = AUDIO_REQUIRED_MODES.includes(mode);
 
-            // Lyrics: only Vocal + Text
+            // Lyrics: always visible
             const lyricsGroup = document.getElementById('musicLyricsGroup');
-            if (lyricsGroup) lyricsGroup.style.display = (!isInstrumental && mode === 'TEXT') ? '' : 'none';
+            if (lyricsGroup) lyricsGroup.style.display = '';
 
             // Audio: required for COVER, ADD_INSTRUMENTAL, ADD_VOCAL
             const audioGroup = document.getElementById('musicAudioGroup');
@@ -3195,7 +3231,7 @@
 
             const body = { prompt, model: 'SUNO', instrumental, audioUsage };
             if (style) body.style = style;
-            if (!instrumental && audioUsage === 'TEXT' && lyrics) body.lyrics = lyrics;
+            if (lyrics) body.lyrics = lyrics;
 
             if (hasAudio) {
                 body.audio_base64 = await audioFileToBase64(audioInput.files[0]);
