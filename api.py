@@ -175,7 +175,7 @@ def resize_image(image_bytes):
 
 def upload_image(token, image_bytes, use_asset_id=False, return_url=False):
     """Uploads image to API and returns image ID.
-    use_asset_id=True: KLING_3_0_OMNI için assetId döner, aksi halde id döner.
+    use_asset_id=True: SEEDANCE_2_0 için assetId döner, aksi halde id döner.
     return_url=True: (assetId, assetUrl) tuple döner — QUALITY_V2_5 için.
     """
     headers = {"authorization": f"Bearer {token}", **DEVICE_HEADERS}
@@ -700,7 +700,7 @@ def process_video_task(task_id, params, api_key_id):
                     }
                 }
                 url_submit = URL_SUBMIT_QUALITY_V2_5
-            elif model == 'KLING_3_0_OMNI':
+            elif model == 'SEEDANCE_2_0':
                 reference_images = params.get('reference_images', [])
 
                 if is_i2v:
@@ -1319,10 +1319,10 @@ def generate_video():
         if reference_images and (data.get('start_frame') or data.get('end_frame')):
             return jsonify({"error": "reference_images cannot be used together with image or end_frame"}), 400
 
-    if data.get('model') == 'KLING_3_0_OMNI' and data.get('end_frame') and not data.get('start_frame'):
+    if data.get('model') == 'SEEDANCE_2_0' and data.get('end_frame') and not data.get('start_frame'):
         return jsonify({"error": "end_frame requires image (start frame) to be provided"}), 400
 
-    if data.get('model') == 'KLING_3_0_OMNI':
+    if data.get('model') == 'SEEDANCE_2_0':
         reference_images = data.get('reference_images', [])
         if isinstance(reference_images, list) and len(reference_images) > 3:
             return jsonify({"error": "Maximum 3 reference images allowed"}), 400
@@ -1352,7 +1352,7 @@ def generate_video():
     elif model == 'VEO_3':
         duration = 8
         resolution = '720p'
-    elif model == 'KLING_3_0_OMNI':
+    elif model == 'SEEDANCE_2_0':
         duration = 5
         resolution = '480p'
         size = data.get('size', '16:9')
