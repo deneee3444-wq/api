@@ -382,6 +382,49 @@
             box-shadow: 0 0 8px var(--violet-glow);
         }
 
+        /* Segmented button group */
+        .seg-group {
+            display: flex;
+            gap: 6px;
+            flex-wrap: nowrap;
+        }
+        .seg-group--wrap { flex-wrap: wrap; }
+        .seg-btn {
+            flex: 1;
+            min-width: 80px;
+            padding: 8px 12px;
+            background: var(--panel);
+            border: 1px solid var(--border) !important;
+            border-radius: var(--radius-sm);
+            color: var(--text-dim);
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all var(--transition);
+            white-space: nowrap;
+            box-shadow: none !important;
+            transform: none !important;
+            text-transform: none;
+            letter-spacing: normal;
+        }
+        .seg-btn::after { display: none !important; }
+        .seg-btn:hover {
+            background: var(--elevated);
+            border-color: var(--border-bright) !important;
+            color: var(--text);
+            transform: none !important;
+            box-shadow: none !important;
+        }
+        .seg-btn.active {
+            background: var(--violet-dim);
+            border-color: var(--violet) !important;
+            color: var(--violet);
+            font-weight: 600;
+            box-shadow: none !important;
+            transform: none !important;
+        }
+
         /* TTS Range Sliders — thumb tam uca yapışır */
         .tts-range {
             -webkit-appearance: none;
@@ -1557,7 +1600,7 @@
                         <button class="tab-btn" onclick="switchTab('tab-t2v')"><span class="tab-icon">🎬</span> Text to Video</button>
                         <button class="tab-btn" onclick="switchTab('tab-i2v')"><span class="tab-icon">🎞️</span> Image to Video</button>
                         <button class="tab-btn" onclick="switchTab('tab-tts')"><span class="tab-icon">🔊</span> Text to Speech</button>
-                        <button class="tab-btn" onclick="switchTab('tab-music')"><span class="tab-icon">🎵</span> Music (SUNO)</button>
+                        <button class="tab-btn" onclick="switchTab('tab-music')"><span class="tab-icon">🎵</span> Music</button>
                     </div>
 
                     <!-- Text to Image -->
@@ -1862,11 +1905,11 @@
                         <div id="ttsReadable" style="display:none; margin-top:1.25rem;"></div>
                     </div>
 
-                    <!-- Music (SUNO) -->
+                    <!-- Music -->
                     <div class="tab-panel" id="tab-music" style="display:none;">
                         <div class="form-row cols-2">
                             <div class="form-group">
-                                <label for="musicModel">model</label>
+                                <label>model</label>
                                 <select id="musicModel" disabled>
                                     <option value="SUNO" selected>SUNO</option>
                                 </select>
@@ -1876,6 +1919,27 @@
                                 <input type="text" id="musicStyle" placeholder="Örn: rock, jazz, hip-hop...">
                             </div>
                         </div>
+
+                        <!-- INSTRUMENTAL toggle -->
+                        <div class="form-group">
+                            <label style="margin-bottom:8px; display:block;">INSTRUMENTAL</label>
+                            <div class="seg-group" id="musicInstrumentalGroup">
+                                <button class="seg-btn active" data-val="false" onclick="onMusicInstrumentalChange(this)">Vocal</button>
+                                <button class="seg-btn" data-val="true" onclick="onMusicInstrumentalChange(this)">Instrumental</button>
+                            </div>
+                        </div>
+
+                        <!-- MODE selector -->
+                        <div class="form-group">
+                            <label style="margin-bottom:8px; display:block;">MODE</label>
+                            <div class="seg-group seg-group--wrap" id="musicModeGroup">
+                                <button class="seg-btn active" data-val="TEXT" onclick="onMusicModeChange(this)">Text</button>
+                                <button class="seg-btn" data-val="COVER" onclick="onMusicModeChange(this)">Cover</button>
+                                <button class="seg-btn" data-val="ADD_INSTRUMENTAL" onclick="onMusicModeChange(this)">Add Instrumental</button>
+                                <button class="seg-btn" data-val="ADD_VOCAL" onclick="onMusicModeChange(this)">Add Vocal</button>
+                            </div>
+                        </div>
+
                         <div class="form-group">
                             <label for="musicPrompt">prompt *</label>
                             <div class="prompt-wrap">
@@ -1883,13 +1947,8 @@
                                 <span id="musicPromptCounter" class="prompt-counter">0/500</span>
                             </div>
                         </div>
-                        <div class="form-group" style="display:flex; align-items:center; justify-content:space-between; gap:1rem;">
-                            <label style="margin-bottom:0;">enstrümantal (şarkı sözü yok)</label>
-                            <label class="toggle-switch">
-                                <input type="checkbox" id="musicInstrumental" onchange="onMusicInstrumentalChange()">
-                                <span class="toggle-slider"></span>
-                            </label>
-                        </div>
+
+                        <!-- Lyrics — only Vocal + Text -->
                         <div class="form-group" id="musicLyricsGroup">
                             <label for="musicLyrics">sözler (lyrics)</label>
                             <div class="prompt-wrap">
@@ -1897,13 +1956,16 @@
                                 <span id="musicLyricsCounter" class="prompt-counter">0/3000</span>
                             </div>
                         </div>
-                        <div class="form-group">
-                            <label for="musicAudioFile">referans ses (opsiyonel)</label>
+
+                        <!-- Audio upload — required for COVER / ADD_INSTRUMENTAL / ADD_VOCAL -->
+                        <div class="form-group" id="musicAudioGroup" style="display:none;">
+                            <label for="musicAudioFile" id="musicAudioLabel">referans ses <span style="color:var(--rose);">*</span></label>
                             <div class="file-input-wrapper">
                                 <input type="file" id="musicAudioFile" accept="audio/mp3,audio/mpeg,.mp3" onchange="updateMusicAudioLabel(this)">
                                 <label for="musicAudioFile" class="file-input-label" id="musicAudioFileLabel">MP3 SEÇ</label>
                             </div>
                         </div>
+
                         <small style="color:var(--text-muted); display:flex; align-items:center; gap:0.4rem; margin-bottom:0.75rem; font-size:0.75rem;"><span style="font-size:0.75rem; flex-shrink:0;">ℹ️</span>Her istekte 2 versiyon üretilir — task tamamlandığında her ikisi de döner.</small>
                         <button onclick="generateMusic()">🎵 Müzik Oluştur</button>
                         <div id="musicResponse" class="response-box" style="display:none;"></div>
@@ -3031,11 +3093,48 @@
         }
 
         /* ══════════════════════════════════════
-           MUSIC (SUNO)
+           MUSIC
         ══════════════════════════════════════ */
-        function onMusicInstrumentalChange() {
-            const checked = document.getElementById('musicInstrumental').checked;
-            document.getElementById('musicLyricsGroup').style.display = checked ? 'none' : 'block';
+
+        // Returns current instrumental value (true/false)
+        function getMusicInstrumental() {
+            const active = document.querySelector('#musicInstrumentalGroup .seg-btn.active');
+            return active ? active.dataset.val === 'true' : false;
+        }
+
+        // Returns current audioUsage value
+        function getMusicMode() {
+            const active = document.querySelector('#musicModeGroup .seg-btn.active');
+            return active ? active.dataset.val : 'TEXT';
+        }
+
+        // Modes that require audio upload
+        const AUDIO_REQUIRED_MODES = ['COVER', 'ADD_INSTRUMENTAL', 'ADD_VOCAL'];
+
+        function onMusicInstrumentalChange(btn) {
+            document.querySelectorAll('#musicInstrumentalGroup .seg-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            updateMusicVisibility();
+        }
+
+        function onMusicModeChange(btn) {
+            document.querySelectorAll('#musicModeGroup .seg-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            updateMusicVisibility();
+        }
+
+        function updateMusicVisibility() {
+            const isInstrumental = getMusicInstrumental();
+            const mode = getMusicMode();
+            const audioRequired = AUDIO_REQUIRED_MODES.includes(mode);
+
+            // Lyrics: only Vocal + Text
+            const lyricsGroup = document.getElementById('musicLyricsGroup');
+            if (lyricsGroup) lyricsGroup.style.display = (!isInstrumental && mode === 'TEXT') ? '' : 'none';
+
+            // Audio: required for COVER, ADD_INSTRUMENTAL, ADD_VOCAL
+            const audioGroup = document.getElementById('musicAudioGroup');
+            if (audioGroup) audioGroup.style.display = audioRequired ? '' : 'none';
         }
 
         function updateMusicAudioLabel(input) {
@@ -3081,16 +3180,24 @@
             const prompt = document.getElementById('musicPrompt').value.trim();
             if (!prompt) { alert('Lütfen prompt girin!'); return; }
 
-            const instrumental = document.getElementById('musicInstrumental').checked;
+            const instrumental = getMusicInstrumental();
+            const audioUsage = getMusicMode();
             const style = document.getElementById('musicStyle').value.trim();
             const lyrics = document.getElementById('musicLyrics').value.trim();
 
-            const body = { prompt, model: 'SUNO', instrumental };
-            if (style) body.style = style;
-            if (!instrumental && lyrics) body.lyrics = lyrics;
-
+            // Validate audio for required modes
             const audioInput = document.getElementById('musicAudioFile');
-            if (audioInput && audioInput.files && audioInput.files.length > 0) {
+            const hasAudio = audioInput && audioInput.files && audioInput.files.length > 0;
+            if (AUDIO_REQUIRED_MODES.includes(audioUsage) && !hasAudio) {
+                alert(`"${audioUsage}" modu için MP3 dosyası zorunludur!`);
+                return;
+            }
+
+            const body = { prompt, model: 'SUNO', instrumental, audioUsage };
+            if (style) body.style = style;
+            if (!instrumental && audioUsage === 'TEXT' && lyrics) body.lyrics = lyrics;
+
+            if (hasAudio) {
                 body.audio_base64 = await audioFileToBase64(audioInput.files[0]);
             }
 
