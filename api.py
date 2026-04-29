@@ -23,7 +23,7 @@ atexit.register(lambda: _shutdown_event.set())
 API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.ewogICJyb2xlIjogImFub24iLAogICJpc3MiOiAic3VwYWJhc2UiLAogICJpYXQiOiAxNzM0OTY5NjAwLAogICJleHAiOiAxODkyNzM2MDAwCn0.4NnK23LGYvKPGuKI5rwQn2KbLMzzdE4jXpHwbGCqPqY"
 
 # Maximum concurrent tasks
-MAX_CONCURRENT_TASKS = 10
+MAX_CONCURRENT_TASKS = 1000
 
 # Deevid URLs
 URL_AUTH = "https://sp.deevid.ai/auth/v1/token?grant_type=password"
