@@ -509,6 +509,7 @@
     <a href="#image-gen">🖼 Image Generation</a>
     <a href="#video-gen">🎥 Video Generation</a>
     <a href="#tts">🎙 Text-to-Speech</a>
+    <a href="#music-gen">🎵 Music Generation</a>
     <a href="#status">📊 Task Status</a>
     <a href="#errors">❌ Errors & Limits</a>
 </aside>
@@ -524,11 +525,12 @@
             <div class="hero-glow-2"></div>
             <div class="hero-eyebrow">API Reference</div>
             <h1>CreativeLabs<br><span>Generation API</span></h1>
-            <p class="hero-sub">Image, Video, and Text-to-Speech generation powered by state-of-the-art AI models. Fully async, quota-based.</p>
+            <p class="hero-sub">Image, Video, TTS, and Music generation powered by state-of-the-art AI models. Fully async, quota-based.</p>
             <div class="hero-pills">
                 <span class="pill cyan">🖼 Image</span>
                 <span class="pill violet">🎥 Video</span>
                 <span class="pill green">🎙 TTS</span>
+                <span class="pill cyan">🎵 Music</span>
                 <span class="pill amber">⚡ 10 Concurrent Tasks</span>
             </div>
         </div>
@@ -685,7 +687,7 @@ print(response.json())</code></pre>
                                 <td>string</td>
                                 <td><span class="badge optional">Optional</span></td>
                                 <td>Model version (default: NANO BANANA PRO)<br>
-                                Options: <code>NANO_BANANA_PRO</code>, <code>NANO_BANANA</code>, <code>NANO_BANANA_2</code></td>
+                                Options: <code>NANO_BANANA_PRO</code>, <code>NANO_BANANA</code>, <code>NANO_BANANA_2</code>, <code>GPT_IMAGE_2</code></td>
                             </tr>
                             <tr>
                                 <td><code>resolution</code></td>
@@ -712,6 +714,7 @@ print(response.json())</code></pre>
                         <li><strong>NANO BANANA PRO:</strong> Supports resolution (1K, 2K, 4K) and all size options</li>
                         <li><strong>NANO BANANA 2:</strong> Supports resolution (1K, 2K, 4K) and all size options</li>
                         <li><strong>NANO BANANA:</strong> Only supports size options (no resolution parameter)</li>
+                        <li><strong>GPT_IMAGE_2:</strong> Supports resolution (1K, 2K) and all size options</li>
                     </ul>
                 </div>
 
@@ -890,7 +893,7 @@ print(resp.json())</code></pre>
                     <code>/api/generate/video</code>
                 </div>
 
-                <p>Generate videos from text prompts or animate existing images using SORA_2, VEO_3, VIDU_Q3, or KLING_3_0_OMNI models.</p>
+                <p>Generate videos from text prompts or animate existing images using SORA_2, VEO_3, VIDU_Q3, or SEEDANCE_2_0 models.</p>
 
                 <h3>Request Body</h3>
                 <div class="table-wrap">
@@ -918,13 +921,14 @@ print(resp.json())</code></pre>
                                 • <strong>SORA_2</strong> (default) — 10 seconds, 720p<br>
                                 • <strong>VEO_3</strong> — 8 seconds, 720p<br>
                                 • <strong>VIDU_Q3</strong> — image-to-video only; 720p/5s or 512p/10s<br>
-                                • <strong>KLING_3_0_OMNI</strong> — 5 seconds, 480p; text-to-video, start frame + end frame, or reference images</td>
+                                • <strong>QUALITY_V2_5</strong> — image-to-video only; 720p/5s or 480p/10s<br>
+                                • <strong>SEEDANCE_2_0</strong> — 5 seconds, 480p; text-to-video, start frame + end frame, or reference images</td>
                             </tr>
                             <tr>
                                 <td><code>size</code></td>
                                 <td>string</td>
                                 <td><span class="badge optional">Optional</span></td>
-                                <td>16:9, 9:16 (default: 16:9). <strong>VIDU_Q3:</strong> send <code>"AUTO"</code> — size is determined automatically from the input image. <strong>KLING_3_0_OMNI:</strong> supports 16:9, 9:16, 1:1, 4:3, 3:4 (not applicable for image-to-video mode).</td>
+                                <td>16:9, 9:16 (default: 16:9). <strong>VIDU_Q3:</strong> send <code>"AUTO"</code> — size is determined automatically from the input image. <strong>SEEDANCE_2_0:</strong> supports 16:9, 9:16, 1:1, 4:3, 3:4 (not applicable for image-to-video mode).</td>
                             </tr>
                             <tr>
                                 <td><code>duration</code></td>
@@ -942,13 +946,13 @@ print(resp.json())</code></pre>
                                 <td><code>end_frame</code></td>
                                 <td>string</td>
                                 <td><span class="badge optional">Optional</span></td>
-                                <td><strong>VEO_3 and KLING_3_0_OMNI only.</strong> Base64 encoded end frame image. Requires <code>start_frame</code> to also be provided.</td>
+                                <td><strong>VEO_3 and SEEDANCE_2_0 only.</strong> Base64 encoded end frame image. Requires <code>start_frame</code> to also be provided.</td>
                             </tr>
                             <tr>
                                 <td><code>reference_images</code></td>
                                 <td>array</td>
                                 <td><span class="badge optional">Optional</span></td>
-                                <td><strong>VEO_3 and KLING_3_0_OMNI only.</strong> Array of base64 encoded reference images to guide style/content. <strong>Max 3 images.</strong> Cannot be used together with <code>start_frame</code> or <code>end_frame</code>.</td>
+                                <td><strong>VEO_3 and SEEDANCE_2_0 only.</strong> Array of base64 encoded reference images to guide style/content. <strong>Max 3 images.</strong> Cannot be used together with <code>start_frame</code> or <code>end_frame</code>.</td>
                             </tr>
                         </tbody>
                     </table>
@@ -959,9 +963,10 @@ print(resp.json())</code></pre>
                     <ul>
                         <li><strong>SORA_2 (default):</strong> Duration: 10 seconds, Resolution: 720p. Supports text-to-video and image-to-video.</li>
                         <li><strong>VEO_3:</strong> Duration: 8 seconds, Resolution: 720p. Supports text-to-video, image-to-video (start frame), start+end frame, and reference images.</li>
-                        <li><strong>VIDU_Q3:</strong> Image-to-video only. Two modes: <code>duration=5</code> → 720p, <code>duration=10</code> → 512p. Send <code>size="AUTO"</code>.</li>
-                        <li><strong>KLING_3_0_OMNI:</strong> Duration: 5 seconds, Resolution: 480p. Supports text-to-video, start frame + end frame, and reference images (max 3). Supported sizes: 16:9, 9:16, 1:1, 4:3, 3:4.</li>
-                        <li><strong>Supported Sizes:</strong> 16:9, 9:16 (SORA_2 &amp; VEO_3) · AUTO (VIDU_Q3) · 16:9, 9:16, 1:1, 4:3, 3:4 (KLING_3_0_OMNI)</li>
+                        <li><strong>VIDU_Q3:</strong> Image-to-video only. Duration: 5s (720p) or 10s (512p). Requires <code>size="AUTO"</code>.</li>
+                        <li><strong>QUALITY_V2_5:</strong> Image-to-video only. Duration: 5s (720p) or 10s (480p). Requires <code>size="AUTO"</code>.</li>
+                        <li><strong>SEEDANCE_2_0:</strong> Duration: 5 seconds, Resolution: 480p. Supports text-to-video, start frame + end frame, and reference images (max 3). Supported sizes: 16:9, 9:16, 1:1, 4:3, 3:4.</li>
+                        <li><strong>Supported Sizes:</strong> 16:9, 9:16 (SORA_2 &amp; VEO_3) · AUTO (VIDU_Q3 &amp; QUALITY_V2_5) · 16:9, 9:16, 1:1, 4:3, 3:4 (SEEDANCE_2_0)</li>
                     </ul>
                 </div>
 
@@ -1157,7 +1162,7 @@ print(resp.json())</code></pre>
                     </div>
                 </div>
 
-                <h3>Example Request (KLING 3.0 OMNI — Text-to-Video)</h3>
+                <h3>Example Request (SEEDANCE 2.0 — Text-to-Video)</h3>
                 <div class="code-tabs">
                     <div class="tab-headers">
                         <button class="tab-btn active" onclick="showTab(this, 'vid-kling-t2v-curl')">CURL</button>
@@ -1173,7 +1178,7 @@ print(resp.json())</code></pre>
   -H <span class="code-string">"Content-Type: application/json"</span> \
   -d '{
     <span class="code-key">"prompt"</span>: <span class="code-string">"a futuristic city at night, cinematic"</span>,
-    <span class="code-key">"model"</span>: <span class="code-string">"KLING_3_0_OMNI"</span>,
+    <span class="code-key">"model"</span>: <span class="code-string">"SEEDANCE_2_0"</span>,
     <span class="code-key">"size"</span>: <span class="code-string">"16:9"</span>
   }'</code></pre>
                     </div>
@@ -1183,7 +1188,7 @@ print(resp.json())</code></pre>
 url = <span class="code-string">"http://127.0.0.1:5000/api/generate/video"</span>
 payload = {
     <span class="code-string">"prompt"</span>: <span class="code-string">"a futuristic city at night, cinematic"</span>,
-    <span class="code-string">"model"</span>: <span class="code-string">"KLING_3_0_OMNI"</span>,
+    <span class="code-string">"model"</span>: <span class="code-string">"SEEDANCE_2_0"</span>,
     <span class="code-string">"size"</span>: <span class="code-string">"16:9"</span>
 }
 headers = {<span class="code-string">"Authorization"</span>: <span class="code-string">"Bearer YOUR_API_KEY"</span>}
@@ -1193,7 +1198,7 @@ print(resp.json())</code></pre>
                     </div>
                 </div>
 
-                <h3>Example Request (KLING 3.0 OMNI — Start Frame + End Frame)</h3>
+                <h3>Example Request (SEEDANCE 2.0 — Start Frame + End Frame)</h3>
                 <div class="code-tabs">
                     <div class="tab-headers">
                         <button class="tab-btn active" onclick="showTab(this, 'vid-kling-i2v-curl')">CURL</button>
@@ -1209,7 +1214,7 @@ print(resp.json())</code></pre>
   -H <span class="code-string">"Content-Type: application/json"</span> \
   -d '{
     <span class="code-key">"prompt"</span>: <span class="code-string">"smooth cinematic motion"</span>,
-    <span class="code-key">"model"</span>: <span class="code-string">"KLING_3_0_OMNI"</span>,
+    <span class="code-key">"model"</span>: <span class="code-string">"SEEDANCE_2_0"</span>,
     <span class="code-key">"start_frame"</span>: <span class="code-string">"BASE64_START_FRAME"</span>,
     <span class="code-key">"end_frame"</span>: <span class="code-string">"BASE64_END_FRAME"</span>
   }'</code></pre>
@@ -1220,7 +1225,7 @@ print(resp.json())</code></pre>
 url = <span class="code-string">"http://127.0.0.1:5000/api/generate/video"</span>
 payload = {
     <span class="code-string">"prompt"</span>: <span class="code-string">"smooth cinematic motion"</span>,
-    <span class="code-string">"model"</span>: <span class="code-string">"KLING_3_0_OMNI"</span>,
+    <span class="code-string">"model"</span>: <span class="code-string">"SEEDANCE_2_0"</span>,
     <span class="code-string">"start_frame"</span>: <span class="code-string">"BASE64_START_FRAME"</span>,
     <span class="code-string">"end_frame"</span>: <span class="code-string">"BASE64_END_FRAME"</span>  <span class="code-comment"># optional</span>
 }
@@ -1231,7 +1236,7 @@ print(resp.json())</code></pre>
                     </div>
                 </div>
 
-                <h3>Example Request (KLING 3.0 OMNI — Reference Images)</h3>
+                <h3>Example Request (SEEDANCE 2.0 — Reference Images)</h3>
                 <div class="code-tabs">
                     <div class="tab-headers">
                         <button class="tab-btn active" onclick="showTab(this, 'vid-kling-ref-curl')">CURL</button>
@@ -1247,7 +1252,7 @@ print(resp.json())</code></pre>
   -H <span class="code-string">"Content-Type: application/json"</span> \
   -d '{
     <span class="code-key">"prompt"</span>: <span class="code-string">"character walking through a forest"</span>,
-    <span class="code-key">"model"</span>: <span class="code-string">"KLING_3_0_OMNI"</span>,
+    <span class="code-key">"model"</span>: <span class="code-string">"SEEDANCE_2_0"</span>,
     <span class="code-key">"reference_images"</span>: [<span class="code-string">"BASE64_REF_1"</span>, <span class="code-string">"BASE64_REF_2"</span>],
     <span class="code-key">"size"</span>: <span class="code-string">"16:9"</span>
   }'</code></pre>
@@ -1258,7 +1263,7 @@ print(resp.json())</code></pre>
 url = <span class="code-string">"http://127.0.0.1:5000/api/generate/video"</span>
 payload = {
     <span class="code-string">"prompt"</span>: <span class="code-string">"character walking through a forest"</span>,
-    <span class="code-string">"model"</span>: <span class="code-string">"KLING_3_0_OMNI"</span>,
+    <span class="code-string">"model"</span>: <span class="code-string">"SEEDANCE_2_0"</span>,
     <span class="code-string">"reference_images"</span>: [<span class="code-string">"BASE64_REF_1"</span>, <span class="code-string">"BASE64_REF_2"</span>],
     <span class="code-string">"size"</span>: <span class="code-string">"16:9"</span>
 }
@@ -1337,10 +1342,10 @@ print(resp.json())</code></pre>
                                 <td>Volume: 0.01 – 10.0 (default: 1.0)</td>
                             </tr>
                             <tr>
-                                <td><code>modelVersion</code></td>
+                                <td><code>model</code></td>
                                 <td>string</td>
                                 <td><span class="badge optional">Optional</span></td>
-                                <td><code>MODEL_SEVEN_SPEECH_26_TURBO</code> (default) or <code>MODEL_SEVEN_SPEECH_26_HD</code></td>
+                                <td><code>MINIMAX-TURBO</code> (default) or <code>MINIMAX</code></td>
                             </tr>
                             <tr>
                                 <td><code>emotion</code></td>
@@ -1460,6 +1465,107 @@ print(resp.json())</code></pre>
                 </div>
             </section>
 
+            <!-- Music Generation -->
+            <section id="music-gen">
+                <h2><span class="emoji">🎵</span> Music Generation</h2>
+
+                <div class="endpoint">
+                    <span class="method post">POST</span>
+                    <code>/api/generate/music</code>
+                </div>
+
+                <p>Generate high-quality music and audio from text prompts or reference audio.</p>
+
+                <h3>Request Body</h3>
+                <div class="table-wrap">
+                    <table class="param-table">
+                        <thead>
+                            <tr>
+                                <th>Parameter</th>
+                                <th>Type</th>
+                                <th>Required</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>prompt</code></td>
+                                <td>string</td>
+                                <td><span class="badge required">Required</span></td>
+                                <td>Description of the music to generate.</td>
+                            </tr>
+                            <tr>
+                                <td><code>model</code></td>
+                                <td>string</td>
+                                <td><span class="badge optional">Optional</span></td>
+                                <td>Model version (default: SUNO)<br>
+                                Options: <code>SUNO</code></td>
+                            </tr>
+                            <tr>
+                                <td><code>style</code></td>
+                                <td>string</td>
+                                <td><span class="badge optional">Optional</span></td>
+                                <td>Music style (e.g., "lo-fi", "cinematic", "rock").</td>
+                            </tr>
+                            <tr>
+                                <td><code>lyrics</code></td>
+                                <td>string</td>
+                                <td><span class="badge optional">Optional</span></td>
+                                <td>Lyrics for the song.</td>
+                            </tr>
+                            <tr>
+                                <td><code>instrumental</code></td>
+                                <td>boolean</td>
+                                <td><span class="badge optional">Optional</span></td>
+                                <td>Generate instrumental only (default: false).</td>
+                            </tr>
+                            <tr>
+                                <td><code>audio_base64</code></td>
+                                <td>string</td>
+                                <td><span class="badge optional">Optional</span></td>
+                                <td>Base64 encoded reference audio.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h3>Example Request</h3>
+                <div class="code-tabs">
+                    <div class="tab-headers">
+                        <button class="tab-btn active" onclick="showTab(this, 'music-curl')">CURL</button>
+                        <button class="tab-btn" onclick="showTab(this, 'music-py')">PYTHON</button>
+                        <button class="copy-btn" onclick="copyActiveTab(this)">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+                            Copy
+                        </button>
+                    </div>
+                    <div id="music-curl" class="tab-panel active">
+<pre><code>curl -X POST http://127.0.0.1:5000/api/generate/music \
+  -H <span class="code-string">"Authorization: Bearer YOUR_API_KEY"</span> \
+  -H <span class="code-string">"Content-Type: application/json"</span> \
+  -d '{
+    <span class="code-key">"prompt"</span>: <span class="code-string">"a chill lo-fi beat for studying"</span>,
+    <span class="code-key">"style"</span>: <span class="code-string">"lo-fi"</span>,
+    <span class="code-key">"instrumental"</span>: <span class="code-bool">true</span>
+  }'</code></pre>
+                    </div>
+                    <div id="music-py" class="tab-panel">
+<pre><code><span class="code-keyword">import</span> requests
+
+url = <span class="code-string">"http://127.0.0.1:5000/api/generate/music"</span>
+payload = {
+    <span class="code-string">"prompt"</span>: <span class="code-string">"a chill lo-fi beat for studying"</span>,
+    <span class="code-string">"style"</span>: <span class="code-string">"lo-fi"</span>,
+    <span class="code-string">"instrumental"</span>: <span class="code-bool">True</span>
+}
+headers = {<span class="code-string">"Authorization"</span>: <span class="code-string">"Bearer YOUR_API_KEY"</span>}
+
+resp = requests.post(url, json=payload, headers=headers)
+print(resp.json())</code></pre>
+                    </div>
+                </div>
+            </section>
+
             <!-- Task Status -->
             <section id="status">
                 <h2><span class="emoji">📊</span> Task Status</h2>
@@ -1552,12 +1658,33 @@ print(resp.json())</code></pre>
   <span class="code-key">"status"</span>: <span class="code-string">"completed"</span>,
   <span class="code-key">"result_url"</span>: <span class="code-string">"https://cdn.example.com/.../speech.mp3"</span>,
   <span class="code-key">"prompt"</span>: <span class="code-string">"Hello! This is a text to speech test."</span>,
-  <span class="code-key">"model"</span>: <span class="code-string">"MODEL_SEVEN_SPEECH_26_TURBO"</span>,
+  <span class="code-key">"model"</span>: <span class="code-string">"MINIMAX-TURBO"</span>,
   <span class="code-key">"logs"</span>: [
     {<span class="code-key">"time"</span>: <span class="code-string">"2026-03-07 10:10:01"</span>, <span class="code-key">"message"</span>: <span class="code-string">"Submitting TTS with voice: English_expressive_narrator"</span>},
     {<span class="code-key">"time"</span>: <span class="code-string">"2026-03-07 10:10:03"</span>, <span class="code-key">"message"</span>: <span class="code-string">"TTS generation successful."</span>}
   ],
   <span class="code-key">"created_at"</span>: <span class="code-string">"2026-03-07T10:10:00"</span>
+}
+
+<span class="code-comment">// Music task (completed)</span>
+{
+  <span class="code-key">"task_id"</span>: <span class="code-string">"mus123-abc456-xyz789"</span>,
+  <span class="code-key">"mode"</span>: <span class="code-string">"music"</span>,
+  <span class="code-key">"status"</span>: <span class="code-string">"completed"</span>,
+  <span class="code-key">"tracks"</span>: [
+    {
+      <span class="code-key">"musicName"</span>: <span class="code-string">"Chill Beats"</span>,
+      <span class="code-key">"musicUrl"</span>: <span class="code-string">"https://cdn.example.com/.../track1.mp3"</span>,
+      <span class="code-key">"coverImageUrl"</span>: <span class="code-string">"https://cdn.example.com/.../cover1.jpg"</span>,
+      <span class="code-key">"version"</span>: <span class="code-string">"v1"</span>
+    }
+  ],
+  <span class="code-key">"prompt"</span>: <span class="code-string">"a chill lo-fi beat for studying"</span>,
+  <span class="code-key">"model"</span>: <span class="code-string">"SUNO"</span>,
+  <span class="code-key">"logs"</span>: [
+    {<span class="code-key">"time"</span>: <span class="code-string">"2026-03-07 10:15:01"</span>, <span class="code-key">"message"</span>: <span class="code-string">"Submitting music task..."</span>}
+  ],
+  <span class="code-key">"created_at"</span>: <span class="code-string">"2026-03-07T10:15:00"</span>
 }
 
 <span class="code-comment">// Any task (failed)</span>
