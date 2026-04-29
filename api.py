@@ -35,6 +35,8 @@ URL_SUBMIT_CHARACTER_VIDEO = "https://api.deevid.ai/character-to-video/task/subm
 URL_SUBMIT_TTS = "https://api.deevid.ai/text-to-speech/task/submit"
 URL_SUBMIT_MULTIMODAL_VIDEO = "https://api.deevid.ai/video/multimodal/task"
 URL_SUBMIT_QUALITY_V2_5 = "https://api.deevid.ai/generation/task"
+URL_PRESIGN_MP3 = "https://api.deevid.ai/file-upload/presign/mp3"
+URL_CONFIRM_MP3 = "https://api.deevid.ai/file-upload/confirm/mp3"
 URL_TTS_VOICES = "https://api.deevid.ai/public-voices"
 URL_ASSETS = "https://api.deevid.ai/my-assets?limit=50&assetType=All&filter=CREATION"
 URL_VIDEO_TASKS = "https://api.deevid.ai/video/tasks?page=1&size=20"
@@ -44,6 +46,11 @@ URL_QUOTA = "https://api.deevid.ai/subscription/plan"
 TTS_MODEL_MAP = {
     'MINIMAX':       'MODEL_SEVEN_SPEECH_26_HD',
     'MINIMAX-TURBO': 'MODEL_SEVEN_SPEECH_26_TURBO',
+}
+
+# Music frontend model name → Deevid selection model mapping
+MUSIC_MODEL_MAP = {
+    'SUNO': 'quality V1.0',
 }
 
 # Frontend model name → Deevid model version mapping
@@ -190,6 +197,177 @@ def upload_image(token, image_bytes, use_asset_id=False, return_url=False):
     except Exception as e:
         print(f"Upload error: {e}")
     return (None, None) if return_url else None
+
+def upload_audio(token, audio_bytes):
+    """Uploads an MP3 audio file via presign → PUT → confirm flow.
+    Returns (asset_id, asset_url) tuple or (None, None) on failure.
+    """
+    try:
+        headers = {"authorization": f"Bearer {token}", **DEVICE_HEADERS}
+
+        # Step 1: Get presigned URL
+        presign_resp = requests.post(URL_PRESIGN_MP3, headers=headers, timeout=15)
+        if presign_resp.status_code not in [200, 201]:
+            print(f"Presign failed: {presign_resp.status_code} {presign_resp.text}")
+            return None, None
+        presign_data = presign_resp.json()['data']['data']
+        presigned_url = presign_data['presignedUrl']
+        file_name = presign_data['fileName']
+
+        # Step 2: PUT audio bytes to presigned URL
+        put_resp = requests.put(
+            presigned_url,
+            data=audio_bytes,
+            headers={"Content-Type": "audio/mpeg", "x-amz-checksum-crc32": "AAAAAA="},
+            timeout=60
+        )
+        if put_resp.status_code not in [200, 201, 204]:
+            print(f"Audio PUT failed: {put_resp.status_code} {put_resp.text}")
+            return None, None
+
+        # Step 3: Confirm upload
+        confirm_resp = requests.post(
+            URL_CONFIRM_MP3,
+            json={"fileName": file_name},
+            headers=headers,
+            timeout=15
+        )
+        if confirm_resp.status_code not in [200, 201]:
+            print(f"Confirm failed: {confirm_resp.status_code} {confirm_resp.text}")
+            return None, None
+        confirm_data = confirm_resp.json()['data']['data']
+        asset_id = str(confirm_data['assetId'])
+        asset_url = confirm_data['url']
+        return asset_id, asset_url
+
+    except Exception as e:
+        print(f"Audio upload error: {e}")
+        return None, None
+
+
+def process_music_task(task_id, params, api_key_id):
+    """Worker for SUNO music generation via Deevid."""
+    try:
+        db.update_task_status(task_id, 'running')
+        try:
+            token, account = login_with_retry(api_key_id, task_id=task_id)
+            if not token:
+                db.update_task_status(task_id, 'failed')
+                db.add_task_log(task_id, "Login failed.")
+                return
+
+            headers = {"authorization": f"Bearer {token}", **DEVICE_HEADERS}
+
+            # Optional: upload reference audio
+            asset_ids = []
+            asset_urls = []
+            audio_b64 = params.get('audio_base64')
+            if audio_b64:
+                audio_bytes = base64.b64decode(audio_b64)
+                aid, aurl = upload_audio(token, audio_bytes)
+                if not aid:
+                    db.update_task_status(task_id, 'failed')
+                    db.add_task_log(task_id, "Audio upload failed.")
+                    db.release_account(api_key_id, account['email'])
+                    return
+                asset_ids.append(aid)
+                asset_urls.append(aurl)
+
+            prompt = params.get('prompt', '')
+            style = params.get('style', '')
+            lyrics = params.get('lyrics', '')
+            instrumental = params.get('instrumental', False)
+            model_key = MUSIC_MODEL_MAP.get(params.get('model', 'SUNO'), 'quality V1.0')
+
+            inputs = {"prompt": prompt}
+            if asset_ids:
+                inputs["assetIds"] = asset_ids
+                inputs["assetUrls"] = asset_urls
+
+            music_params = {
+                "instrumental": instrumental,
+                "audioUsage": "TEXT",
+            }
+            if style:
+                music_params["style"] = style
+            if lyrics and not instrumental:
+                music_params["lyrics"] = lyrics
+
+            payload = {
+                "selection": {
+                    "modality": "audio",
+                    "capability": "music",
+                    "model": model_key
+                },
+                "inputs": inputs,
+                "params": music_params
+            }
+
+            db.update_task_token(task_id, token)
+
+            resp = requests.post(URL_SUBMIT_QUALITY_V2_5, headers=headers, json=payload, timeout=30)
+            resp_json = resp.json()
+
+            error = resp_json.get('error')
+            if error and error.get('code') != 0:
+                db.update_task_status(task_id, 'failed')
+                db.add_task_log(task_id, f"Submit error: {resp_json}")
+                db.release_account(api_key_id, account['email'])
+                return
+
+            api_task_id = str(resp_json['data']['data']['taskId'])
+            db.update_task_external_data(task_id, api_task_id, token)
+            db.add_task_log(task_id, f"API Task ID: {api_task_id}")
+
+            poll_headers = {"authorization": f"Bearer {token}", **DEVICE_HEADERS}
+            for _ in range(600):  # max ~30 minutes
+                if _shutdown_event.wait(3):
+                    return
+                try:
+                    poll = requests.get(URL_ASSETS, headers=poll_headers).json()
+                    groups = poll.get('data', {}).get('data', {}).get('groups', [])
+                    for group in groups:
+                        for item in group.get('items', []):
+                            creation = item.get('detail', {}).get('creation', {})
+                            if str(creation.get('taskId')) != api_task_id:
+                                continue
+                            state = creation.get('taskState')
+                            if state == 'SUCCESS':
+                                music_name = creation.get('musicName', '')
+                                music_urls = creation.get('musicUrls', [])
+                                cover_urls = creation.get('coverImageUrls', [])
+                                if not music_urls:
+                                    continue
+                                tracks = []
+                                for i, murl in enumerate(music_urls):
+                                    tracks.append({
+                                        "musicName": music_name,
+                                        "musicUrl": murl,
+                                        "coverImageUrl": cover_urls[i] if i < len(cover_urls) else None,
+                                        "version": i + 1
+                                    })
+                                db.update_task_status(task_id, 'completed', json.dumps(tracks))
+                                db.add_task_log(task_id, f"Music generation successful. {len(tracks)} tracks.")
+                                return
+                            elif state == 'FAIL':
+                                db.update_task_status(task_id, 'failed')
+                                db.add_task_log(task_id, "Music task failed on Deevid.")
+                                db.release_account(api_key_id, account['email'])
+                                return
+                except Exception:
+                    pass
+
+            db.update_task_status(task_id, 'timeout')
+            db.release_account(api_key_id, account['email'])
+
+        except Exception as e:
+            db.update_task_status(task_id, 'error')
+            db.add_task_log(task_id, str(e))
+            if 'account' in locals() and account:
+                db.release_account(api_key_id, account['email'])
+    except Exception:
+        db.update_task_status(task_id, 'error')
+
 
 def process_image_task(task_id, params, api_key_id):
     """Worker for image generation."""
@@ -1022,14 +1200,28 @@ TASK_FIELDS_BY_MODE = {
     'image': ['task_id', 'mode', 'status', 'result_url', 'prompt', 'model', 'size', 'resolution', 'reference_image_urls', 'logs', 'created_at'],
     'video': ['task_id', 'mode', 'status', 'result_url', 'prompt', 'model', 'size', 'resolution', 'duration', 'start_frame_url', 'end_frame_url', 'reference_image_urls', 'logs', 'created_at'],
     'tts':   ['task_id', 'mode', 'status', 'result_url', 'prompt', 'model', 'logs', 'created_at'],
+    'music': ['task_id', 'mode', 'status', 'tracks', 'prompt', 'model', 'logs', 'created_at'],
 }
 
 def filter_task_fields(task):
     """Filters task dict fields based on mode."""
     if not task:
         return task
-    fields = TASK_FIELDS_BY_MODE.get(task.get('mode'), list(task.keys()))
-    return {k: task[k] for k in fields if k in task}
+    mode = task.get('mode')
+    fields = TASK_FIELDS_BY_MODE.get(mode, list(task.keys()))
+    result = {k: task[k] for k in fields if k in task}
+    # For music tasks: decode JSON tracks from result_url
+    if mode == 'music':
+        raw = task.get('result_url')
+        if raw:
+            try:
+                result['tracks'] = json.loads(raw)
+            except Exception:
+                result['tracks'] = []
+        else:
+            result['tracks'] = []
+        result.pop('result_url', None)
+    return result
 
 @app.errorhandler(Exception)
 def handle_exception(e):
@@ -1201,6 +1393,33 @@ def generate_tts():
     db.create_task(api_key_id, task_id, 'tts', prompt=data.get('text'))
     
     threading.Thread(target=process_tts_task, args=(task_id, data, api_key_id)).start()
+    return jsonify({"task_id": task_id})
+
+@app.route('/api/generate/music', methods=['POST'])
+def generate_music():
+    api_key_id = verify_api_key()
+    if not api_key_id:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    data = request.json
+    if not data or 'prompt' not in data:
+        return jsonify({"error": "Prompt required"}), 400
+
+    if db.get_account_count(api_key_id) == 0:
+        return jsonify({"error": "No quota available"}), 503
+
+    running_count = db.get_running_task_count(api_key_id)
+    if running_count >= MAX_CONCURRENT_TASKS:
+        return jsonify({
+            "error": "Maximum concurrent tasks reached",
+            "message": f"Currently {running_count}/{MAX_CONCURRENT_TASKS} tasks running. Please wait."
+        }), 429
+
+    task_id = str(uuid.uuid4())
+    model = data.get('model', 'SUNO')
+    db.create_task(api_key_id, task_id, 'music', prompt=data.get('prompt'), model=model)
+
+    threading.Thread(target=process_music_task, args=(task_id, data, api_key_id)).start()
     return jsonify({"task_id": task_id})
 
 @app.route('/api/tts/voices', methods=['GET'])
