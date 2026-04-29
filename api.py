@@ -218,7 +218,7 @@ def upload_audio(token, audio_bytes):
         put_resp = requests.put(
             presigned_url,
             data=audio_bytes,
-            headers={"Content-Type": "audio/mpeg", "x-amz-checksum-crc32": "AAAAAA="},
+            headers={"Content-Type": "audio/mpeg"},
             timeout=60
         )
         if put_resp.status_code not in [200, 201, 204]:
