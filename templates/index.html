@@ -2759,15 +2759,11 @@
             paginationContainer.innerHTML = '';
             
             let resultHTML = '';
-            if (taskData.mode === 'music' && taskData.tracks && taskData.tracks.length > 0) {
-                resultHTML = taskData.tracks.map(t => `
-                    <div style="display:flex;align-items:center;gap:12px;background:var(--panel);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 14px;margin-top:10px;">
-                        ${t.coverImageUrl ? `<img src="${t.coverImageUrl}" style="width:52px;height:52px;border-radius:8px;object-fit:cover;flex-shrink:0;">` : ''}
-                        <div style="flex:1;min-width:0;">
-                            <div style="font-family:'JetBrains Mono',monospace;font-size:0.65rem;color:var(--violet);text-transform:uppercase;margin-bottom:4px;">${t.musicName || ('Versiyon ' + t.version)}</div>
-                            <audio src="${t.musicUrl}" controls style="width:100%;height:32px;"></audio>
-                        </div>
-                    </div>`).join('');
+            if (taskData.mode === 'music') {
+                if (!taskData.tracks && taskData.result_url) {
+                    try { taskData.tracks = JSON.parse(taskData.result_url); } catch(e) {}
+                }
+                resultHTML = renderMusicTracks(taskData.tracks);
             } else if (taskData.result_url) {
                 if (taskData.mode === 'image') {
                     resultHTML = `<img src="${taskData.result_url}" class="result-image" alt="Result">`;
@@ -2913,6 +2909,13 @@
                     }
                 }
 
+                if (taskData.mode === 'music') {
+                    if (!taskData.tracks && taskData.result_url) {
+                        try { taskData.tracks = JSON.parse(taskData.result_url); } catch(e) {}
+                    }
+                    resultHTML = renderMusicTracks(taskData.tracks);
+                }
+
                 const logsHTML = ''; // Loglar kaldırıldı (madde 3)
 
                 const refImagesHTML = taskData.reference_image_urls && taskData.reference_image_urls.length > 0
@@ -2931,22 +2934,6 @@
 
                 const card = document.createElement('div');
                 card.className = 'task-card';
-
-                // For music: render tracks as side-by-side grid
-                let musicGridHTML = '';
-                if (taskData.mode === 'music' && taskData.tracks && taskData.tracks.length > 0) {
-                    musicGridHTML = `<div style="margin-top:10px; display:flex; flex-direction:column; gap:10px;">
-                        ${taskData.tracks.map(t => `
-                            <div style="display:flex;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 14px;">
-                                ${t.coverImageUrl ? `<img src="${t.coverImageUrl}" style="width:48px;height:48px;border-radius:8px;object-fit:cover;flex-shrink:0;">` : ''}
-                                <div style="flex:1;min-width:0;">
-                                    <div style="font-family:'JetBrains Mono',monospace;font-size:0.62rem;color:var(--violet);text-transform:uppercase;margin-bottom:4px;">${t.musicName || ('Versiyon ' + t.version)}</div>
-                                    <audio src="${t.musicUrl}" controls style="width:100%;height:28px;"></audio>
-                                </div>
-                            </div>
-                        `).join('')}
-                    </div>`;
-                }
 
                 card.innerHTML = `
                     <h3 style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
@@ -2967,7 +2954,6 @@
                     </div>
                     ${logsHTML}
                     ${resultHTML}
-                    ${musicGridHTML}
                 `;
                 container.appendChild(card);
             });
