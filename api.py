@@ -23,7 +23,7 @@ atexit.register(lambda: _shutdown_event.set())
 API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.ewogICJyb2xlIjogImFub24iLAogICJpc3MiOiAic3VwYWJhc2UiLAogICJpYXQiOiAxNzM0OTY5NjAwLAogICJleHAiOiAxODkyNzM2MDAwCn0.4NnK23LGYvKPGuKI5rwQn2KbLMzzdE4jXpHwbGCqPqY"
 
 # Maximum concurrent tasks
-MAX_CONCURRENT_TASKS = 10
+MAX_CONCURRENT_TASKS = 1000
 
 # Deevid URLs
 URL_AUTH = "https://sp.deevid.ai/auth/v1/token?grant_type=password"
@@ -284,9 +284,10 @@ def process_music_task(task_id, params, api_key_id):
                 inputs["assetIds"] = asset_ids
                 inputs["assetUrls"] = asset_urls
 
+            audio_usage = params.get('audioUsage', 'TEXT')
             music_params = {
                 "instrumental": instrumental,
-                "audioUsage": "TEXT",
+                "audioUsage": audio_usage,
             }
             if style:
                 music_params["style"] = style
@@ -647,7 +648,12 @@ def process_video_task(task_id, params, api_key_id):
                 vidu_duration = int(params.get('duration', 5))
                 if vidu_duration not in [5, 10]:
                     vidu_duration = 5
-                vidu_resolution = "512p" if vidu_duration == 10 else "720p"
+                vidu_resolution = params.get('resolution', '720p')
+                if vidu_resolution not in ['720p', '512p']:
+                    vidu_resolution = '720p'
+                # 720p yalnızca 5s destekler
+                if vidu_resolution == '720p' and vidu_duration == 10:
+                    vidu_duration = 5
 
                 payload = {
                     "userImageId": int(str(img_id).strip()),
@@ -1253,6 +1259,12 @@ def generate_image():
     if len(data.get('prompt', '')) > 4000:
         return jsonify({"error": "Prompt must be 4000 characters or less"}), 400
 
+    model = data.get('model', 'NANO_BANANA_PRO')
+    if model in ('NANO_BANANA_PRO', 'NANO_BANANA_2', 'GPT_IMAGE_2'):
+        resolution = data.get('resolution', '2K')
+        if resolution not in ['1K', '2K', '4K']:
+            return jsonify({"error": "Invalid resolution. Must be one of: 1K, 2K, 4K"}), 400
+
     if db.get_account_count(api_key_id) == 0:
         return jsonify({"error": "No quota available"}), 503
     
@@ -1264,9 +1276,8 @@ def generate_image():
         }), 429
     
     task_id = str(uuid.uuid4())
-    model = data.get('model', 'NANO_BANANA_PRO')
     size = data.get('size', '16:9')
-    resolution = data.get('resolution', '2K') if model in ('NANO_BANANA_PRO', 'NANO_BANANA_2') else None
+    resolution = data.get('resolution', '2K') if model in ('NANO_BANANA_PRO', 'NANO_BANANA_2', 'GPT_IMAGE_2') else None
     db.create_task(api_key_id, task_id, 'image',
                    prompt=data.get('prompt'),
                    model=model,
@@ -1300,6 +1311,12 @@ def generate_video():
             return jsonify({"error": "VIDU_Q3 model does not support end_frame"}), 400
         if data.get('reference_images'):
             return jsonify({"error": "VIDU_Q3 model does not support reference_images"}), 400
+
+    if data.get('model') == 'SORA_2':
+        if data.get('end_frame'):
+            return jsonify({"error": "SORA_2 model does not support end_frame"}), 400
+        if data.get('reference_images'):
+            return jsonify({"error": "SORA_2 model does not support reference_images"}), 400
 
     if data.get('model') == 'QUALITY_V2_5':
         if not data.get('start_frame'):
@@ -1343,7 +1360,12 @@ def generate_video():
         duration = int(data.get('duration', 5))
         if duration not in [5, 10]:
             duration = 5
-        resolution = '512p' if duration == 10 else '720p'
+        resolution = data.get('resolution', '720p')
+        if resolution not in ['720p', '512p']:
+            resolution = '720p'
+        # 720p yalnızca 5s destekler
+        if resolution == '720p' and duration == 10:
+            duration = 5
     elif model == 'QUALITY_V2_5':
         duration = int(data.get('duration', 5))
         if duration not in [5, 10]:
