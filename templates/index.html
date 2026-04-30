@@ -2452,16 +2452,16 @@
             const sizeSelect = document.getElementById('t2vSize');
 
             if (model === 'VEO_3') {
-                durSelect.innerHTML = '<option>8 saniye</option>';
-                resSelect.innerHTML = '<option>720p</option>';
+                durSelect.innerHTML = '<option value="8">8 saniye</option>';
+                resSelect.innerHTML = '<option value="720p">720p</option>';
                 sizeSelect.innerHTML = '<option value="16:9">16:9</option><option value="9:16">9:16</option>';
             } else if (model === 'SEEDANCE_2_0') {
-                durSelect.innerHTML = '<option>5 saniye</option>';
-                resSelect.innerHTML = '<option>480p</option>';
+                durSelect.innerHTML = '<option value="5">5 saniye</option>';
+                resSelect.innerHTML = '<option value="480p">480p</option>';
                 sizeSelect.innerHTML = '<option value="16:9">16:9</option><option value="9:16">9:16</option><option value="1:1">1:1</option><option value="4:3">4:3</option><option value="3:4">3:4</option>';
             } else {
-                durSelect.innerHTML = '<option>10 saniye</option>';
-                resSelect.innerHTML = '<option>720p</option>';
+                durSelect.innerHTML = '<option value="10">10 saniye</option>';
+                resSelect.innerHTML = '<option value="720p">720p</option>';
                 sizeSelect.innerHTML = '<option value="16:9">16:9</option><option value="9:16">9:16</option>';
             }
         }
@@ -2564,7 +2564,9 @@
             const body = {
                 prompt,
                 model: document.getElementById('t2vModel').value,
-                size: document.getElementById('t2vSize').value
+                size: document.getElementById('t2vSize').value,
+                resolution: document.getElementById('t2vResolutionDisplay').value,
+                duration: parseInt(document.getElementById('t2vDurationDisplay').value)
             };
 
             try {
@@ -2589,11 +2591,13 @@
             // VIDU_Q3 ve QUALITY_V2_5 için size AUTO, diğerleri seçilen değer
             if (body.model === 'VIDU_Q3' || body.model === 'QUALITY_V2_5') {
                 body.size = 'AUTO';
-                body.duration = parseInt(document.getElementById('i2vDuration').value) || 5;
-                body.resolution = document.getElementById('i2vResolution').value;
             } else {
                 body.size = document.getElementById('i2vSize').value;
             }
+
+            // Her model için resolution ve duration her zaman gönderilir
+            body.duration = parseInt(document.getElementById('i2vDuration').value) || 5;
+            body.resolution = document.getElementById('i2vResolution').value;
 
             // Determine active sub-tab
             const startEndActive = document.getElementById('subtab-startend').style.display !== 'none';
@@ -2607,8 +2611,11 @@
 
                 const endInput = document.getElementById('i2vEndFrame');
                 if (endInput.files && endInput.files.length > 0) {
-                    if (body.model !== 'VEO_3' && body.model !== 'SEEDANCE_2_0') { alert('End Frame yalnızca VEO_3 ve SEEDANCE_2_0 modelleriyle kullanılabilir!'); return; }
-                    body.end_frame = await fileToBase64(endInput.files[0]);
+                    // End frame yalnızca VEO_3 ve SEEDANCE_2_0 destekler;
+                    // diğer modellerde seçili dosya olsa dahi payload'a eklenmez (hata verilmez)
+                    if (body.model === 'VEO_3' || body.model === 'SEEDANCE_2_0') {
+                        body.end_frame = await fileToBase64(endInput.files[0]);
+                    }
                 }
             } else {
                 if (body.model !== 'VEO_3' && body.model !== 'SEEDANCE_2_0') { alert('Reference Images yalnızca VEO_3 ve SEEDANCE_2_0 modelleriyle kullanılabilir!'); return; }
@@ -3146,15 +3153,16 @@
         }
 
         function updateMusicVisibility() {
-            const isInstrumental = getMusicInstrumental();
             const mode = getMusicMode();
+            // MP3 upload: sadece COVER, ADD_INSTRUMENTAL, ADD_VOCAL modlarında gerekli
+            // Vocal ya da Instrumental fark etmez — mod belirler
             const audioRequired = AUDIO_REQUIRED_MODES.includes(mode);
 
-            // Lyrics: always visible
+            // Lyrics: her zaman görünür
             const lyricsGroup = document.getElementById('musicLyricsGroup');
             if (lyricsGroup) lyricsGroup.style.display = '';
 
-            // Audio: required for COVER, ADD_INSTRUMENTAL, ADD_VOCAL
+            // MP3 upload alanı: TEXT modunda gizli, diğer 3 modda (6 kombinasyon) her zaman açık
             const audioGroup = document.getElementById('musicAudioGroup');
             if (audioGroup) audioGroup.style.display = audioRequired ? '' : 'none';
         }
@@ -3215,11 +3223,10 @@
                 return;
             }
 
-            const body = { prompt, model: 'SUNO', instrumental, audioUsage };
-            if (style) body.style = style;
-            if (lyrics) body.lyrics = lyrics;
+            const body = { prompt, model: 'SUNO', instrumental, audioUsage, style, lyrics };
 
-            if (hasAudio) {
+            // audio_base64 yalnızca COVER / ADD_INSTRUMENTAL / ADD_VOCAL için gönderilir
+            if (AUDIO_REQUIRED_MODES.includes(audioUsage) && hasAudio) {
                 body.audio_base64 = await audioFileToBase64(audioInput.files[0]);
             }
 
