@@ -693,7 +693,7 @@ print(response.json())</code></pre>
                                 <td><code>resolution</code></td>
                                 <td>string</td>
                                 <td><span class="badge optional">Optional</span></td>
-                                <td><strong>Only for NANO BANANA PRO and NANO BANANA 2 models:</strong> 1K, 2K, 4K (default: 2K)<br>
+                                <td><strong>Only for NANO BANANA PRO, NANO BANANA 2, and GPT IMAGE 2 models:</strong> 1K, 2K, 4K (default: 2K)<br>
                                 <em>Not applicable for NANO BANANA model</em></td>
                             </tr>
                             <tr>
@@ -714,7 +714,7 @@ print(response.json())</code></pre>
                         <li><strong>NANO BANANA PRO:</strong> Supports resolution (1K, 2K, 4K) and all size options</li>
                         <li><strong>NANO BANANA 2:</strong> Supports resolution (1K, 2K, 4K) and all size options</li>
                         <li><strong>NANO BANANA:</strong> Only supports size options (no resolution parameter)</li>
-                        <li><strong>GPT_IMAGE_2:</strong> Supports resolution (1K, 2K) and all size options</li>
+                        <li><strong>GPT_IMAGE_2:</strong> Supports resolution (1K, 2K, 4K) and all size options</li>
                     </ul>
                 </div>
 
@@ -920,7 +920,7 @@ print(resp.json())</code></pre>
                                 <td>Video generation model:<br>
                                 • <strong>SORA_2</strong> (default) — 10 seconds, 720p<br>
                                 • <strong>VEO_3</strong> — 8 seconds, 720p<br>
-                                • <strong>VIDU_Q3</strong> — image-to-video only; 720p/5s or 512p/10s<br>
+                                • <strong>VIDU_Q3</strong> — image-to-video only; 720p/5s · 512p/5s · 512p/10s<br>
                                 • <strong>QUALITY_V2_5</strong> — image-to-video only; 720p/5s or 480p/10s<br>
                                 • <strong>SEEDANCE_2_0</strong> — 5 seconds, 480p; text-to-video, start frame + end frame, or reference images</td>
                             </tr>
@@ -934,7 +934,16 @@ print(resp.json())</code></pre>
                                 <td><code>duration</code></td>
                                 <td>integer</td>
                                 <td><span class="badge optional">Optional</span></td>
-                                <td><strong>VIDU_Q3 only.</strong> Duration in seconds: <code>5</code> (720p) or <code>10</code> (512p). Default: 5.</td>
+                                <td><strong>VIDU_Q3 and QUALITY_V2_5 only.</strong> Duration in seconds: <code>5</code> or <code>10</code>. Default: 5.<br>
+                                <em>VIDU_Q3: 720p supports only 5s · 512p supports 5s or 10s</em><br>
+                                <em>QUALITY_V2_5: 720p supports only 5s · 480p supports 5s or 10s</em></td>
+                            </tr>
+                            <tr>
+                                <td><code>resolution</code></td>
+                                <td>string</td>
+                                <td><span class="badge optional">Optional</span></td>
+                                <td><strong>VIDU_Q3 only.</strong> Options: <code>720p</code> (default), <code>512p</code>.<br>
+                                Note: <code>720p</code> only supports 5s duration. <code>512p</code> supports 5s or 10s.</td>
                             </tr>
                             <tr>
                                 <td><code>start_frame</code></td>
@@ -961,10 +970,10 @@ print(resp.json())</code></pre>
                 <div class="alert info">
                     <strong>📌 Video Model Info:</strong>
                     <ul>
-                        <li><strong>SORA_2 (default):</strong> Duration: 10 seconds, Resolution: 720p. Supports text-to-video and image-to-video.</li>
+                        <li><strong>SORA_2 (default):</strong> Duration: 10 seconds, Resolution: 720p. Supports text-to-video and image-to-video (start frame only). Does not support <code>end_frame</code> or <code>reference_images</code>.</li>
                         <li><strong>VEO_3:</strong> Duration: 8 seconds, Resolution: 720p. Supports text-to-video, image-to-video (start frame), start+end frame, and reference images.</li>
-                        <li><strong>VIDU_Q3:</strong> Image-to-video only. Duration: 5s (720p) or 10s (512p). Requires <code>size="AUTO"</code>.</li>
-                        <li><strong>QUALITY_V2_5:</strong> Image-to-video only. Duration: 5s (720p) or 10s (480p). Requires <code>size="AUTO"</code>.</li>
+                        <li><strong>VIDU_Q3:</strong> Image-to-video only. Resolution: <code>720p</code> (5s only) or <code>512p</code> (5s or 10s). Requires <code>size="AUTO"</code>. Does not support <code>end_frame</code> or <code>reference_images</code>.</li>
+                        <li><strong>QUALITY_V2_5:</strong> Image-to-video only. Duration: 5s (720p) or 10s (480p). Requires <code>size="AUTO"</code>. Does not support <code>end_frame</code> or <code>reference_images</code>.</li>
                         <li><strong>SEEDANCE_2_0:</strong> Duration: 5 seconds, Resolution: 480p. Supports text-to-video, start frame + end frame, and reference images (max 3). Supported sizes: 16:9, 9:16, 1:1, 4:3, 3:4.</li>
                         <li><strong>Supported Sizes:</strong> 16:9, 9:16 (SORA_2 &amp; VEO_3) · AUTO (VIDU_Q3 &amp; QUALITY_V2_5) · 16:9, 9:16, 1:1, 4:3, 3:4 (SEEDANCE_2_0)</li>
                     </ul>
@@ -1140,6 +1149,7 @@ print(resp.json())</code></pre>
     <span class="code-key">"prompt"</span>: <span class="code-string">"smooth camera movement, cinematic"</span>,
     <span class="code-key">"model"</span>: <span class="code-string">"VIDU_Q3"</span>,
     <span class="code-key">"size"</span>: <span class="code-string">"AUTO"</span>,
+    <span class="code-key">"resolution"</span>: <span class="code-string">"720p"</span>,
     <span class="code-key">"duration"</span>: <span class="code-number">5</span>,
     <span class="code-key">"start_frame"</span>: <span class="code-string">"BASE64_ENCODED_IMAGE_HERE"</span>
   }'</code></pre>
@@ -1152,6 +1162,7 @@ payload = {
     <span class="code-string">"prompt"</span>: <span class="code-string">"smooth camera movement, cinematic"</span>,
     <span class="code-string">"model"</span>: <span class="code-string">"VIDU_Q3"</span>,
     <span class="code-string">"size"</span>: <span class="code-string">"AUTO"</span>,
+    <span class="code-string">"resolution"</span>: <span class="code-string">"720p"</span>,
     <span class="code-string">"duration"</span>: <span class="code-number">5</span>,
     <span class="code-string">"start_frame"</span>: <span class="code-string">"BASE64_ENCODED_IMAGE_HERE"</span>
 }
@@ -1517,13 +1528,23 @@ print(resp.json())</code></pre>
                                 <td><code>instrumental</code></td>
                                 <td>boolean</td>
                                 <td><span class="badge optional">Optional</span></td>
-                                <td>Generate instrumental only (default: false).</td>
+                                <td>Generate instrumental only (default: false). When true, <code>lyrics</code> is ignored.</td>
+                            </tr>
+                            <tr>
+                                <td><code>audioUsage</code></td>
+                                <td>string</td>
+                                <td><span class="badge optional">Optional</span></td>
+                                <td>Generation mode (default: <code>TEXT</code>):<br>
+                                • <code>TEXT</code> — generate from prompt only<br>
+                                • <code>COVER</code> — create a cover of reference audio (requires <code>audio_base64</code>)<br>
+                                • <code>ADD_INSTRUMENTAL</code> — add instrumental to reference audio (requires <code>audio_base64</code>)<br>
+                                • <code>ADD_VOCAL</code> — add vocals to reference audio (requires <code>audio_base64</code>)</td>
                             </tr>
                             <tr>
                                 <td><code>audio_base64</code></td>
                                 <td>string</td>
                                 <td><span class="badge optional">Optional</span></td>
-                                <td>Base64 encoded reference audio.</td>
+                                <td>Base64 encoded reference MP3 audio. <strong>Required</strong> when <code>audioUsage</code> is <code>COVER</code>, <code>ADD_INSTRUMENTAL</code>, or <code>ADD_VOCAL</code>.</td>
                             </tr>
                         </tbody>
                     </table>
@@ -1546,7 +1567,9 @@ print(resp.json())</code></pre>
   -d '{
     <span class="code-key">"prompt"</span>: <span class="code-string">"a chill lo-fi beat for studying"</span>,
     <span class="code-key">"style"</span>: <span class="code-string">"lo-fi"</span>,
-    <span class="code-key">"instrumental"</span>: <span class="code-bool">true</span>
+    <span class="code-key">"lyrics"</span>: <span class="code-string">""</span>,
+    <span class="code-key">"instrumental"</span>: <span class="code-bool">true</span>,
+    <span class="code-key">"audioUsage"</span>: <span class="code-string">"TEXT"</span>
   }'</code></pre>
                     </div>
                     <div id="music-py" class="tab-panel">
@@ -1556,7 +1579,9 @@ url = <span class="code-string">"http://127.0.0.1:5000/api/generate/music"</span
 payload = {
     <span class="code-string">"prompt"</span>: <span class="code-string">"a chill lo-fi beat for studying"</span>,
     <span class="code-string">"style"</span>: <span class="code-string">"lo-fi"</span>,
-    <span class="code-string">"instrumental"</span>: <span class="code-bool">True</span>
+    <span class="code-string">"lyrics"</span>: <span class="code-string">""</span>,
+    <span class="code-string">"instrumental"</span>: <span class="code-bool">True</span>,
+    <span class="code-string">"audioUsage"</span>: <span class="code-string">"TEXT"</span>
 }
 headers = {<span class="code-string">"Authorization"</span>: <span class="code-string">"Bearer YOUR_API_KEY"</span>}
 
