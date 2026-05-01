@@ -1388,7 +1388,7 @@ print(resp.json())</code></pre>
     <span class="code-key">"speed"</span>: <span class="code-number">1.0</span>,
     <span class="code-key">"pitch"</span>: <span class="code-number">0</span>,
     <span class="code-key">"volume"</span>: <span class="code-number">1.0</span>,
-    <span class="code-key">"modelVersion"</span>: <span class="code-string">"MODEL_SEVEN_SPEECH_26_TURBO"</span>,
+    <span class="code-key">"model"</span>: <span class="code-string">"MINIMAX-TURBO"</span>,
     <span class="code-key">"emotion"</span>: <span class="code-string">"happy"</span>
   }'</code></pre>
                     </div>
@@ -1402,7 +1402,7 @@ payload = {
     <span class="code-string">"speed"</span>: <span class="code-number">1.0</span>,
     <span class="code-string">"pitch"</span>: <span class="code-number">0</span>,
     <span class="code-string">"volume"</span>: <span class="code-number">1.0</span>,
-    <span class="code-string">"modelVersion"</span>: <span class="code-string">"MODEL_SEVEN_SPEECH_26_TURBO"</span>,
+    <span class="code-string">"model"</span>: <span class="code-string">"MINIMAX-TURBO"</span>,
     <span class="code-string">"emotion"</span>: <span class="code-string">"happy"</span>
 }
 headers = {<span class="code-string">"Authorization"</span>: <span class="code-string">"Bearer YOUR_API_KEY"</span>}
@@ -1525,13 +1525,13 @@ print(resp.json())</code></pre>
                                 <td>Lyrics for the song.</td>
                             </tr>
                             <tr>
-                                <td><code>instrumental</code></td>
-                                <td>boolean</td>
+                                <td><code>main_mode</code></td>
+                                <td>string</td>
                                 <td><span class="badge optional">Optional</span></td>
-                                <td>Generate instrumental only (default: false). When true, <code>lyrics</code> is ignored.</td>
+                                <td>Generation mode: <code>Vocal</code> (default) or <code>Instrumental</code>. When <code>Instrumental</code>, <code>lyrics</code> is ignored and instrumental music is generated.</td>
                             </tr>
                             <tr>
-                                <td><code>audioUsage</code></td>
+                                <td><code>mode</code></td>
                                 <td>string</td>
                                 <td><span class="badge optional">Optional</span></td>
                                 <td>Generation mode (default: <code>TEXT</code>):<br>
@@ -1541,10 +1541,10 @@ print(resp.json())</code></pre>
                                 • <code>ADD_VOCAL</code> — add vocals to reference audio (requires <code>audio_base64</code>)</td>
                             </tr>
                             <tr>
-                                <td><code>audio_base64</code></td>
+                                <td><code>audio</code></td>
                                 <td>string</td>
                                 <td><span class="badge optional">Optional</span></td>
-                                <td>Base64 encoded reference MP3 audio. <strong>Required</strong> when <code>audioUsage</code> is <code>COVER</code>, <code>ADD_INSTRUMENTAL</code>, or <code>ADD_VOCAL</code>.</td>
+                                <td>Base64 encoded reference MP3 audio. <strong>Required</strong> when <code>mode</code> is <code>COVER</code>, <code>ADD_INSTRUMENTAL</code>, or <code>ADD_VOCAL</code>.</td>
                             </tr>
                         </tbody>
                     </table>
@@ -1568,8 +1568,8 @@ print(resp.json())</code></pre>
     <span class="code-key">"prompt"</span>: <span class="code-string">"a chill lo-fi beat for studying"</span>,
     <span class="code-key">"style"</span>: <span class="code-string">"lo-fi"</span>,
     <span class="code-key">"lyrics"</span>: <span class="code-string">""</span>,
-    <span class="code-key">"instrumental"</span>: <span class="code-bool">true</span>,
-    <span class="code-key">"audioUsage"</span>: <span class="code-string">"TEXT"</span>
+    <span class="code-key">"main_mode"</span>: <span class="code-string">"Instrumental"</span>,
+    <span class="code-key">"mode"</span>: <span class="code-string">"TEXT"</span>
   }'</code></pre>
                     </div>
                     <div id="music-py" class="tab-panel">
@@ -1580,8 +1580,8 @@ payload = {
     <span class="code-string">"prompt"</span>: <span class="code-string">"a chill lo-fi beat for studying"</span>,
     <span class="code-string">"style"</span>: <span class="code-string">"lo-fi"</span>,
     <span class="code-string">"lyrics"</span>: <span class="code-string">""</span>,
-    <span class="code-string">"instrumental"</span>: <span class="code-bool">True</span>,
-    <span class="code-string">"audioUsage"</span>: <span class="code-string">"TEXT"</span>
+    <span class="code-string">"main_mode"</span>: <span class="code-string">"Instrumental"</span>,
+    <span class="code-string">"mode"</span>: <span class="code-string">"TEXT"</span>
 }
 headers = {<span class="code-string">"Authorization"</span>: <span class="code-string">"Bearer YOUR_API_KEY"</span>}
 
@@ -1696,14 +1696,13 @@ print(resp.json())</code></pre>
   <span class="code-key">"task_id"</span>: <span class="code-string">"mus123-abc456-xyz789"</span>,
   <span class="code-key">"mode"</span>: <span class="code-string">"music"</span>,
   <span class="code-key">"status"</span>: <span class="code-string">"completed"</span>,
-  <span class="code-key">"tracks"</span>: [
-    {
-      <span class="code-key">"musicName"</span>: <span class="code-string">"Chill Beats"</span>,
-      <span class="code-key">"musicUrl"</span>: <span class="code-string">"https://cdn.example.com/.../track1.mp3"</span>,
-      <span class="code-key">"coverImageUrl"</span>: <span class="code-string">"https://cdn.example.com/.../cover1.jpg"</span>,
-      <span class="code-key">"version"</span>: <span class="code-string">"v1"</span>
-    }
-  ],
+  <span class="code-key">"result_url"</span>: <span class="code-string">"[{\"musicName\":\"Chill Beats\",\"musicUrl\":\"https://cdn.example.com/.../track1.mp3\",\"coverImageUrl\":\"https://cdn.example.com/.../cover1.jpg\",\"version\":1}]"</span>,
+  <span class="code-comment">// result_url is a JSON string — parse it to get the tracks array</span>
+  <span class="code-key">"style"</span>: <span class="code-string">"lo-fi"</span>,
+  <span class="code-key">"lyrics"</span>: <span class="code-string">""</span>,
+  <span class="code-key">"instrumental"</span>: <span class="code-bool">true</span>,
+  <span class="code-key">"audio_usage"</span>: <span class="code-string">"TEXT"</span>,
+  <span class="code-key">"reference_audio_url"</span>: <span class="code-bool">null</span>,
   <span class="code-key">"prompt"</span>: <span class="code-string">"a chill lo-fi beat for studying"</span>,
   <span class="code-key">"model"</span>: <span class="code-string">"SUNO"</span>,
   <span class="code-key">"logs"</span>: [
