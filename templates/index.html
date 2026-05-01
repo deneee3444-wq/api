@@ -1107,7 +1107,7 @@
 
         .task-info {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
             gap: 0.625rem;
             margin-top: 1rem;
         }
@@ -1158,14 +1158,9 @@
 
         .task-meta-item span {
             display: block;
-        }
-
-        @media (max-width: 600px) {
-            .task-meta-item span {
-                overflow: hidden;
-                text-overflow: ellipsis;
-                white-space: nowrap;
-            }
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
 
         /* Status badges */
@@ -2766,11 +2761,12 @@
             paginationContainer.innerHTML = '';
             
             let resultHTML = '';
+            let parsedTracks = [];
             if (taskData.mode === 'music') {
-                if (!taskData.tracks && taskData.result_url) {
-                    try { taskData.tracks = JSON.parse(taskData.result_url); } catch(e) {}
+                if (taskData.result_url) {
+                    try { parsedTracks = JSON.parse(taskData.result_url); } catch(e) {}
                 }
-                resultHTML = renderMusicTracks(taskData.tracks);
+                resultHTML = renderMusicTracks(parsedTracks);
             } else if (taskData.result_url) {
                 if (taskData.mode === 'image') {
                     resultHTML = `<img src="${taskData.result_url}" class="result-image" alt="Result">`;
@@ -2798,12 +2794,40 @@
             // Meta items — flex row, equal width, wraps on mobile
             const metaItems = [
                 { label: 'Mod',        val: taskData.mode },
-                taskData.result_url  ? { label: 'Sonuç URL', val: `<a href="${taskData.result_url}" target="_blank" style="color:var(--cyan);text-decoration:none;">Aç</a>` } : null,
-                taskData.model       ? { label: 'Model',      val: taskData.model }      : null,
-                taskData.resolution  ? { label: 'Resolution', val: taskData.resolution } : null,
-                taskData.size        ? { label: 'Size',        val: taskData.size }       : null,
-                taskData.duration    ? { label: 'Duration',    val: taskData.duration }   : null,
-            ].filter(Boolean).map(item => `
+            ];
+
+            // Music: Sonuç URL kutuları (her track için ayrı)
+            if (taskData.mode === 'music' && parsedTracks.length > 0) {
+                parsedTracks.forEach((t, i) => {
+                    metaItems.push({ label: `Sonuç URL ${i+1}`, val: `<a href="${t.musicUrl}" target="_blank" style="color:var(--cyan);text-decoration:none;">Aç</a>` });
+                });
+            } else if (taskData.result_url && taskData.mode !== 'music') {
+                metaItems.push({ label: 'Sonuç URL', val: `<a href="${taskData.result_url}" target="_blank" style="color:var(--cyan);text-decoration:none;">Aç</a>` });
+            }
+
+            // Ortak alanlar
+            if (taskData.model)      metaItems.push({ label: 'Model',      val: taskData.model });
+            if (taskData.resolution) metaItems.push({ label: 'Resolution', val: taskData.resolution });
+            if (taskData.size)       metaItems.push({ label: 'Size',       val: taskData.size });
+            if (taskData.duration)   metaItems.push({ label: 'Duration',   val: taskData.duration });
+
+            // Music'e özgü alanlar
+            if (taskData.mode === 'music') {
+                metaItems.push({ label: 'Main Mode', val: taskData.instrumental ? 'Instrumental' : 'Vocal' });
+                if (taskData.audio_usage) metaItems.push({ label: 'Mode', val: taskData.audio_usage });
+                if (taskData.style)       metaItems.push({ label: 'Style', val: taskData.style });
+            }
+
+            // TTS'e özgü alanlar
+            if (taskData.mode === 'tts') {
+                if (taskData.voice_id) metaItems.push({ label: 'Voice',   val: taskData.voice_id });
+                if (taskData.speed != null)    metaItems.push({ label: 'Speed',   val: taskData.speed });
+                if (taskData.pitch != null)    metaItems.push({ label: 'Pitch',   val: taskData.pitch });
+                if (taskData.volume != null)   metaItems.push({ label: 'Volume',  val: taskData.volume });
+                if (taskData.emotion)  metaItems.push({ label: 'Emotion', val: taskData.emotion });
+            }
+
+            const metaHTML = metaItems.map(item => `
                 <div class="task-meta-item" style="background:var(--panel); border:1px solid transparent; border-radius:var(--radius-sm); padding:0.625rem 0.875rem;">
                     <strong style="color:var(--violet);font-family:'JetBrains Mono',monospace;font-size:0.68rem;text-transform:uppercase;display:block;margin-bottom:2px;">${item.label}:</strong>
                     <span style="font-size:0.82rem;color:var(--text-dim);">${item.val}</span>
@@ -2836,17 +2860,51 @@
                     </div>
                 </div>` : '';
 
+            // Music lyrics — tam genişlik kutu (prompt gibi, kopyalama butonlu)
+            const lyricsHTML = (taskData.mode === 'music' && taskData.lyrics) ? `
+                <div style="background:var(--panel); border:1px solid transparent; border-radius:var(--radius-sm); padding:0.625rem 0.875rem; margin-top:0.625rem;">
+                    <strong style="color:var(--violet);font-family:'JetBrains Mono',monospace;font-size:0.68rem;text-transform:uppercase;display:block;margin-bottom:6px;">Lyrics:</strong>
+                    <div style="display:flex;align-items:flex-start;gap:8px;">
+                        <div id="lyricsTextDisplay" style="
+                            flex:1; overflow-x:auto; white-space:pre-wrap; word-break:break-word;
+                            background:var(--input-bg); border:1px solid var(--border);
+                            border-radius:8px; padding:8px 12px;
+                            font-family:'JetBrains Mono',monospace; font-size:0.8rem;
+                            color:var(--text-dim); line-height:1.5; max-height:120px; overflow-y:auto;
+                            scrollbar-width:thin; scrollbar-color:rgba(139,92,246,0.4) transparent;
+                        "></div>
+                        <button id="lyricsCopyBtn" style="
+                            flex-shrink:0; width:34px; height:34px;
+                            display:flex; align-items:center; justify-content:center;
+                            font-size:0.85rem;
+                            background:var(--violet-dim); border:1px solid var(--border-bright);
+                            color:var(--violet); border-radius:8px;
+                            cursor:pointer; box-shadow:none; transform:none;
+                            transition:background 0.2s, border-color 0.2s, color 0.2s;
+                        ">📋</button>
+                    </div>
+                </div>` : '';
+
+            // Referans audio — music task'larında referans audio player göster
+            const referenceAudioHTML = taskData.reference_audio_url ? `
+                <div class="task-info-item" style="grid-column:1/-1">
+                    <strong>Referans Audio:</strong>
+                    <audio src="${taskData.reference_audio_url}" controls style="width:100%;margin-top:6px;height:36px;"></audio>
+                </div>` : '';
+
             container.innerHTML = `
                 <div class="task-card">
                     <h3>Task: ${taskId}</h3>
                     <span class="status-badge ${statusClass}">${taskData.status.toUpperCase()}</span>
                     <div class="task-meta-row">
-                        ${metaItems}
+                        ${metaHTML}
                     </div>
                     ${promptHTML}
+                    ${lyricsHTML}
                     <div style="margin-top:0.625rem;">
                         ${frameHTML}
                         ${refImagesHTML}
+                        ${referenceAudioHTML}
                     </div>
                     ${resultHTML}
                 </div>
@@ -2868,6 +2926,27 @@
                             promptCopyBtn.style.background = 'var(--violet-dim)';
                             promptCopyBtn.style.borderColor = 'var(--border-bright)';
                             promptCopyBtn.style.color = 'var(--violet)';
+                        }, 1500);
+                    });
+                };
+            }
+
+            // Set lyrics text & wire lyrics copy button after render
+            const lyricsTextEl = document.getElementById('lyricsTextDisplay');
+            const lyricsCopyBtn = document.getElementById('lyricsCopyBtn');
+            if (lyricsTextEl) lyricsTextEl.textContent = taskData.lyrics;
+            if (lyricsCopyBtn) {
+                lyricsCopyBtn.onclick = () => {
+                    navigator.clipboard.writeText(taskData.lyrics).then(() => {
+                        lyricsCopyBtn.textContent = '✓';
+                        lyricsCopyBtn.style.background = 'rgba(16,185,129,0.2)';
+                        lyricsCopyBtn.style.borderColor = 'rgba(16,185,129,0.6)';
+                        lyricsCopyBtn.style.color = 'var(--emerald)';
+                        setTimeout(() => {
+                            lyricsCopyBtn.textContent = '📋';
+                            lyricsCopyBtn.style.background = 'var(--violet-dim)';
+                            lyricsCopyBtn.style.borderColor = 'var(--border-bright)';
+                            lyricsCopyBtn.style.color = 'var(--violet)';
                         }, 1500);
                     });
                 };
@@ -2917,10 +2996,12 @@
                 }
 
                 if (taskData.mode === 'music') {
-                    if (!taskData.tracks && taskData.result_url) {
-                        try { taskData.tracks = JSON.parse(taskData.result_url); } catch(e) {}
+                    let tracks = [];
+                    if (taskData.result_url) {
+                        try { tracks = JSON.parse(taskData.result_url); } catch(e) {}
                     }
-                    resultHTML = renderMusicTracks(taskData.tracks);
+                    taskData._parsedTracks = tracks;
+                    resultHTML = renderMusicTracks(tracks);
                 }
 
                 const logsHTML = ''; // Loglar kaldırıldı (madde 3)
@@ -2942,6 +3023,23 @@
                 const card = document.createElement('div');
                 card.className = 'task-card';
 
+                // Build music Sonuç URL kutuları
+                let musicUrlItems = '';
+                if (taskData.mode === 'music' && taskData._parsedTracks && taskData._parsedTracks.length > 0) {
+                    musicUrlItems = taskData._parsedTracks.map((t, i) => `
+                        <div class="task-info-item">
+                            <strong>Sonuç URL ${i+1}:</strong> <a href="${t.musicUrl}" target="_blank">Aç</a>
+                        </div>
+                    `).join('');
+                }
+
+                // Referans audio kutusu
+                const refAudioItem = taskData.reference_audio_url ? `
+                    <div class="task-info-item" style="grid-column:1/-1">
+                        <strong>Referans Audio:</strong>
+                        <audio src="${taskData.reference_audio_url}" controls style="width:100%;margin-top:6px;height:36px;"></audio>
+                    </div>` : '';
+
                 card.innerHTML = `
                     <h3 style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
                         <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">Task: ${taskId}</span>
@@ -2952,12 +3050,14 @@
                         <div class="task-info-item">
                             <strong>Mod:</strong> ${taskData.mode}
                         </div>
-                        ${taskData.result_url ? `
+                        ${taskData.mode !== 'music' && taskData.result_url ? `
                         <div class="task-info-item">
                             <strong>Sonuç URL:</strong> <a href="${taskData.result_url}" target="_blank">Aç</a>
                         </div>` : ''}
+                        ${musicUrlItems}
                         ${frameHTML2}
                         ${refImagesHTML}
+                        ${refAudioItem}
                     </div>
                     ${logsHTML}
                     ${resultHTML}
@@ -3223,11 +3323,11 @@
                 return;
             }
 
-            const body = { prompt, model: 'SUNO', instrumental, audioUsage, style, lyrics };
+            const body = { prompt, model: 'SUNO', main_mode: instrumental ? 'Instrumental' : 'Vocal', mode: audioUsage, style, lyrics };
 
             // audio_base64 yalnızca COVER / ADD_INSTRUMENTAL / ADD_VOCAL için gönderilir
             if (AUDIO_REQUIRED_MODES.includes(audioUsage) && hasAudio) {
-                body.audio_base64 = await audioFileToBase64(audioInput.files[0]);
+                body.audio = await audioFileToBase64(audioInput.files[0]);
             }
 
             try {
