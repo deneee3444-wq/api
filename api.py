@@ -23,7 +23,7 @@ atexit.register(lambda: _shutdown_event.set())
 API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.ewogICJyb2xlIjogImFub24iLAogICJpc3MiOiAic3VwYWJhc2UiLAogICJpYXQiOiAxNzM0OTY5NjAwLAogICJleHAiOiAxODkyNzM2MDAwCn0.4NnK23LGYvKPGuKI5rwQn2KbLMzzdE4jXpHwbGCqPqY"
 
 # Maximum concurrent tasks
-MAX_CONCURRENT_TASKS = 1000
+MAX_CONCURRENT_TASKS = 10
 
 # Deevid URLs
 URL_AUTH = "https://sp.deevid.ai/auth/v1/token?grant_type=password"
@@ -272,6 +272,7 @@ def process_music_task(task_id, params, api_key_id):
                     return
                 asset_ids.append(aid)
                 asset_urls.append(aurl)
+                db.update_task_reference_audio(task_id, aurl)
 
             prompt = params.get('prompt', '')
             style = params.get('style', '')
@@ -1205,8 +1206,8 @@ def resume_incomplete_tasks():
 TASK_FIELDS_BY_MODE = {
     'image': ['task_id', 'mode', 'status', 'result_url', 'prompt', 'model', 'size', 'resolution', 'reference_image_urls', 'logs', 'created_at'],
     'video': ['task_id', 'mode', 'status', 'result_url', 'prompt', 'model', 'size', 'resolution', 'duration', 'start_frame_url', 'end_frame_url', 'reference_image_urls', 'logs', 'created_at'],
-    'tts':   ['task_id', 'mode', 'status', 'result_url', 'prompt', 'model', 'logs', 'created_at'],
-    'music': ['task_id', 'mode', 'status', 'tracks', 'prompt', 'model', 'logs', 'created_at'],
+    'tts':   ['task_id', 'mode', 'status', 'result_url', 'prompt', 'model', 'voice_id', 'speed', 'pitch', 'volume', 'emotion', 'logs', 'created_at'],
+    'music': ['task_id', 'mode', 'status', 'result_url', 'prompt', 'model', 'style', 'lyrics', 'instrumental', 'audio_usage', 'reference_audio_url', 'logs', 'created_at'],
 }
 
 def filter_task_fields(task):
@@ -1216,17 +1217,9 @@ def filter_task_fields(task):
     mode = task.get('mode')
     fields = TASK_FIELDS_BY_MODE.get(mode, list(task.keys()))
     result = {k: task[k] for k in fields if k in task}
-    # For music tasks: decode JSON tracks from result_url
-    if mode == 'music':
-        raw = task.get('result_url')
-        if raw:
-            try:
-                result['tracks'] = json.loads(raw)
-            except Exception:
-                result['tracks'] = []
-        else:
-            result['tracks'] = []
-        result.pop('result_url', None)
+    # Convert instrumental integer to boolean for music tasks
+    if mode == 'music' and 'instrumental' in result:
+        result['instrumental'] = bool(result.get('instrumental'))
     return result
 
 @app.errorhandler(Exception)
@@ -1412,7 +1405,14 @@ def generate_tts():
         }), 429
     
     task_id = str(uuid.uuid4())
-    db.create_task(api_key_id, task_id, 'tts', prompt=data.get('text'))
+    db.create_task(api_key_id, task_id, 'tts',
+                   prompt=data.get('text'),
+                   model=data.get('model', 'MINIMAX-TURBO'),
+                   voice_id=data.get('voiceId'),
+                   speed=data.get('speed'),
+                   pitch=data.get('pitch'),
+                   volume=data.get('volume'),
+                   emotion=data.get('emotion'))
     
     threading.Thread(target=process_tts_task, args=(task_id, data, api_key_id)).start()
     return jsonify({"task_id": task_id})
@@ -1439,9 +1439,32 @@ def generate_music():
 
     task_id = str(uuid.uuid4())
     model = data.get('model', 'SUNO')
-    db.create_task(api_key_id, task_id, 'music', prompt=data.get('prompt'), model=model)
 
-    threading.Thread(target=process_music_task, args=(task_id, data, api_key_id)).start()
+    # Frontend → API mapping (tıpkı IMAGE_MODEL_MAP, SIZE_MAP gibi)
+    main_mode = data.get('main_mode', 'Vocal')
+    instrumental = 1 if main_mode == 'Instrumental' else 0
+    audio_usage = data.get('mode', 'TEXT')
+
+    db.create_task(api_key_id, task_id, 'music',
+                   prompt=data.get('prompt'),
+                   model=model,
+                   style=data.get('style'),
+                   lyrics=data.get('lyrics'),
+                   instrumental=instrumental,
+                   audio_usage=audio_usage)
+
+    # Worker'a Deevid uyumlu parametreler gönder
+    worker_data = {
+        'prompt': data.get('prompt', ''),
+        'model': model,
+        'style': data.get('style', ''),
+        'lyrics': data.get('lyrics', ''),
+        'instrumental': main_mode == 'Instrumental',
+        'audioUsage': audio_usage,
+        'audio_base64': data.get('audio'),
+    }
+
+    threading.Thread(target=process_music_task, args=(task_id, worker_data, api_key_id)).start()
     return jsonify({"task_id": task_id})
 
 @app.route('/api/tts/voices', methods=['GET'])
