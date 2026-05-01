@@ -79,6 +79,16 @@ def init_db():
                     reference_image_urls TEXT DEFAULT '[]',
                     start_frame_url TEXT,
                     end_frame_url TEXT,
+                    style TEXT,
+                    lyrics TEXT,
+                    instrumental INTEGER DEFAULT 0,
+                    audio_usage TEXT,
+                    reference_audio_url TEXT,
+                    voice_id TEXT,
+                    speed REAL,
+                    pitch REAL,
+                    volume REAL,
+                    emotion TEXT,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             ''')
@@ -96,6 +106,16 @@ def init_db():
                 ('reference_image_urls', "TEXT DEFAULT '[]'"),
                 ('start_frame_url', 'TEXT'),
                 ('end_frame_url', 'TEXT'),
+                ('style', 'TEXT'),
+                ('lyrics', 'TEXT'),
+                ('instrumental', 'INTEGER DEFAULT 0'),
+                ('audio_usage', 'TEXT'),
+                ('reference_audio_url', 'TEXT'),
+                ('voice_id', 'TEXT'),
+                ('speed', 'REAL'),
+                ('pitch', 'REAL'),
+                ('volume', 'REAL'),
+                ('emotion', 'TEXT'),
             ]:
                 cursor.execute(
                     "SELECT column_name FROM information_schema.columns WHERE table_name='tasks' AND column_name=%s",
@@ -146,6 +166,16 @@ def init_db():
                     reference_image_urls TEXT DEFAULT '[]',
                     start_frame_url TEXT,
                     end_frame_url TEXT,
+                    style TEXT,
+                    lyrics TEXT,
+                    instrumental INTEGER DEFAULT 0,
+                    audio_usage TEXT,
+                    reference_audio_url TEXT,
+                    voice_id TEXT,
+                    speed REAL,
+                    pitch REAL,
+                    volume REAL,
+                    emotion TEXT,
                     created_at TEXT DEFAULT CURRENT_TIMESTAMP
                 )
             ''')
@@ -428,11 +458,13 @@ def delete_account(api_key_id, email):
 
 # --- Task Functions ---
 
-def create_task(api_key_id, task_id, mode, prompt=None, model=None, size=None, resolution=None, duration=None):
+def create_task(api_key_id, task_id, mode, prompt=None, model=None, size=None, resolution=None, duration=None,
+                style=None, lyrics=None, instrumental=None, audio_usage=None,
+                voice_id=None, speed=None, pitch=None, volume=None, emotion=None):
     """Creates a new task in the database."""
     _execute_query(
-        'INSERT INTO tasks (api_key_id, task_id, mode, status, prompt, model, size, resolution, duration) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)' if DB_TYPE == 'postgresql' else 'INSERT INTO tasks (api_key_id, task_id, mode, status, prompt, model, size, resolution, duration) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-        (api_key_id, task_id, mode, 'pending', prompt, model, size, resolution, duration)
+        'INSERT INTO tasks (api_key_id, task_id, mode, status, prompt, model, size, resolution, duration, style, lyrics, instrumental, audio_usage, voice_id, speed, pitch, volume, emotion) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)' if DB_TYPE == 'postgresql' else 'INSERT INTO tasks (api_key_id, task_id, mode, status, prompt, model, size, resolution, duration, style, lyrics, instrumental, audio_usage, voice_id, speed, pitch, volume, emotion) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        (api_key_id, task_id, mode, 'pending', prompt, model, size, resolution, duration, style, lyrics, instrumental, audio_usage, voice_id, speed, pitch, volume, emotion)
     )
 
 
@@ -461,6 +493,14 @@ def update_task_frame_urls(task_id, start_frame_url=None, end_frame_url=None):
             'UPDATE tasks SET end_frame_url = %s WHERE task_id = %s' if DB_TYPE == 'postgresql' else 'UPDATE tasks SET end_frame_url = ? WHERE task_id = ?',
             (end_frame_url, task_id)
         )
+
+
+def update_task_reference_audio(task_id, url):
+    """Saves the reference audio URL used in a music task."""
+    _execute_query(
+        'UPDATE tasks SET reference_audio_url = %s WHERE task_id = %s' if DB_TYPE == 'postgresql' else 'UPDATE tasks SET reference_audio_url = ? WHERE task_id = ?',
+        (url, task_id)
+    )
 
 
 def update_task_status(task_id, status, result_url=None):
@@ -511,7 +551,7 @@ def add_task_log(task_id, message):
 def get_task(api_key_id, task_id):
     """Returns task detail."""
     result = _execute_query(
-        'SELECT task_id, mode, status, result_url, logs, prompt, model, size, resolution, duration, reference_image_urls, start_frame_url, end_frame_url, created_at FROM tasks WHERE api_key_id = %s AND task_id = %s' if DB_TYPE == 'postgresql' else 'SELECT task_id, mode, status, result_url, logs, prompt, model, size, resolution, duration, reference_image_urls, start_frame_url, end_frame_url, created_at FROM tasks WHERE api_key_id = ? AND task_id = ?',
+        'SELECT task_id, mode, status, result_url, logs, prompt, model, size, resolution, duration, reference_image_urls, start_frame_url, end_frame_url, style, lyrics, instrumental, audio_usage, reference_audio_url, voice_id, speed, pitch, volume, emotion, created_at FROM tasks WHERE api_key_id = %s AND task_id = %s' if DB_TYPE == 'postgresql' else 'SELECT task_id, mode, status, result_url, logs, prompt, model, size, resolution, duration, reference_image_urls, start_frame_url, end_frame_url, style, lyrics, instrumental, audio_usage, reference_audio_url, voice_id, speed, pitch, volume, emotion, created_at FROM tasks WHERE api_key_id = ? AND task_id = ?',
         (api_key_id, task_id),
         fetch_one=True
     )
