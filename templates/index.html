@@ -2772,9 +2772,9 @@
                 if (taskData.mode === 'image') {
                     resultHTML = `<img src="${proxied(taskData.result_url)}" class="result-image" alt="Result">`;
                 } else if (taskData.mode === 'video') {
-                    resultHTML = `<video src="${taskData.result_url}" class="result-video" controls></video>`;
+                    resultHTML = `<video src="${proxied(taskData.result_url)}" class="result-video" controls></video>`;
                 } else if (taskData.mode === 'tts') {
-                    resultHTML = `<audio src="${taskData.result_url}" controls style="width:100%; margin-top:1rem; border-radius:var(--radius-sm);"></audio>`;
+                    resultHTML = `<audio src="${proxied(taskData.result_url)}" controls style="width:100%; margin-top:1rem; border-radius:var(--radius-sm);"></audio>`;
                 }
             }
 
@@ -2800,10 +2800,10 @@
             // Music: Sonuç URL kutuları (her track için ayrı)
             if (taskData.mode === 'music' && parsedTracks.length > 0) {
                 parsedTracks.forEach((t, i) => {
-                    metaItems.push({ label: `Sonuç URL ${i+1}`, val: `<a href="${t.musicUrl}" target="_blank" style="color:var(--cyan);text-decoration:none;">Aç</a>` });
+                    metaItems.push({ label: `Sonuç URL ${i+1}`, val: `<a href="${proxied(t.musicUrl)}" target="_blank" style="color:var(--cyan);text-decoration:none;">Aç</a>` });
                 });
             } else if (taskData.result_url && taskData.mode !== 'music') {
-                metaItems.push({ label: 'Sonuç URL', val: `<a href="${taskData.result_url}" target="_blank" style="color:var(--cyan);text-decoration:none;">Aç</a>` });
+                metaItems.push({ label: 'Sonuç URL', val: `<a href="${proxied(taskData.result_url)}" target="_blank" style="color:var(--cyan);text-decoration:none;">Aç</a>` });
             }
 
             // Ortak alanlar
@@ -2890,7 +2890,7 @@
             const referenceAudioHTML = taskData.reference_audio_url ? `
                 <div class="task-info-item" style="grid-column:1/-1">
                     <strong>Referans Audio:</strong>
-                    <audio src="${taskData.reference_audio_url}" controls style="width:100%;margin-top:6px;height:36px;"></audio>
+                    <audio src="${proxied(taskData.reference_audio_url)}" controls style="width:100%;margin-top:6px;height:36px;"></audio>
                 </div>` : '';
 
             container.innerHTML = `
@@ -2990,9 +2990,9 @@
                     if (taskData.mode === 'image') {
                         resultHTML = `<img src="${proxied(taskData.result_url)}" class="result-image" alt="Result">`;
                     } else if (taskData.mode === 'video') {
-                        resultHTML = `<video src="${taskData.result_url}" class="result-video" controls></video>`;
+                        resultHTML = `<video src="${proxied(taskData.result_url)}" class="result-video" controls></video>`;
                     } else if (taskData.mode === 'tts') {
-                        resultHTML = `<audio src="${taskData.result_url}" controls style="width:100%; margin-top:1rem; border-radius:var(--radius-sm);"></audio>`;
+                        resultHTML = `<audio src="${proxied(taskData.result_url)}" controls style="width:100%; margin-top:1rem; border-radius:var(--radius-sm);"></audio>`;
                     }
                 }
 
@@ -3029,7 +3029,7 @@
                 if (taskData.mode === 'music' && taskData._parsedTracks && taskData._parsedTracks.length > 0) {
                     musicUrlItems = taskData._parsedTracks.map((t, i) => `
                         <div class="task-info-item">
-                            <strong>Sonuç URL ${i+1}:</strong> <a href="${t.musicUrl}" target="_blank">Aç</a>
+                            <strong>Sonuç URL ${i+1}:</strong> <a href="${proxied(t.musicUrl)}" target="_blank">Aç</a>
                         </div>
                     `).join('');
                 }
@@ -3038,7 +3038,7 @@
                 const refAudioItem = taskData.reference_audio_url ? `
                     <div class="task-info-item" style="grid-column:1/-1">
                         <strong>Referans Audio:</strong>
-                        <audio src="${taskData.reference_audio_url}" controls style="width:100%;margin-top:6px;height:36px;"></audio>
+                        <audio src="${proxied(taskData.reference_audio_url)}" controls style="width:100%;margin-top:6px;height:36px;"></audio>
                     </div>` : '';
 
                 card.innerHTML = `
@@ -3053,7 +3053,7 @@
                         </div>
                         ${taskData.mode !== 'music' && taskData.result_url ? `
                         <div class="task-info-item">
-                            <strong>Sonuç URL:</strong> <a href="${taskData.result_url}" target="_blank">Aç</a>
+                            <strong>Sonuç URL:</strong> <a href="${proxied(taskData.result_url)}" target="_blank">Aç</a>
                         </div>` : ''}
                         ${musicUrlItems}
                         ${frameHTML2}
@@ -3301,7 +3301,7 @@
                         <div style="font-family:'JetBrains Mono',monospace;font-size:0.65rem;color:var(--violet);text-transform:uppercase;margin-bottom:4px;">
                             ${t.musicName || ('Versiyon ' + t.version)}
                         </div>
-                        <audio src="${t.musicUrl}" controls style="width:100%;height:32px;"></audio>
+                        <audio src="${proxied(t.musicUrl)}" controls style="width:100%;height:32px;"></audio>
                     </div>
                 </div>
             `).join('');
