@@ -1240,8 +1240,18 @@ def image_proxy():
     url = request.args.get('url')
     if not url:
         return jsonify({"error": "url parametresi gerekli"}), 400
-    r = requests.get(url, headers=DEVICE_HEADERS, timeout=30)
-    return Response(r.content, status=r.status_code, content_type=r.headers.get('Content-Type', 'image/png'))
+
+    fwd_headers = dict(DEVICE_HEADERS)
+    range_header = request.headers.get('Range')
+    if range_header:
+        fwd_headers['Range'] = range_header  # video/mp3 seek desteği
+
+    r = requests.get(url, headers=fwd_headers, stream=True, timeout=(30, 120))
+
+    excluded = {'content-encoding', 'transfer-encoding', 'connection'}
+    resp_headers = [(k, v) for k, v in r.headers.items() if k.lower() not in excluded]
+
+    return Response(r.iter_content(chunk_size=8192), status=r.status_code, headers=resp_headers)
 
 @app.route('/api/generate/image', methods=['POST'])
 def generate_image():
