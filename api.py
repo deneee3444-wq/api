@@ -1231,6 +1231,13 @@ def handle_exception(e):
 def index():
     return render_template('index.html')
 
+@app.route('/api/proxy')
+def proxy():
+    from flask import Response
+    r = requests.get(request.args['url'], timeout=60)
+    return Response(r.content, status=r.status_code,
+                    content_type=r.headers.get('Content-Type'))
+
 @app.route('/api-doc', methods=['GET'])
 def api_doc():
     return render_template('apiDocNoTTS.html')
