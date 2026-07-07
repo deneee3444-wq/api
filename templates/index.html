@@ -2770,7 +2770,7 @@
                 resultHTML = renderMusicTracks(parsedTracks);
             } else if (taskData.result_url) {
                 if (taskData.mode === 'image') {
-                    resultHTML = `<img src="${taskData.result_url}" class="result-image" alt="Result">`;
+                    resultHTML = `<img src="${px(taskData.result_url)}" class="result-image" alt="Result">`;
                 } else if (taskData.mode === 'video') {
                     resultHTML = `<video src="${taskData.result_url}" class="result-video" controls></video>`;
                 } else if (taskData.mode === 'tts') {
