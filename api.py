@@ -8,7 +8,7 @@ import requests
 import base64
 from io import BytesIO
 from PIL import Image
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify, render_template, Response
 from flask_cors import CORS
 import database as db
 
@@ -1231,16 +1231,17 @@ def handle_exception(e):
 def index():
     return render_template('index.html')
 
-@app.route('/api/proxy')
-def proxy():
-    from flask import Response
-    r = requests.get(request.args['url'], timeout=60)
-    return Response(r.content, status=r.status_code,
-                    content_type=r.headers.get('Content-Type'))
-
 @app.route('/api-doc', methods=['GET'])
 def api_doc():
     return render_template('apiDocNoTTS.html')
+
+@app.route('/api/image-proxy', methods=['GET'])
+def image_proxy():
+    url = request.args.get('url')
+    if not url:
+        return jsonify({"error": "url parametresi gerekli"}), 400
+    r = requests.get(url, headers=DEVICE_HEADERS, timeout=30)
+    return Response(r.content, status=r.status_code, content_type=r.headers.get('Content-Type', 'image/png'))
 
 @app.route('/api/generate/image', methods=['POST'])
 def generate_image():
