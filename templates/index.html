@@ -2098,6 +2098,7 @@
         });
 
         const API_BASE = () => document.getElementById('apiUrl').value;
+        function px(u){return u&&u.includes&&u.includes('deevid.ai')?`${API_BASE()}/api/proxy?url=${encodeURIComponent(u)}`:u;}
         const API_KEY = () => document.getElementById('apiKey').value;
         let autoRefreshInterval = null;
         let currentViewMode = 'all'; // 'all' veya 'single'
